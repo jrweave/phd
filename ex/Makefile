@@ -15,8 +15,8 @@ runtests : all
 
 clean :
 	$(ECHO) cleaning up in ex
-	$(ECHO) -$(RM) -f $(OBJS)
-	-$(RM) -f $(OBJS)
+	-$(RM) -vf $(OBJS) 
+	-$(RM) -vfr *.dSYM
 	cd __tests__; $(MAKE) $(MFLAGS) clean
 
 force_look :

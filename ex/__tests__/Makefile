@@ -12,7 +12,8 @@ testBaseException : testBaseException.cpp ../BaseException.h ../BaseException-in
 clean :
 	$(ECHO) cleaning up in ex/__tests__
 	$(ECHO) -$(RM) -f $(TESTS)
-	-$(RM) -f $(TESTS)
+	-$(RM) -vf $(TESTS)
+	-$(RM) -vfr *.dSYM
 
 runtests : all
 	$(ECHO) ./testBaseException

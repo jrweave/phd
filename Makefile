@@ -15,8 +15,8 @@ runtests : all force_look
 
 clean :
 	$(ECHO) cleaning up in .
-	$(ECHO) -$(RM) -f $(EXE) $(OBJS) $(OBJLIBS)
-	-$(RM) -f $(EXE) $(OBJS) $(OBJLIBS)
+	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
+	-$(RM) -vfr *.dSYM
 	-for d in $(DIRS); do (cd $$d; $(MAKE) clean ); done
 
 # add main.o to dependencies
