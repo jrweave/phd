@@ -19,11 +19,11 @@ force_look :
 testTraceableException : testTraceableException.cpp ../TraceableException.h ../TraceableException.cpp ../TraceableException.o
 	$(ECHO) $(CC) $(CFLAGS) -o testTraceableException testTraceableException.cpp ../TraceableException.o
 	$(CC) $(CFLAGS) -o testTraceableException testTraceableException.cpp ../TraceableException.o
-	$(ECHO) ./testTraceableException
+	$(ECHO) [TEST] ./testTraceableException
 	./testTraceableException
 
 testBaseException : testBaseException.cpp ../BaseException.h ../BaseException-inl.h testTraceableException
 	$(ECHO) $(CC) $(CFLAGS) -o testBaseException testBaseException.cpp ../TraceableException.o
 	$(CC) $(CFLAGS) -o testBaseException testBaseException.cpp ../TraceableException.o
-	$(ECHO) ./testBaseException
+	$(ECHO) [TEST] ./testBaseException
 	./testBaseException
