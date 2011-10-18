@@ -15,7 +15,7 @@ using namespace ex;
 
 void throws() THROWS(TraceableException) {
   THROW(TraceableException, "uh oh");
-} TRACE("unhandled")
+} TRACE(TraceableException, "unhandled")
 
 bool testThrows() {
   try {

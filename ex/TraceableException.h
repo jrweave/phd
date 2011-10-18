@@ -2,6 +2,7 @@
 #define __TRACEABLEEXCEPTION_H__
 
 #include <exception>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -9,14 +10,15 @@
   throw type(__FILE__, __LINE__, __VA_ARGS__) 
 
 #define RETHROW(ex, ...) \
-  throw ex.amendStackTrace(__FILE__, __LINE__, __VA_ARGS__)
+  ex.amendStackTrace(__FILE__, __LINE__, __VA_ARGS__); \
+  throw ex
 
 #define THROWS(...) \
   throw(__VA_ARGS__) { \
     try
 
-#define TRACE(...) \
-    catch (TraceableException &_e) { \
+#define TRACE(type, ...) \
+    catch (type &_e) { \
       RETHROW(_e, __VA_ARGS__); \
     } \
   }
@@ -36,7 +38,7 @@ public:
       throw(const char *);
   TraceableException(const char *file, const unsigned int line,
       const char *message) throw(const char *);
-  TraceableException(TraceableException *) throw();
+  TraceableException(const TraceableException *) throw();
   virtual ~TraceableException() throw();
   
   // Final Methods
@@ -53,5 +55,7 @@ public:
 };
 
 }
+
+std::ostream &operator<<(std::ostream &stream, ex::TraceableException *ex);
 
 #endif /* __TRACEABLEEXCEPTION_H__ */

@@ -22,8 +22,8 @@ TraceableException::TraceableException(const char *file,
   }
 }
 
-TraceableException::TraceableException(TraceableException *ex) throw ()
-    : file(ex->getFile()), line(ex->getLine()), message(ex->getMessage()) {
+TraceableException::TraceableException(const TraceableException *ex) throw ()
+    : file(ex->file), line(ex->line), message(ex->message) {
   // do nothing
 }
 
@@ -71,9 +71,13 @@ const char *TraceableException::what() const throw() {
   ss << "\n";
   vector<string>::const_iterator it;
   for (it = this->stack_trace.begin(); it != this->stack_trace.end(); it++) {
-    ss << "\t" << *it << "\n";
+    ss << "\t\t" << *it << "\n";
   }
   return ss.str().c_str();
 }
 
+}
+
+std::ostream &operator<<(std::ostream &stream, ex::TraceableException *ex) {
+  return stream << ex->what();
 }
