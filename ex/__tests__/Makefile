@@ -1,13 +1,9 @@
 include ../../Makefile.inc
 
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testBaseException
+TESTS		= testTraceableException
 
 all : $(TESTS)
-
-testBaseException : testBaseException.cpp ../BaseException.h ../BaseException-inl.h
-	$(ECHO) $(LD) -o testBaseException testBaseException.cpp
-	$(CC) $(CFLAGS) -o testBaseException testBaseException.cpp
 
 clean :
 	$(ECHO) cleaning up in ex/__tests__
@@ -16,8 +12,12 @@ clean :
 	-$(RM) -vfr *.dSYM
 
 runtests : all
-	$(ECHO) ./testBaseException
-	./testBaseException
+	$(ECHO) ./testTraceableException
+	./testTraceableException
 
 force_look :
 	true
+
+testTraceableException : testTraceableException.cpp ../TraceableException.h ../TraceableException.cpp ../TraceableException.o
+	$(ECHO) $(CC) $(CFLAGS) -o testTraceableException testTraceableException.cpp ../TraceableException.o
+	$(CC) $(CFLAGS) -o testTraceableException testTraceableException.cpp ../TraceableException.o

@@ -7,7 +7,7 @@ OBJS      =
 OBJLIBS		=
 LIBS      = -L.
 
-all : $(EXE)
+all : $(DIRS) $(EXE)
 
 runtests : all force_look
 	$(ECHO) running tests
@@ -19,6 +19,9 @@ clean :
 	-$(RM) -vfr *.dSYM
 	-for d in $(DIRS); do (cd $$d; $(MAKE) clean ); done
 
+force_look :
+	true
+
 # add main.o to dependencies
 $(EXE) : $(OBJLIBS)
 	$(ECHO) This is where compiling main would happen
@@ -28,6 +31,3 @@ $(EXE) : $(OBJLIBS)
 ex : force_look
 	$(ECHO) looking into ex : $(MAKE) $(MFLAGS)
 	cd ex; $(MAKE) $(MFLAGS)
-
-force_look :
-	true

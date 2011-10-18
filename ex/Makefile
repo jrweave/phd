@@ -1,7 +1,7 @@
 include ../Makefile.inc
 
 CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		=
+OBJS		= TraceableException.o
 
 all : $(OBJS) __tests__
 
@@ -21,3 +21,7 @@ clean :
 
 force_look :
 	true
+
+TraceableException.o : TraceableException.h TraceableException.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o TraceableException.o TraceableException.cpp
+	$(CC) $(CFLAGS) -c -o TraceableException.o TraceableException.cpp
