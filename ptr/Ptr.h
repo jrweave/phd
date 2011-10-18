@@ -1,7 +1,6 @@
 #ifndef __PTR_H__
 #define __PTR_H__
 
-#include <cstring>
 #include "ex/TraceableException.h"
 #include "ptr/BadAllocException.h"
 
@@ -19,6 +18,8 @@ protected:
   virtual void destroy() throw();
 public:
   Ptr(void *p) throw(BadAllocException);
+  Ptr(const Ptr &ptr) throw();
+  Ptr(const Ptr *ptr) throw();
   virtual ~Ptr() throw();
 
   // Final Methods

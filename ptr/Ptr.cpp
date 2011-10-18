@@ -15,6 +15,14 @@ Ptr::Ptr(void *p) throw(BadAllocException)
   *(this->global_refs) = 1;
 }
 
+Ptr::Ptr(const Ptr &ptr) throw() {
+  *this = ptr;
+}
+
+Ptr::Ptr(const Ptr *ptr) throw() {
+  *this = ptr;
+}
+
 Ptr::~Ptr() throw() {
   (*(this->global_refs)) -= this->local_refs;
   if (*(this->global_refs) == 0) {
