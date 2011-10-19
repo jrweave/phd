@@ -39,10 +39,10 @@ using namespace std;
  */
 class Ptr {
 private:
-  void *p;
   unsigned int *global_refs;
   unsigned int local_refs;
 protected:
+  void *p; // subclasses, be careful
   virtual void destroy() throw();
 public:
   Ptr(void *p) throw(BadAllocException);

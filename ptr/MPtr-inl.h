@@ -5,6 +5,12 @@ namespace ptr {
 using namespace std;
 
 template<typename ptr_type>
+MPtr<ptr_type>::MPtr(ptr_type *p) throw()
+    : DPtr<ptr_type>(p), num(0) {
+  // do nothing
+}
+
+template<typename ptr_type>
 MPtr<ptr_type>::MPtr(ptr_type *p, size_t num) throw()
     : DPtr<ptr_type>(p), num(num) {
   // do nothing
@@ -44,7 +50,7 @@ void MPtr<ptr_type>::destroy() throw() {
 
 template<typename ptr_type>
 bool MPtr<ptr_type>::sizeKnown() const throw() {
-  return num != 0 || this->ptr() == NULL;
+  return this->num != 0 || this->ptr() == NULL;
 }
 
 template<typename ptr_type>
