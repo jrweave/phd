@@ -21,7 +21,7 @@ public:
   OPtr<obj_type> &operator=(const OPtr<obj_type> &rhs) throw();
   OPtr<obj_type> &operator=(const OPtr<obj_type> *rhs) throw();
   OPtr<obj_type> &operator=(obj_type *p) throw(BadAllocException);
-}
+};
 
 }
 

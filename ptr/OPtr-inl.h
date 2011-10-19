@@ -18,7 +18,7 @@ OPtr<obj_type>::OPtr(const OPtr<obj_type> &optr) throw()
 
 template<typename obj_type>
 OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr) throw()
-    : DPtr<opj_type>(optr) {
+    : DPtr<obj_type>(optr) {
   // do nothing
 }
 
@@ -35,15 +35,17 @@ void OPtr<obj_type>::destroy() throw() {
 
 template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> &rhs) throw() {
+  Ptr *l = this;
   const Ptr *r = &rhs;
-  *this = *r;
+  *l = *r;
   return *this;
 }
 
 template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> *rhs) throw() {
+  Ptr *l = this;
   const Ptr *r = rhs;
-  *this = r;
+  *l = r;
   return *this;
 }
 

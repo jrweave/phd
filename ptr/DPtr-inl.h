@@ -36,15 +36,17 @@ ptr_type *DPtr<ptr_type>::dptr() const throw() {
 
 template<typename ptr_type>
 DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> &rhs) throw() {
+  Ptr *l = this;
   const Ptr *r = &rhs;
-  *this = *r;
+  *l = *r;
   return *this;
 }
 
 template<typename ptr_type>
 DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> *rhs) throw() {
+  Ptr *l = this;
   const Ptr *r = rhs;
-  *this = r;
+  *l = r;
   return *this;
 }
 

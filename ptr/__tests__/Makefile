@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 SUBDIR	= ex/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testPtr testDPtr
+TESTS		= testPtr testDPtr testOPtr
 
 all :
 
@@ -28,3 +28,10 @@ testDPtr : testDPtr.cpp ../DPtr.h ../DPtr-inl.h testPtr
 	$(CC) $(CFLAGS) -o testDPtr testDPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
 	$(ECHO) [TEST] ./testDPtr
 	./testDPtr
+
+testOPtr : testOPtr.cpp ../OPtr.h ../OPtr-inl.h testDPtr
+	$(ECHO) $(CC) $(CFLAGS) -o testOPtr testOPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
+	$(CC) $(CFLAGS) -o testOPtr testOPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
+	$(ECHO) [TEST] ./testOPtr
+	./testOPtr
+

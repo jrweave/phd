@@ -1,0 +1,102 @@
+#include "ptr/OPtr.h"
+
+#include <iostream>
+#include <vector>
+
+#define TEST(call, ...) \
+  cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
+  call(__VA_ARGS__)
+
+#define PASS \
+  cerr << "\nPASSED\n"; \
+  return true
+
+#define FAIL \
+  cerr << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
+  return false
+
+#define PROG(cond) \
+  cerr << __LINE__; \
+  if (!(cond)) { FAIL; } \
+  cerr << ","
+
+using namespace ptr;
+using namespace std;
+
+bool testVector() THROWS(BadAllocException) {
+  int i;
+  int nums = 11;
+  vector<int > *vec = new vector<int>();
+  for (i = 0; i < nums; i++) {
+    vec->push_back(i);
+  }
+  OPtr<vector<int> > *p = new OPtr<vector<int> >(vec);
+  PROG((vector<int>*)p->ptr() == vec);
+  PROG(p->dptr() == vec);
+  PROG(**p == *vec);
+  PROG((*p)->at(1) == vec->at(1));
+  int max = 10;
+  for (i = 0; i < max; i++) {
+    p->hold();
+  }
+  for (i = 0; i < max; i++) {
+    p->drop();
+  }
+  PROG(p->dptr() == vec);
+  vector<int> *vec2 = new vector<int>();
+  *p = vec2;
+  // vec is no longer a valid pointer
+  // vec->push_back(100); // should create memory error
+  PROG(p->dptr() == vec2);
+  PROG((**p).size() == 0);
+  p->hold();
+  p->drop();
+  p->drop(); // this deletes p
+  // p->drop(); // should create memory error 
+  // vec2 is still a valid pointer
+  delete vec2;
+  PASS;
+}
+TRACE(BadAllocException, "uncaught")
+
+bool testConstructors() THROWS(BadAllocException) {
+  vector<int> *vec = new vector<int>();
+  PROG(vec != NULL);
+  OPtr<vector<int> > *p = new OPtr<vector<int> >(vec);
+  OPtr<vector<int> > p3 (*p);
+  OPtr<vector<int> > *p2 = new OPtr<vector<int> >(&p3);
+  PROG(p->ptr() == vec);
+  PROG(p2->dptr() == vec);
+  PROG(p3.dptr() == vec);
+  p->hold();
+  p2->drop(); // now p2 is invalid
+  // vec is still valid
+  PROG(p->dptr() == vec);
+  PROG(p3.dptr() == vec);
+  p->drop();
+  p->drop(); // now p is invalid
+  // vec is still valid
+  PROG(p3.dptr() == vec);
+  vector<int> *vec2 = new vector<int>();
+  p = new OPtr<vector<int> >(vec2); // p is valid
+  p3 = p;
+  // vec is now invalid due to no Ptr reference
+  // vec->size(); // should create memory error
+  PROG(p->dptr() == vec2);
+  PROG(p3.dptr() == vec2);
+  (*p)->push_back(5);
+  p3->push_back(6);
+  PROG(p3->at(1) == 6);
+  PROG((*p)->at(0) == 5);
+  PROG(p3->size() == 2);
+  p->drop(); // now p is invalid
+  PROG(p3.dptr() == vec2);
+  // vec2 will be freed with p3
+  PASS;
+}
+TRACE(BadAllocException, "uncaught")
+
+int main (int argc, char **argv) {
+  TEST(testVector);
+  TEST(testConstructors);
+}
