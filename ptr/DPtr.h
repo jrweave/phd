@@ -18,6 +18,10 @@ public:
   // Final Methods
   ptr_type *dptr() const throw();
 
+  // Virtual Methods
+  virtual bool sizeKnown() const throw();
+  virtual size_t size() const throw();
+
   // Operators
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> &rhs) throw();
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> *rhs) throw();

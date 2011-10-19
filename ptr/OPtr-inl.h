@@ -35,6 +35,16 @@ void OPtr<obj_type>::destroy() throw() {
 }
 
 template<typename obj_type>
+bool OPtr<obj_type>::sizeKnown() const throw() {
+  return true;
+}
+
+template<typename obj_type>
+size_t OPtr<obj_type>::size() const throw() {
+  return 1;
+}
+
+template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> &rhs) throw() {
   Ptr *l = this;
   const Ptr *r = &rhs;

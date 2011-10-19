@@ -35,6 +35,16 @@ ptr_type *DPtr<ptr_type>::dptr() const throw() {
 }
 
 template<typename ptr_type>
+bool DPtr<ptr_type>::sizeKnown() const throw() {
+  return false;
+}
+
+template<typename ptr_type>
+size_t DPtr<ptr_type>::size() const throw() {
+  return 0;
+}
+
+template<typename ptr_type>
 DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> &rhs) throw() {
   Ptr *l = this;
   const Ptr *r = &rhs;

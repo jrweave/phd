@@ -52,7 +52,7 @@ bool testInt() THROWS(BadAllocException) {
   p->hold();
   p->drop();
   p->drop(); // this deletes p
-  //p->drop(); // should create memory error 
+  // p->drop(); // should create memory error 
   PASS;
 }
 TRACE(BadAllocException, "uncaught")

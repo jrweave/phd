@@ -32,6 +32,7 @@ bool testInt() THROWS(BadAllocException) {
   PROG(p->dptr() == ip);
   PROG(**p == val);
   PROG((*p)[1] == val + 1);
+  PROG(!p->sizeKnown());
   // p->func(); shouldn't compile
   int max = 10;
   int i;

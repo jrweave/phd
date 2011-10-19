@@ -22,9 +22,11 @@ public:
   MPtr(const MPtr<ptr_type> *mptr) throw();
   virtual ~MPtr() throw();
 
+  // Inherited Methods
+  virtual bool sizeKnown() const throw();
+  virtual size_t size() const throw();
+
   // Final Methods
-  bool sizeKnown() const throw();
-  size_t size() const throw();
   size_t sizeInBytes() const throw();
 
   // Operators

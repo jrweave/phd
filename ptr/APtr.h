@@ -23,9 +23,9 @@ public:
   APtr(const APtr<arr_type> *mptr) throw();
   virtual ~APtr() throw();
 
-  // Final Methods
-  bool sizeKnown() const throw();
-  size_t size() const throw();
+  // Inherited Methods
+  virtual bool sizeKnown() const throw();
+  virtual size_t size() const throw();
 
   // Operators
   APtr<arr_type> &operator=(const APtr<arr_type> &rhs) throw();

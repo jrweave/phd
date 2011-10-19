@@ -35,6 +35,8 @@ bool testVector() THROWS(BadAllocException) {
   PROG(p->dptr() == vec);
   PROG(**p == *vec);
   PROG((*p)->at(1) == vec->at(1));
+  PROG(p->sizeKnown());
+  PROG(p->size() == 1);
   int max = 10;
   for (i = 0; i < max; i++) {
     p->hold();
