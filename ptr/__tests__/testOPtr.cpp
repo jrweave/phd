@@ -53,8 +53,6 @@ bool testVector() THROWS(BadAllocException) {
   p->drop();
   p->drop(); // this deletes p
   // p->drop(); // should create memory error 
-  // vec2 is still a valid pointer
-  delete vec2;
   PASS;
 }
 TRACE(BadAllocException, "uncaught")

@@ -25,12 +25,13 @@ OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr) throw()
 template<typename obj_type>
 OPtr<obj_type>::~OPtr() throw() {
   // do nothing
-  // Ptr::~Ptr will call destroy method
 }
 
 template<typename obj_type>
 void OPtr<obj_type>::destroy() throw() {
-  delete this->dptr();
+  if (this->ptr() != NULL) {
+    delete this->dptr();
+  }
 }
 
 template<typename obj_type>

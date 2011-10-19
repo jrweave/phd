@@ -33,12 +33,13 @@ MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr) throw()
 template<typename ptr_type>
 MPtr<ptr_type>::~MPtr() throw() {
   // do nothing
-  // Ptr::~Ptr will call destroy method
 }
 
 template<typename ptr_type>
 void MPtr<ptr_type>::destroy() throw() {
-  free(this->ptr());
+  if (this->ptr() != NULL) {
+    free(this->ptr());
+  }
 }
 
 template<typename ptr_type>

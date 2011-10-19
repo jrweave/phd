@@ -46,14 +46,14 @@ bool testInt() THROWS(BadAllocException) {
   }
   PROG(p->dptr() == ip);
   p->drop(); // p is invalid
-  // **p = 0; // memory error
+  //p->hold(); // memory error
   p = new MPtr<int>(1);
   **p = val;
   PROG((*p)[0] == val);
   p->hold();
   p->drop();
   p->drop(); // this deletes p
-  // p->drop(); // should create memory error 
+  //p->drop(); // should create memory error 
   PASS;
 }
 TRACE(BadAllocException, "uncaught")

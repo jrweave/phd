@@ -26,10 +26,11 @@ Ptr::Ptr(const Ptr *ptr) throw()
 }
 
 Ptr::~Ptr() throw() {
-  (*(this->global_refs)) -= this->local_refs;
-  if (*(this->global_refs) == 0) {
-    this->destroy();
-    free(this->global_refs);
+  if (this->global_refs != NULL) {
+    (*(this->global_refs)) -= this->local_refs;
+    if (*(this->global_refs) == 0) {
+      free(this->global_refs);
+    }
   }
 }
 
@@ -46,6 +47,11 @@ void Ptr::drop() throw() {
   this->local_refs--;
   (*(this->global_refs))--;
   if (this->local_refs == 0) {
+    if (*(this->global_refs) == 0) {
+      this->destroy();
+      free(this->global_refs);
+      this->global_refs = NULL;
+    }
     delete this;
   }
 }
