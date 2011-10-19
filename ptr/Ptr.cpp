@@ -34,6 +34,10 @@ Ptr::~Ptr() throw() {
   }
 }
 
+bool Ptr::alreadyDestroyed() const throw() {
+  return this->local_refs == 0;
+}
+
 void *Ptr::ptr() const throw() {
   return this->p;
 }
@@ -49,6 +53,7 @@ void Ptr::drop() throw() {
   if (this->local_refs == 0) {
     if (*(this->global_refs) == 0) {
       this->destroy();
+      this->p = NULL;
       free(this->global_refs);
       this->global_refs = NULL;
     }

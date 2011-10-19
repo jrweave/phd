@@ -44,7 +44,9 @@ APtr<arr_type>::APtr(const APtr<arr_type> *aptr) throw()
 
 template<typename arr_type>
 APtr<arr_type>::~APtr() throw() {
-  // do nothing
+  if (!this->alreadyDestroyed()) {
+    this->destroy();
+  }
 }
 
 template<typename arr_type>

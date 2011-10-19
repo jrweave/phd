@@ -38,7 +38,9 @@ MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr) throw()
 
 template<typename ptr_type>
 MPtr<ptr_type>::~MPtr() throw() {
-  // do nothing
+  if (!this->alreadyDestroyed()) {
+    this->destroy();
+  }
 }
 
 template<typename ptr_type>

@@ -24,7 +24,9 @@ OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr) throw()
 
 template<typename obj_type>
 OPtr<obj_type>::~OPtr() throw() {
-  // do nothing
+  if (!this->alreadyDestroyed()) {
+    this->destroy();
+  }
 }
 
 template<typename obj_type>

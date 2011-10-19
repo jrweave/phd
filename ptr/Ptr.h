@@ -44,6 +44,7 @@ private:
 protected:
   void *p; // subclasses, be careful
   virtual void destroy() throw();
+  bool alreadyDestroyed() const throw();
 public:
   Ptr(void *p) throw(BadAllocException);
   Ptr(const Ptr &ptr) throw();
