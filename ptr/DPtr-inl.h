@@ -5,7 +5,13 @@ namespace ptr {
 using namespace std;
 
 template<typename ptr_type>
-DPtr<ptr_type>::DPtr(ptr_type *p) throw()
+DPtr<ptr_type>::DPtr() throw(BadAllocException)
+    : Ptr() {
+  // do nothing
+}
+
+template<typename ptr_type>
+DPtr<ptr_type>::DPtr(ptr_type *p) throw(BadAllocException)
     : Ptr((void*)p) {
   // do nothing
 }
@@ -24,9 +30,7 @@ DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr) throw()
 
 template<typename ptr_type>
 DPtr<ptr_type>::~DPtr() throw() {
-  // do nothing
-  // Ptr::~Ptr will call destroy method,
-  // which should be overridden by subclasses
+  this->destruct();
 }
 
 template<typename ptr_type>

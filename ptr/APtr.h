@@ -16,7 +16,8 @@ private:
 protected:
   virtual void destroy() throw();
 public:
-  APtr(arr_type *p) throw();
+  APtr() throw(BadAllocException);
+  APtr(arr_type *p) throw(BadAllocException);
   APtr(arr_type *p, size_t num) throw();
   APtr(size_t num) throw(BadAllocException);
   APtr(const APtr<arr_type> &mptr) throw();

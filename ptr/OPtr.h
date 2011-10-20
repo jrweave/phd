@@ -12,7 +12,8 @@ class OPtr : public DPtr<obj_type> {
 protected:
   virtual void destroy() throw();
 public:
-  OPtr(obj_type *p) throw();
+  OPtr() throw(BadAllocException);
+  OPtr(obj_type *p) throw(BadAllocException);
   OPtr(const OPtr<obj_type> &optr) throw();
   OPtr(const OPtr<obj_type> *optr) throw();
   virtual ~OPtr() throw();

@@ -1,11 +1,20 @@
 #include "ptr/OPtr.h"
 
+#include "ptr/APtr.h"
+#include "ptr/MPtr.h"
+
 namespace ptr {
 
 using namespace std;
 
 template<typename obj_type>
-OPtr<obj_type>::OPtr(obj_type *p) throw()
+OPtr<obj_type>::OPtr() throw(BadAllocException)
+    : DPtr<obj_type>() {
+  // do nothing
+}
+
+template<typename obj_type>
+OPtr<obj_type>::OPtr(obj_type *p) throw(BadAllocException)
     : DPtr<obj_type>(p) {
   // do nothing
 }
@@ -24,15 +33,20 @@ OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr) throw()
 
 template<typename obj_type>
 OPtr<obj_type>::~OPtr() throw() {
-  if (!this->alreadyDestroyed()) {
-    this->destroy();
-  }
+  this->destruct();
 }
 
 template<typename obj_type>
 void OPtr<obj_type>::destroy() throw() {
   if (this->ptr() != NULL) {
     delete this->dptr();
+  }
+}
+
+template<>
+void OPtr<Ptr>::destroy() throw() {
+  if (this->ptr() != NULL) {
+    this->dptr()->drop();
   }
 }
 

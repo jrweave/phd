@@ -10,7 +10,8 @@ using namespace std;
 template<typename ptr_type>
 class DPtr : public Ptr {
 public:
-  DPtr(ptr_type *p) throw();
+  DPtr() throw(BadAllocException);
+  DPtr(ptr_type *p) throw(BadAllocException);
   DPtr(const DPtr<ptr_type> &dptr) throw();
   DPtr(const DPtr<ptr_type> *dptr) throw();
   virtual ~DPtr() throw();

@@ -6,6 +6,15 @@ namespace ptr {
 
 using namespace std;
 
+Ptr::Ptr() throw(BadAllocException)
+    : p(NULL), local_refs(1) {
+  this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
+  if (this->global_refs == NULL) {
+    THROW(BadAllocException, sizeof(unsigned int));
+  }
+  *(this->global_refs) = 1;
+}
+
 Ptr::Ptr(void *p) throw(BadAllocException)
     : p(p), local_refs(1) {
   this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
@@ -26,16 +35,20 @@ Ptr::Ptr(const Ptr *ptr) throw()
 }
 
 Ptr::~Ptr() throw() {
-  if (this->global_refs != NULL) {
-    (*(this->global_refs)) -= this->local_refs;
-    if (*(this->global_refs) == 0) {
-      free(this->global_refs);
-    }
-  }
+  this->destruct();
 }
 
-bool Ptr::alreadyDestroyed() const throw() {
-  return this->local_refs == 0;
+void Ptr::destruct() throw() {
+  if (this->global_refs != NULL) {
+    (*(this->global_refs)) -= this->local_refs;
+    this->local_refs = 0;
+    if (*(this->global_refs) == 0) {
+      this->destroy();
+      this->p = NULL;
+      free(this->global_refs);
+      this->global_refs = NULL;
+    }
+  }
 }
 
 void *Ptr::ptr() const throw() {
@@ -67,8 +80,12 @@ void Ptr::destroy() throw() {
 }
 
 Ptr &Ptr::operator=(const Ptr &rhs) throw() {
+  if (this == &rhs) {
+    return *this;
+  }
+  *(this->global_refs) -= this->local_refs;
   // destroy old pointer if no one else refers to it.
-  if (this->local_refs == *(this->global_refs)) {
+  if (*(this->global_refs) == 0) {
     this->destroy();
   }
   this->p = rhs.p;
@@ -84,7 +101,9 @@ Ptr &Ptr::operator=(const Ptr *rhs) throw() {
 
 Ptr &Ptr::operator=(void *p) throw(BadAllocException) {
   if (this->local_refs == *(this->global_refs)) {
-    this->destroy();
+    if (this->p != p) {
+      this->destroy();
+    }
   } else {
     this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
     if (this->global_refs == NULL) {

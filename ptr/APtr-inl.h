@@ -7,7 +7,13 @@ namespace ptr {
 using namespace std;
 
 template<typename arr_type>
-APtr<arr_type>::APtr(arr_type *p) throw()
+APtr<arr_type>::APtr() throw(BadAllocException)
+    : DPtr<arr_type>(), num(0), num_known(false) {
+  // do nothing
+}
+
+template<typename arr_type>
+APtr<arr_type>::APtr(arr_type *p) throw(BadAllocException)
     : DPtr<arr_type>(p), num(0), num_known(false) {
   // do nothing
 }
@@ -44,9 +50,7 @@ APtr<arr_type>::APtr(const APtr<arr_type> *aptr) throw()
 
 template<typename arr_type>
 APtr<arr_type>::~APtr() throw() {
-  if (!this->alreadyDestroyed()) {
-    this->destroy();
-  }
+  this->destruct();
 }
 
 template<typename arr_type>

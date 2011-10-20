@@ -5,7 +5,13 @@ namespace ptr {
 using namespace std;
 
 template<typename ptr_type>
-MPtr<ptr_type>::MPtr(ptr_type *p) throw()
+MPtr<ptr_type>::MPtr() throw(BadAllocException)
+    : DPtr<ptr_type>(), num(0) {
+  // do nothing
+}
+
+template<typename ptr_type>
+MPtr<ptr_type>::MPtr(ptr_type *p) throw(BadAllocException)
     : DPtr<ptr_type>(p), num(0) {
   // do nothing
 }
@@ -38,9 +44,7 @@ MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr) throw()
 
 template<typename ptr_type>
 MPtr<ptr_type>::~MPtr() throw() {
-  if (!this->alreadyDestroyed()) {
-    this->destroy();
-  }
+  this->destruct();
 }
 
 template<typename ptr_type>

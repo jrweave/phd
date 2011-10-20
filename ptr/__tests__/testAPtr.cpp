@@ -1,6 +1,7 @@
 #include "ptr/APtr.h"
 
 #include <iostream>
+#include "ptr/OPtr.h"
 
 #define TEST(call, ...) \
   cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
@@ -49,6 +50,8 @@ bool testInt() THROWS(BadAllocException) {
   p = new APtr<int>(1);
   **p = val;
   PROG((*p)[0] == val);
+  (*p)[0] = 0;
+  PROG((*p)[0] == 0);
   p->hold();
   p->drop();
   p->drop(); // this deletes p
@@ -86,7 +89,36 @@ bool testConstructors() THROWS(BadAllocException) {
 }
 TRACE(BadAllocException, "uncaught")
 
+bool testArrayOfDPtrs() THROWS(BadAllocException) {
+  const char *cstrs[5] = {
+    "0", "one", "dos", "trois", "IV"
+  };
+  APtr<OPtr<string> > strings (5);
+  PROG(strings.sizeKnown());
+  PROG(strings.size() == 5);
+  int i;
+  for (i = 0; i < 5; i++) {
+    strings[i] = new string(cstrs[i]);
+  }
+  PROG(true);
+  for (i = 0; i < 5; i++) {
+    PROG(*(strings[i]) == string(cstrs[i]));
+  }
+  for (i = 0; i < 5; i++) {
+    strings[i] = strings[4-i];
+  }
+  for (i = 0; i < 3; i++) {
+    PROG(*(strings[i]) == string(cstrs[4-i]));
+  }
+  for (i = 2; i < 5; i++) {
+    PROG(*(strings[i]) == string(cstrs[i]));
+  }
+  PASS;
+}
+TRACE(BadAllocException, "uncaught")
+
 int main (int argc, char **argv) {
   TEST(testInt);
   TEST(testConstructors);
+  TEST(testArrayOfDPtrs);
 }
