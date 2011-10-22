@@ -1,6 +1,6 @@
 include ../../Makefile.inc
 
-SUBDIR	= ex/__tests__
+SUBDIR	= ptr/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
 TESTS		= testPtr testDPtr testOPtr testMPtr testAPtr
 
