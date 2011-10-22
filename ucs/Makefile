@@ -18,11 +18,16 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
+	-$(RM) -vf ucs_arrays.h
 	cd __tests__; $(MAKE) $(MFLAGS) clean
 
 force_look :
 	true
 
-ucs_lookup.o : ucs_lookup.h  ucs_arrays.h ucs_lookup.cpp
+ucs_arrays.h :
+	$(ECHO) generating ucs_arrays.h
+	perl scripts/index.pl < scripts/UnicodeData.txt > ucs_arrays.h
+
+ucs_lookup.o : ucs_lookup.h ucs_arrays.h  ucs_lookup.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o ucs_lookup.o ucs_lookup.cpp
 	$(CC) $(CFLAGS) -c -o ucs_lookup.o ucs_lookup.cpp
