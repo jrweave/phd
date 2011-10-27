@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 SUBDIR	= ucs/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testucs_lookup
+TESTS		= testnf
 
 all :
 
@@ -17,8 +17,8 @@ runtests : $(TESTS)
 force_look :
 	true
 
-testucs_lookup : force_look testucs_lookup.cpp ../ucs_lookup.h ../ucs_arrays.h ../ucs_lookup.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o testucs_lookup testucs_lookup.cpp ../ucs_lookup.o
-	$(CC) $(CFLAGS) -o testucs_lookup testucs_lookup.cpp ../ucs_lookup.o
-	$(ECHO) [TEST] ./testucs_lookup
-	./testucs_lookup
+testnf : force_look testnf.cpp ../nf.h ../nf.o
+	$(ECHO) $(CC) $(CFLAGS) -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(CC) $(CFLAGS) -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(ECHO) [TEST] ./testnf
+	./testnf

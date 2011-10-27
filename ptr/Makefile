@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= ptr
 CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		= BadAllocException.o Ptr.o
+OBJS		= BadAllocException.o Ptr.o SizeUnknownException.o
 
 all : $(OBJS) __tests__
 
@@ -22,6 +22,10 @@ clean :
 
 force_look :
 	true
+
+SizeUnknownException.o : ../ex/TraceableException.h SizeUnknownException.h SizeUnknownException.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o SizeUnknownException.o SizeUnknownException.cpp
+	$(CC) $(CFLAGS) -c -o SizeUnknownException.o SizeUnknownException.cpp
 
 BadAllocException.o : ../ex/TraceableException.h BadAllocException.h BadAllocException.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o BadAllocException.o BadAllocException.cpp

@@ -5,6 +5,12 @@
 #include <new>
 #include "ex/TraceableException.h"
 
+#define RETHROW_BAD_ALLOC \
+  JUST_RETHROW(ptr::BadAllocException, "(rethrow)") \
+  catch(std::bad_alloc &ba) { \
+    THROWX(ptr::BadAllocException); \
+  }
+
 namespace ptr {
 
 using namespace ex;

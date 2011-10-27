@@ -1,5 +1,5 @@
 CC        = g++
-PRJCFLAGS = -g
+PRJCFLAGS = -g -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 LD        = g++
 LDFLAGS   =
 AR        = ar

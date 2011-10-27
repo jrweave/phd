@@ -1,10 +1,10 @@
 include ../Makefile.inc
 
 SUBDIR	= ucs
-CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		= ucs_lookup.o
+CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
+OBJS		= nf.o
 
-all : $(OBJS) __tests__
+all : ucs_arrays $(OBJS) __tests__
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)
@@ -18,16 +18,16 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	-$(RM) -vf ucs_arrays.h
+	-$(RM) -vf ucs_arrays.*
 	cd __tests__; $(MAKE) $(MFLAGS) clean
 
 force_look :
 	true
 
-ucs_arrays.h :
-	$(ECHO) generating ucs_arrays.h
-	perl scripts/index.pl < scripts/UnicodeData.txt > ucs_arrays.h
+ucs_arrays : scripts/index.pl scripts/UnicodeData.txt scripts/DerivedNormalizationProps.txt scripts/HangulSyllableType.txt scripts/NormalizationTest.txt
+	$(ECHO) generating ucs_arrays.h and ucs_arrays.cpp
+	cd scripts; perl index.pl 2> ../ucs_arrays.cpp | tee ../ucs_arrays.h
 
-ucs_lookup.o : ucs_lookup.h ucs_arrays.h  ucs_lookup.cpp
-	$(ECHO) $(CC) $(CFLAGS) -c -o ucs_lookup.o ucs_lookup.cpp
-	$(CC) $(CFLAGS) -c -o ucs_lookup.o ucs_lookup.cpp
+nf.o : nf.h nf.cpp ucs_arrays.h ucs_arrays.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o nf.o nf.cpp
+	$(CC) $(CFLAGS) -c -o nf.o nf.cpp

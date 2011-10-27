@@ -2,6 +2,12 @@
 
 #include <iostream>
 
+#define INIT \
+  int __failures = 0
+
+#define FINAL \
+  exit(__failures)
+
 #define TEST(call, ...) \
   cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
   call(__VA_ARGS__)
@@ -90,6 +96,8 @@ bool testConstructors() THROWS(BadAllocException) {
 TRACE(BadAllocException, "uncaught")
 
 int main (int argc, char **argv) {
+  INIT;
   TEST(testOverall);
   TEST(testConstructors);
+  FINAL;
 }

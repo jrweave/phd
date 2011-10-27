@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+#define THROWX(type) \
+  throw type(__FILE__, __LINE__)
+
 #define THROW(type, ...) \
   throw type(__FILE__, __LINE__, __VA_ARGS__) 
 
@@ -17,10 +20,13 @@
   throw(__VA_ARGS__) { \
     try
 
+#define JUST_RETHROW(type, ...) \
+  catch (type &_e) { \
+    RETHROW(_e, __VA_ARGS__); \
+  }
+
 #define TRACE(type, ...) \
-    catch (type &_e) { \
-      RETHROW(_e, __VA_ARGS__); \
-    } \
+    JUST_RETHROW(type, __VA_ARGS__) \
   }
 
 namespace ex {
