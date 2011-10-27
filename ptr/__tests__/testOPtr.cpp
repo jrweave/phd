@@ -1,30 +1,7 @@
 #include "ptr/OPtr.h"
 
-#include <iostream>
 #include <vector>
-
-#define INIT \
-  int __failures = 0
-
-#define FINAL \
-  exit(__failures)
-
-#define TEST(call, ...) \
-  cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
-  if (!call(__VA_ARGS__)) __failures++
-
-#define PASS \
-  cerr << "\nPASSED\n"; \
-  return true
-
-#define FAIL \
-  cerr << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
-  return false
-
-#define PROG(cond) \
-  cerr << __LINE__; \
-  if (!(cond)) { FAIL; } \
-  cerr << ","
+#include "test/unit.h"
 
 using namespace ptr;
 using namespace std;

@@ -1,14 +1,6 @@
 #include "ex/TraceableException.h"
 
-#include <iostream>
-
-#define ASSERT(call, ...) \
-  if (call(__VA_ARGS__)) { \
-    cerr << "PASSED "; \
-  } else { \
-    cerr << "FAILED "; \
-  } \
-  cerr << "" #call "(" #__VA_ARGS__ ")\n"
+#include "test/unit.h"
 
 using namespace std;
 using namespace ex;
@@ -28,5 +20,7 @@ bool testThrows() {
 }
 
 int main (int argc, char **argv) {
-  ASSERT(testThrows);
+  INIT;
+  TEST(testThrows);
+  FINAL;
 }

@@ -1,23 +1,6 @@
 #include "ptr/MPtr.h"
 
-#include <iostream>
-
-#define TEST(call, ...) \
-  cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
-  call(__VA_ARGS__)
-
-#define PASS \
-  cerr << "\nPASSED\n"; \
-  return true
-
-#define FAIL \
-  cerr << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
-  return false
-
-#define PROG(cond) \
-  cerr << __LINE__; \
-  if (!(cond)) { FAIL; } \
-  cerr << ","
+#include "test/unit.h"
 
 using namespace ptr;
 using namespace std;
@@ -88,6 +71,8 @@ bool testConstructors() THROWS(BadAllocException) {
 TRACE(BadAllocException, "uncaught")
 
 int main (int argc, char **argv) {
+  INIT;
   TEST(testInt);
   TEST(testConstructors);
+  FINAL;
 }

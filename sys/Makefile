@@ -1,10 +1,11 @@
 include ../Makefile.inc
 
-SUBDIR	= ex
+SUBDIR	= sys
 CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		= TraceableException.o
+OBJS		=
 
-all : $(OBJS) __tests__
+# no __tests__
+all : $(OBJS)
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)
@@ -12,17 +13,13 @@ __tests__ : force_look
 
 runtests : all
 	$(ECHO) running tests for $(SUBDIR) : $(MAKE) $(MFLAGS) runtests
-	cd __tests__; $(MAKE) $(MFLAGS) runtests
+	#cd __tests__; $(MAKE) $(MFLAGS) runtests
 
 clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	cd __tests__; $(MAKE) $(MFLAGS) clean
+	#cd __tests__; $(MAKE) $(MFLAGS) clean
 
 force_look :
 	true
-
-TraceableException.o : TraceableException.h TraceableException.cpp
-	$(ECHO) $(CC) $(CFLAGS) -c -o TraceableException.o TraceableException.cpp
-	$(CC) $(CFLAGS) -c -o TraceableException.o TraceableException.cpp

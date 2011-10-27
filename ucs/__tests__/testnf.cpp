@@ -8,30 +8,8 @@
 #include <vector>
 #include "ptr/APtr.h"
 #include "ptr/DPtr.h"
+#include "test/unit.h"
 #include "sys/ints.h"
-
-#define INIT \
-  int __failures = 0
-
-#define FINAL \
-  exit(__failures)
-
-#define TEST(call, ...) \
-  cerr << "TEST " #call "(" #__VA_ARGS__ ")\n"; \
-  if (!call(__VA_ARGS__)) __failures++
-
-#define PASS \
-  cerr << "\nPASSED\n"; \
-  return true
-
-#define FAIL \
-  cerr << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
-  return false
-
-#define PROG(cond) \
-  cerr << __LINE__; \
-  if (!(cond)) { FAIL; } \
-  cerr << ","
 
 using namespace ptr;
 using namespace std;

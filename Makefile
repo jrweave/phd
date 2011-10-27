@@ -1,7 +1,7 @@
 include Makefile.inc
 
 # When adding a new subdirectory, make sure to modify DIRS
-DIRS      = ex ptr ucs
+DIRS      = ex ptr ucs sys test
 EXE       = main
 OBJS      =
 OBJLIBS		=

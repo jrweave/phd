@@ -1,14 +1,7 @@
 #include "ex/BaseException.h"
 
 #include <iostream>
-
-#define ASSERT(call, ...) \
-  if (call(__VA_ARGS__)) { \
-    cerr << "PASSED "; \
-  } else { \
-    cerr << "FAILED "; \
-  } \
-  cerr << "" #call "(" #__VA_ARGS__ ")\n"
+#include "test/unit.h"
 
 using namespace std;
 using namespace ex;
@@ -42,6 +35,8 @@ bool testWrap() {
 }
 
 int main (int argc, char **argv) {
-  ASSERT(testThrows);
-  ASSERT(testWrap);
+  INIT;
+  TEST(testThrows);
+  TEST(testWrap);
+  FINAL;
 }
