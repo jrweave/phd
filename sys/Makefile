@@ -2,10 +2,9 @@ include ../Makefile.inc
 
 SUBDIR	= sys
 CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		=
+OBJS		= endian.o
 
-# no __tests__
-all : $(OBJS)
+all : $(OBJS) __tests__
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)
@@ -13,13 +12,17 @@ __tests__ : force_look
 
 runtests : all
 	$(ECHO) running tests for $(SUBDIR) : $(MAKE) $(MFLAGS) runtests
-	#cd __tests__; $(MAKE) $(MFLAGS) runtests
+	cd __tests__; $(MAKE) $(MFLAGS) runtests
 
 clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	#cd __tests__; $(MAKE) $(MFLAGS) clean
+	cd __tests__; $(MAKE) $(MFLAGS) clean
 
 force_look :
 	true
+
+endian.o : endian.cpp endian.h ints.h
+	$(ECHO) $(CC) $(CFLAGS) -c -o endian.o endian.cpp
+	$(CC) $(CFLAGS) -c -o endian.o endian.cpp
