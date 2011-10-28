@@ -39,7 +39,31 @@ const char *InvalidCodepointException::what() const throw() {
 
 #include "ucs_arrays.cpp"
 
-bool nfcmpccc(const uint32_t a, const uint32_t b) {
+#ifndef UCS_PLAY_DUMB
+const uint32_t *nflookupd(const uint32_t codepoint)
+    throw(InvalidCodepointException) {
+  const uint32_t *ub = upper_bound(UCS_DECOMPOSITION_RANGES,
+      UCS_DECOMPOSITION_RANGES + UCS_DECOMPOSITION_RANGES_LEN, codepoint);
+  if (ub == UCS_DECOMPOSITION_RANGES) {
+    if (!nfvalid(codepoint)) {
+      THROW(InvalidCodepointException, codepoint);
+    }
+    return NULL;
+  }
+  ub--;
+  uint32_t offset = ub - UCS_DECOMPOSITION_RANGES;
+  if ((offset & UINT32_C(1)) != UINT32_C(0)) {
+    if (!nfvalid(codepoint)) {
+      THROW(InvalidCodepointException, codepoint);
+    }
+    return NULL;
+  }
+  offset = UCS_DECOMPOSITION_OFFSETS[offset >> 1] + (codepoint - *ub);
+  return UCS_DECOMPOSITIONS[offset];
+}
+#endif /* UCS_PLAY_DUMB */
+
+bool nfcmpccc(const uint32_t a, const uint32_t b) throw() {
   return UCS_UNPACK_CCC(a) < UCS_UNPACK_CCC(b);
 }
 
@@ -85,28 +109,14 @@ vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
   vector<uint32_t> *decomp;
   try {
     decomp = new vector<uint32_t>();
+    decomp->reserve(codepoints->size());
   } RETHROW_BAD_ALLOC
   for (i = 0; i < max; i++) {
-    const uint32_t *ub = upper_bound(UCS_DECOMPOSITION_RANGES,
-        UCS_DECOMPOSITION_RANGES + UCS_DECOMPOSITION_RANGES_LEN, cps[i]);
-    if (ub == UCS_DECOMPOSITION_RANGES) {
-      if (!nfvalid(cps[i])) {
-        THROW(InvalidCodepointException, cps[i]);
-      }
+    const uint32_t *d = nflookupd(cps[i]);
+    if (d == NULL) {
       decomp->push_back(cps[i]);
       continue;
     }
-    ub--;
-    uint32_t offset = ub - UCS_DECOMPOSITION_RANGES;
-    if ((offset & UINT32_C(1)) != UINT32_C(0)) {
-      if (!nfvalid(cps[i])) {
-        THROW(InvalidCodepointException, cps[i]);
-      }
-      decomp->push_back(cps[i]);
-      continue;
-    }
-    offset = UCS_DECOMPOSITION_OFFSETS[offset >> 1] + (cps[i] - *ub);
-    const uint32_t *d = UCS_DECOMPOSITIONS[offset];
     if (use_compat) {
       const uint32_t len = UCS_DECOMP_COMPAT_LEN(d);
       const uint32_t *c = UCS_DECOMP_COMPAT_CHARS(d);
@@ -182,6 +192,7 @@ vector<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
     vector<uint32_t> *comp;
     try {
       comp = new vector<uint32_t>();
+      comp->reserve(codepoints->size());
     } RETHROW_BAD_ALLOC
     comp->push_back(decomp->at(0));
     size_t i;

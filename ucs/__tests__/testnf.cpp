@@ -15,7 +15,7 @@ using namespace ptr;
 using namespace std;
 
 void printerr(const DPtr<uint32_t> *expected, const DPtr<uint32_t> *found) {
-#if 0
+#if 1
   size_t i;
   cerr << "\nExpected: ";
   for (i = 0; i < expected->size(); i++) {
