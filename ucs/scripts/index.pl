@@ -206,6 +206,13 @@ while (<EXCLUDE>) {
 		for ($i = hex($1); $i <= hex($max); $i++) {
 			$data[$i]{'exclude'} = 1;
 		}
+	} elsif ($_ =~ m/^([0-9A-F]+)((?:\.\.[0-9A-F]+)?)\s*;\s+(NFK?[CD]_QC);\s+([YNM])\s/) {
+		if ($4 ne "Y") {
+			$max = $2 eq "" ? $1 : substr($2, 2);
+			for ($i = hex($1); $i <= hex($max); $i++) {
+				$data[$i]{lc($3)} = $4;
+			}
+		}
 	}
 }
 close EXCLUDE;
@@ -329,7 +336,11 @@ for ($i = 0; $i < scalar(@data); $i++) {
 	@decomp = ($testkd[$i] == undef) ? () : @{$testkd[$i]};
 	$valid = $data[$i] != undef &&
 			(("@decomp" ne "$i" && "@decomp" ne "") ||
-			 ($data[$i]{'ccc'} != 0 && $data[$i]{'ccc'} ne ""));
+			 ($data[$i]{'ccc'} != 0 && $data[$i]{'ccc'} ne "") ||
+			 (exists($data[$i]{'nfd_qc'}) && $data[$i]{'nfd_qc'} ne "Y") ||
+			 (exists($data[$i]{'nfkd_qc'}) && $data[$i]{'nfkd_qc'} ne "Y") ||
+			 (exists($data[$i]{'nfc_qc'}) && $data[$i]{'nfc_qc'} ne "Y") ||
+			 (exists($data[$i]{'nfkc_qc'}) && $data[$i]{'nfkc_qc'} ne "Y"));
 	if ($valid) {
 		if ($last == undef) {
 			push(@kdranges, $i);
@@ -396,21 +407,37 @@ push(@cranges, $last[0] . " " . ($last[1] + 1));
 # .cpp to STDERR
 
 # DECOMP FORMAT: array of uint32_t, one header, rest codepoints
-# HEADER FORMAT: | 8 : ccc | 12 : compatibility length | 12 : canonical length |
+# HEADER FORMAT: | 8 : ccc | 8 : qcs | 8 : compatibility length | 8 : canonical length |
+# QCS FORMAT: | 2 : NFD_QC | 2 : NFKD_QC | 2 : NFC_QC | 2 :NFKC_QC |
+#			where each 2-bit value is one of 10 = MAYBE, 00 = NO, 01 = YES
 # CODEPOINT FORMAT: | 8 : ccc | 24 : codepoint |
+
+%qc_map = ( "N" => 0, "Y" => 1, "M" => 2 );
 
 print "#include \"sys/ints.h\"\n";
 print "\n";
-print "#define UCS_DECOMP_HEADER(ccc, compat_len, canon_len) ( \\\n";
+print "#define UCS_QC_YES UINT8_C(0x01)\n";
+print "#define UCS_QC_NO UINT8_C(0x00)\n";
+print "#define UCS_QC_MAYBE UINT8_C(0x02)\n";
+print "\n";
+print "#define UCS_DECOMP_HEADER(ccc, nfdqc, nfkdqc, nfcqc, nfkcqc, compat_len, canon_len) ( \\\n";
 print "\t(((uint32_t)(ccc) & UINT32_C(0x0FF)) << 24) | \\\n";
-print "\t(((uint32_t)(compat_len) & UINT32_C(0x0FFF)) << 12) | \\\n";
-print "\t((uint32_t)(canon_len) & UINT32_C(0x0FFF)) \\\n";
+print "\t(((uint32_t)(nfdqc) & UINT32_C(0x3)) << 22) | \\\n";
+print "\t(((uint32_t)(nfkdqc) & UINT32_C(0x3)) << 20) | \\\n";
+print "\t(((uint32_t)(nfcqc) & UINT32_C(0x3)) << 18) | \\\n";
+print "\t(((uint32_t)(nfkcqc) & UINT32_C(0x3)) << 16) | \\\n";
+print "\t(((uint32_t)(compat_len) & UINT32_C(0x0FF)) << 8) | \\\n";
+print "\t((uint32_t)(canon_len) & UINT32_C(0x0FF)) \\\n";
 print ")\n";
 print "#define UCS_DECOMP_CCC(ptr) (*((uint32_t*)(ptr)) >> 24)\n";
-print "#define UCS_DECOMP_CANON_LEN(ptr) (*((uint32_t*)(ptr)) & UINT32_C(0x0FFF))\n";
+print "#define UCS_DECOMP_NFD_QC(ptr) ((*((uint32_t*)(ptr)) >> 22) & UINT32_C(0x3))\n";
+print "#define UCS_DECOMP_NFKD_QC(ptr) ((*((uint32_t*)(ptr)) >> 20) & UINT32_C(0x3))\n";
+print "#define UCS_DECOMP_NFC_QC(ptr) ((*((uint32_t*)(ptr)) >> 18) & UINT32_C(0x3))\n";
+print "#define UCS_DECOMP_NFKC_QC(ptr) ((*((uint32_t*)(ptr)) >> 16) & UINT32_C(0x3))\n";
+print "#define UCS_DECOMP_CANON_LEN(ptr) (*((uint32_t*)(ptr)) & UINT32_C(0x0FF))\n";
 print "#define UCS_DECOMP_CANON_CHARS(ptr) (((uint32_t*)(ptr)) + 1)\n";
-print "#define UCS_DECOMP_COMPAT_LEN(ptr) (((*((uint32_t*)(ptr)) >> 12) & UINT32_C(0x0FFF)) == UINT32_C(0) ? UCS_DECOMP_CANON_LEN(ptr) : ((*((uint32_t*)(ptr)) >> 12) & UINT32_C(0x0FFF)))\n";
-print "#define UCS_DECOMP_COMPAT_CHARS(ptr) (((*((uint32_t*)(ptr)) >> 12) & UINT32_C(0x0FFF)) == UINT32_C(0) ? UCS_DECOMP_CANON_CHARS(ptr) : (UCS_DECOMP_CANON_CHARS(ptr) + UCS_DECOMP_CANON_LEN(ptr)))\n";
+print "#define UCS_DECOMP_COMPAT_LEN(ptr) (((*((uint32_t*)(ptr)) >> 8) & UINT32_C(0x0FF)) == UINT32_C(0) ? UCS_DECOMP_CANON_LEN(ptr) : ((*((uint32_t*)(ptr)) >> 8) & UINT32_C(0x0FF)))\n";
+print "#define UCS_DECOMP_COMPAT_CHARS(ptr) (((*((uint32_t*)(ptr)) >> 8) & UINT32_C(0x0FF)) == UINT32_C(0) ? UCS_DECOMP_CANON_CHARS(ptr) : (UCS_DECOMP_CANON_CHARS(ptr) + UCS_DECOMP_CANON_LEN(ptr)))\n";
 print "#define UCS_PACK(ccc, cp) ((((uint32_t)(ccc)) << 24) | ((uint32_t)(cp)))\n";
 print "#define UCS_UNPACK_CCC(packed) (((uint32_t)(packed)) >> 24)\n";
 print "#define UCS_UNPACK_CODEPOINT(packed) (((uint32_t)(packed)) & UINT32_C(0x00FFFFFF))\n";
@@ -474,7 +501,12 @@ for ($i = 0; $i < scalar(@dranges); $i += 2) {
 	for ($j = $dranges[$i]; $j < $dranges[$i+1]; $j++) {
 		@decomp = @{$testd[$j]};
 		printf(STDERR "const uint32_t UCS_%04X_DECOMPOSITION[%d] = {\n", $j, scalar(@decomp) + 1);
-		print STDERR "\tUCS_DECOMP_HEADER(" . $data[$j]{'ccc'} . ", 0, " . scalar(@decomp) . "),\n";
+		print STDERR "\tUCS_DECOMP_HEADER(" . $data[$j]{'ccc'} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfd_qc'}) ? "Y" : $data[$j]{'nfd_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfkd_qc'}) ? "Y" : $data[$j]{'nfkd_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfc_qc'}) ? "Y" : $data[$j]{'nfc_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfkc_qc'}) ? "Y" : $data[$j]{'nfkc_qc'})} . ", ";
+		print STDERR "0, " . scalar(@decomp) . "),\n";
 		foreach (@decomp) {
 			printf(STDERR "\tUCS_PACK(%d, 0x%04X),\n", $data[$_]{'ccc'}, $_);
 		}
@@ -512,7 +544,12 @@ for ($i = 0; $i < scalar(@kdranges); $i += 2) {
 		@decomp = @{$testkd[$j]};
 		$compatlen = "@d" eq "@decomp" ? 0 : scalar(@decomp);
 		printf(STDERR "const uint32_t UCS_%04X_DECOMPOSITION[%d] = {\n", $j, scalar(@d) + $compatlen + 1);
-		print STDERR "\tUCS_DECOMP_HEADER(" . $data[$j]{'ccc'} . ", " . $compatlen . ", " . scalar(@d) . "),\n";
+		print STDERR "\tUCS_DECOMP_HEADER(" . $data[$j]{'ccc'} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfd_qc'}) ? "Y" : $data[$j]{'nfd_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfkd_qc'}) ? "Y" : $data[$j]{'nfkd_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfc_qc'}) ? "Y" : $data[$j]{'nfc_qc'})} . ", ";
+		print STDERR $qc_map{(!exists($data[$j]{'nfkc_qc'}) ? "Y" : $data[$j]{'nfkc_qc'})} . ", ";
+		print STDERR $compatlen . ", " . scalar(@d) . "),\n";
 		foreach (@d) {
 			printf(STDERR "\tUCS_PACK(%d, 0x%04X),\n", $data[$_]{'ccc'}, $_);
 		}
