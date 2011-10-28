@@ -15,6 +15,7 @@ using namespace ptr;
 using namespace std;
 
 void printerr(const DPtr<uint32_t> *expected, const DPtr<uint32_t> *found) {
+#if 0
   size_t i;
   cerr << "\nExpected: ";
   for (i = 0; i < expected->size(); i++) {
@@ -25,6 +26,57 @@ void printerr(const DPtr<uint32_t> *expected, const DPtr<uint32_t> *found) {
     cerr << hex << (*found)[i] << " ";
   }
   cerr << endl;
+#endif
+}
+
+bool testInvalid(DPtr<uint32_t> *codepoints) {
+  #if defined(UCS_PLAY_DUMB) || defined(UCS_TRUST_CODEPOINTS)
+  bool flip = true;
+  #else
+  bool flip = false;
+  #endif
+  size_t i;
+  PROG(codepoints->sizeKnown());
+  bool is_valid = true;
+  for (i = 0; i < codepoints->size(); i++) {
+    is_valid &= ucs::nfvalid((*codepoints)[i]);
+  }
+  PROG(flip ^ !is_valid);
+  try {
+    DPtr<uint32_t> *p = ucs::nfd(codepoints);
+    p->drop();
+    PROG(flip ^ false);
+  } catch (ucs::InvalidCodepointException &e) {
+    PROG(flip ^ true);
+  }
+  #ifndef UCS_NO_K
+  try {
+    DPtr<uint32_t> *p = ucs::nfkd(codepoints);
+    p->drop();
+    PROG(flip ^ false);
+  } catch (ucs::InvalidCodepointException &e) {
+    PROG(flip ^ true);
+  }
+  #endif
+  #ifndef UCS_NO_C
+  try {
+    DPtr<uint32_t> *p = ucs::nfc(codepoints);
+    p->drop();
+    PROG(flip ^ false);
+  } catch (ucs::InvalidCodepointException &e) {
+    PROG(flip ^ true);
+  }
+  #ifndef UCS_NO_K
+  try {
+    DPtr<uint32_t> *p = ucs::nfkc(codepoints);
+    p->drop();
+    PROG(flip ^ false);
+  } catch (ucs::InvalidCodepointException &e) {
+    PROG(flip ^ true);
+  }
+  #endif
+  #endif
+  PASS;
 }
 
 bool test(const DPtr<uint32_t> *expected, const DPtr<uint32_t> *found) {
@@ -89,7 +141,11 @@ int main(int argc, char **argv) {
 
     cerr << "INPUT " << str << endl;
     cerr << "NFD " << nfd << endl;
+#ifdef UCS_PLAY_DUMB
+    expected = parse(str);
+#else
     expected = parse(nfd);
+#endif
     cerr << "parsed\n";
     found = ucs::nfd(input);
     cerr << "found?\n";
@@ -100,7 +156,11 @@ int main(int argc, char **argv) {
 #ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
     cerr << "NFKD " << nfkd << endl;
+#ifdef UCS_PLAY_DUMB
+    expected = parse(str);
+#else
     expected = parse(nfkd);
+#endif
     found = ucs::nfkd(input);
     TEST(test, expected, found);
     expected->drop();
@@ -110,7 +170,11 @@ int main(int argc, char **argv) {
 #ifndef UCS_NO_C
     cerr << "INPUT " << str << endl;
     cerr << "NFC " << nfc << endl;
+#ifdef UCS_PLAY_DUMB
+    expected = parse(str);
+#else
     expected = parse(nfc);
+#endif
     found = ucs::nfc(input);
     TEST(test, expected, found);
     expected->drop();
@@ -119,7 +183,11 @@ int main(int argc, char **argv) {
 #ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
     cerr << "NFKC " << nfkc << endl;
+#ifdef UCS_PLAY_DUMB
+    expected = parse(str);
+#else
     expected = parse(nfkc);
+#endif
     found = ucs::nfkc(input);
     TEST(test, expected, found);
     expected->drop();
@@ -130,6 +198,11 @@ int main(int argc, char **argv) {
     input->drop();
 
   }
+
+  DPtr<uint32_t> *p = new APtr<uint32_t>(1);
+  (*p)[0] = UINT32_C(0x0378);
+  TEST(testInvalid, p);
+  p->drop();
 
   FINAL;
 }

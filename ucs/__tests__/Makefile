@@ -22,6 +22,20 @@ testnf : force_look testnf.cpp ../nf.h ../nf.o
 	$(CC) $(CFLAGS) -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
 	$(ECHO) [TEST] ./testnf
 	./testnf
+	$(ECHO) running tests for $(SUBDIR) with -DUCS_PLAY_DUMB
+	$(ECHO) $(CC) $(PRJCFLAGS) -I.. -DUCS_PLAY_DUMB -c -o nf.o nf.cpp
+	cd ..; $(CC) $(PRJCFLAGS) -I.. -DUCS_PLAY_DUMB -c -o nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(ECHO) [TEST] ./testnf
+	./testnf
+	$(ECHO) running tests for $(SUBDIR) with -DUCS_TRUST_CODEPOINTS
+	$(ECHO) $(CC) $(PRJCFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o nf.o nf.cpp
+	cd ..; $(CC) $(PRJCFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o
+	$(ECHO) [TEST] ./testnf
+	./testnf
 	$(ECHO) running tests for $(SUBDIR) with -DUCS_NO_K
 	$(ECHO) $(CC) $(PRJCFLAGS) -I.. -DUCS_NO_K -c -o nf.o nf.cpp
 	cd ..; $(CC) $(PRJCFLAGS) -I.. -DUCS_NO_K -c -o nf.o nf.cpp; cd -

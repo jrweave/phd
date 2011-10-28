@@ -29,24 +29,24 @@ public:
 
 bool nfvalid(const uint32_t codepoint) throw();
 
-DPtr<uint32_t> *nfd(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
 #ifndef UCS_NO_K
-DPtr<uint32_t> *nfkd(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif
 
 #ifndef UCS_NO_C
 
-DPtr<uint32_t> *nfc(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
 #ifndef UCS_NO_K
-DPtr<uint32_t> *nfkc(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif

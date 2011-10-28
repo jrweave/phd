@@ -43,7 +43,7 @@ bool nfcmpccc(const uint32_t a, const uint32_t b) {
   return UCS_UNPACK_CCC(a) < UCS_UNPACK_CCC(b);
 }
 
-#ifdef UCS_TRUST_CODEPOINTS
+#if defined(UCS_TRUST_CODEPOINTS) || defined(UCS_PLAY_DUMB)
 bool nfvalid(const uint32_t codepoint) throw() {
   return true;
 }
@@ -135,7 +135,7 @@ vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS decomposition.")
 #endif
 
-DPtr<uint32_t> *nfd(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   #ifdef UCS_PLAY_DUMB
@@ -151,7 +151,7 @@ DPtr<uint32_t> *nfd(const DPtr<uint32_t> *codepoints)
 }
 
 #ifndef UCS_NO_K
-DPtr<uint32_t> *nfkd(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   #ifdef UCS_PLAY_DUMB
@@ -231,7 +231,7 @@ vector<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS composition.")
 #endif
 
-DPtr<uint32_t> *nfc(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   #ifdef UCS_PLAY_DUMB
@@ -247,7 +247,7 @@ DPtr<uint32_t> *nfc(const DPtr<uint32_t> *codepoints)
 }
 
 #ifndef UCS_NO_K
-DPtr<uint32_t> *nfkc(const DPtr<uint32_t> *codepoints)
+DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   #ifdef UCS_PLAY_DUMB
