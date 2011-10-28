@@ -6,11 +6,13 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "ex/TraceableException.h"
 #include "ptr/APtr.h"
 #include "ptr/DPtr.h"
 #include "test/unit.h"
 #include "sys/ints.h"
 
+using namespace ex;
 using namespace ptr;
 using namespace std;
 
@@ -41,41 +43,73 @@ bool testInvalid(DPtr<uint32_t> *codepoints) {
   for (i = 0; i < codepoints->size(); i++) {
     is_valid &= ucs::nfvalid((*codepoints)[i]);
   }
-  PROG(flip ^ !is_valid);
+  PROG((flip && is_valid) || (!flip && !is_valid));
   try {
     DPtr<uint32_t> *p = ucs::nfd(codepoints);
     p->drop();
-    PROG(flip ^ false);
+    PROG(flip);
   } catch (ucs::InvalidCodepointException &e) {
-    PROG(flip ^ true);
+    PROG(!flip);
   }
   #ifndef UCS_NO_K
   try {
     DPtr<uint32_t> *p = ucs::nfkd(codepoints);
     p->drop();
-    PROG(flip ^ false);
+    PROG(flip);
   } catch (ucs::InvalidCodepointException &e) {
-    PROG(flip ^ true);
+    PROG(!flip);
   }
   #endif
   #ifndef UCS_NO_C
   try {
     DPtr<uint32_t> *p = ucs::nfc(codepoints);
     p->drop();
-    PROG(flip ^ false);
+    PROG(flip);
   } catch (ucs::InvalidCodepointException &e) {
-    PROG(flip ^ true);
+    PROG(!flip);
   }
   #ifndef UCS_NO_K
   try {
     DPtr<uint32_t> *p = ucs::nfkc(codepoints);
     p->drop();
-    PROG(flip ^ false);
+    PROG(flip);
   } catch (ucs::InvalidCodepointException &e) {
-    PROG(flip ^ true);
+    PROG(!flip);
   }
   #endif
   #endif
+  PASS;
+}
+
+bool testQuickCheck(const DPtr<uint32_t> *input, bool not_no, bool do_c, bool do_k) {
+  uint8_t qc;
+  if (do_c) {
+    #ifdef UCS_NO_C
+    THROW(TraceableException, "This should never happen.");
+    #else
+    if (do_k) {
+      #ifdef UCS_NO_K
+      THROW(TraceableException, "This should never happen.");
+      #else
+      qc = ucs::nfkc_qc(input, NULL);
+      #endif
+    } else {
+      qc = ucs::nfc_qc(input, NULL);
+    }
+    #endif
+  } else {
+    if (do_k) {
+      #ifdef UCS_NO_K
+      THROW(TraceableException, "This should never happen.");
+      #else
+      qc = ucs::nfkd_qc(input, NULL);
+      #endif
+    } else {
+      qc = ucs::nfd_qc(input, NULL);
+    }
+  }
+  cerr << "QC: " << (int)qc << endl;
+  PROG((qc == (not_no ? UCS_QC_YES : UCS_QC_NO)) || qc == UCS_QC_MAYBE);
   PASS;
 }
 
@@ -142,13 +176,11 @@ int main(int argc, char **argv) {
     cerr << "INPUT " << str << endl;
     cerr << "NFD " << nfd << endl;
 #ifdef UCS_PLAY_DUMB
-    expected = parse(str);
-#else
-    expected = parse(nfd);
+    nfd = str;
 #endif
-    cerr << "parsed\n";
+    TEST(testQuickCheck, input, nfd == str, false, false);
+    expected = parse(nfd);
     found = ucs::nfd(input);
-    cerr << "found?\n";
     TEST(test, expected, found);
     expected->drop();
     found->drop();
@@ -157,10 +189,10 @@ int main(int argc, char **argv) {
     cerr << "INPUT " << str << endl;
     cerr << "NFKD " << nfkd << endl;
 #ifdef UCS_PLAY_DUMB
-    expected = parse(str);
-#else
-    expected = parse(nfkd);
+    nfkd = str;
 #endif
+    TEST(testQuickCheck, input, nfkd == str, false, true);
+    expected = parse(nfkd);
     found = ucs::nfkd(input);
     TEST(test, expected, found);
     expected->drop();
@@ -171,10 +203,10 @@ int main(int argc, char **argv) {
     cerr << "INPUT " << str << endl;
     cerr << "NFC " << nfc << endl;
 #ifdef UCS_PLAY_DUMB
-    expected = parse(str);
-#else
-    expected = parse(nfc);
+    nfc = str;
 #endif
+    TEST(testQuickCheck, input, nfc == str, true, false);
+    expected = parse(nfc);
     found = ucs::nfc(input);
     TEST(test, expected, found);
     expected->drop();
@@ -184,10 +216,10 @@ int main(int argc, char **argv) {
     cerr << "INPUT " << str << endl;
     cerr << "NFKC " << nfkc << endl;
 #ifdef UCS_PLAY_DUMB
-    expected = parse(str);
-#else
-    expected = parse(nfkc);
+    nfkc = str;
 #endif
+    TEST(testQuickCheck, input, nfkc == str, true, true);
+    expected = parse(nfkc);
     found = ucs::nfkc(input);
     TEST(test, expected, found);
     expected->drop();
@@ -198,6 +230,8 @@ int main(int argc, char **argv) {
     input->drop();
 
   }
+
+  ifs.close();
 
   DPtr<uint32_t> *p = new APtr<uint32_t>(1);
   (*p)[0] = UINT32_C(0x0378);

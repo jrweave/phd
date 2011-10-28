@@ -63,12 +63,27 @@ const uint32_t *nflookupd(const uint32_t codepoint)
 }
 #endif /* UCS_PLAY_DUMB */
 
+#ifndef UCS_PLAY_DUMB
 bool nfcmpccc(const uint32_t a, const uint32_t b) throw() {
   return UCS_UNPACK_CCC(a) < UCS_UNPACK_CCC(b);
 }
+#endif /* UCS_PLAY_DUMB */
 
 #if defined(UCS_TRUST_CODEPOINTS) || defined(UCS_PLAY_DUMB)
 bool nfvalid(const uint32_t codepoint) throw() {
+  return true;
+}
+
+bool nfvalid(DPtr<uint32_t> *codepoints) throw(SizeUnknownException) {
+  if (!codepoints->sizeKnown()) {
+    THROWX(SizeUnknownException);
+  }
+  size_t i;
+  for (i = 0; i < codepoints->size(); i++) {
+    if (!nfvalid((*codepoints)[i])) {
+      return false;
+    }
+  }
   return true;
 }
 #else
@@ -84,6 +99,7 @@ bool nfvalid(const uint32_t codepoint) throw() {
 }
 #endif /* UCS_TRUST_CODEPOINTS */
 
+#ifndef UCS_PLAY_DUMB
 DPtr<uint32_t> *nfreturn(vector<uint32_t> *vec) THROWS(BadAllocException) {
   APtr<uint32_t> *p = new APtr<uint32_t>(vec->size());
   size_t i;
@@ -94,6 +110,7 @@ DPtr<uint32_t> *nfreturn(vector<uint32_t> *vec) THROWS(BadAllocException) {
   return p;
 }
 TRACE(BadAllocException, "(trace)")
+#endif /* UCS_PLAY_DUMB */
 
 #ifndef UCS_PLAY_DUMB
 vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
@@ -145,6 +162,81 @@ vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS decomposition.")
 #endif
 
+#ifndef UCS_PLAY_DUMB
+uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k)
+    throw (InvalidCodepointException, SizeUnknownException) {
+  if (!codepoints->sizeKnown()) {
+    THROWX(SizeUnknownException);
+  }
+  uint8_t lastccc = 0;
+  uint8_t result = UCS_QC_YES;
+  size_t i;
+  for (i = 0; i < codepoints->size(); i++) {
+    const uint32_t codepoint = (*codepoints)[i];
+    const uint32_t *d = nflookupd(codepoint);
+    uint8_t ccc;
+    if (d == NULL) {
+      if (!nfvalid(codepoint)) {
+        THROW(InvalidCodepointException, codepoint);
+      }
+      ccc = 0;
+    } else {
+      ccc = (uint8_t) UCS_DECOMP_CCC(d);
+    }
+    if (lastccc > ccc && ccc != UINT8_C(0)) {
+      if (pos != NULL) {
+        *pos = i;
+      }
+      return UCS_QC_NO;
+    }
+    uint8_t check;
+    if (d == NULL) {
+      check = UCS_QC_YES;
+    } else {
+      if (do_c) {
+        if (do_k) {
+          check = (uint8_t) UCS_DECOMP_NFKC_QC(d);
+        } else {
+          check = (uint8_t) UCS_DECOMP_NFC_QC(d);
+        }
+      } else {
+        if (do_k) {
+          check = (uint8_t) UCS_DECOMP_NFKD_QC(d);
+        } else {
+          check = (uint8_t) UCS_DECOMP_NFD_QC(d);
+        }
+      }
+    }
+    if (check == UCS_QC_NO) {
+      if (pos != NULL) {
+        *pos = i;
+      }
+      return UCS_QC_NO;
+    }
+    if (check == UCS_QC_MAYBE && result != UCS_QC_MAYBE) {
+      if (pos != NULL) {
+        *pos = i;
+      }
+      result = UCS_QC_MAYBE;
+    }
+    lastccc = ccc;
+  }
+  return result;
+}
+#endif /* UCS_PLAY_DUMB */
+
+uint8_t nfd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
+    throw(InvalidCodepointException, SizeUnknownException) {
+  #ifdef UCS_PLAY_DUMB
+  return UCS_QC_YES;
+  #else
+  try {
+    return nfqc(codepoints, pos, false, false);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  #endif
+}
+
 DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
@@ -161,6 +253,18 @@ DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
 }
 
 #ifndef UCS_NO_K
+uint8_t nfkd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
+    throw(InvalidCodepointException, SizeUnknownException) {
+  #ifdef UCS_PLAY_DUMB
+  return UCS_QC_YES;
+  #else
+  try {
+    return nfqc(codepoints, pos, false, true);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  #endif
+}
+
 DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
@@ -242,6 +346,18 @@ vector<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS composition.")
 #endif
 
+uint8_t nfc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
+    throw(InvalidCodepointException, SizeUnknownException) {
+  #ifdef UCS_PLAY_DUMB
+  return UCS_QC_YES;
+  #else
+  try {
+    return nfqc(codepoints, pos, true, false);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  #endif
+}
+
 DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
@@ -258,6 +374,18 @@ DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
 }
 
 #ifndef UCS_NO_K
+uint8_t nfkc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
+    throw(InvalidCodepointException, SizeUnknownException) {
+  #ifdef UCS_PLAY_DUMB
+  return UCS_QC_YES;
+  #else
+  try {
+    return nfqc(codepoints, pos, true, true);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  #endif
+}
+
 DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {

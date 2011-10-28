@@ -412,12 +412,12 @@ push(@cranges, $last[0] . " " . ($last[1] + 1));
 #			where each 2-bit value is one of 10 = MAYBE, 00 = NO, 01 = YES
 # CODEPOINT FORMAT: | 8 : ccc | 24 : codepoint |
 
-%qc_map = ( "N" => 0, "Y" => 1, "M" => 2 );
+%qc_map = ( "N" => "UCS_QC_NO", "Y" => "UCS_QC_YES", "M" => "UCS_QC_MAYBE" );
 
 print "#include \"sys/ints.h\"\n";
 print "\n";
-print "#define UCS_QC_YES UINT8_C(0x01)\n";
 print "#define UCS_QC_NO UINT8_C(0x00)\n";
+print "#define UCS_QC_YES UINT8_C(0x01)\n";
 print "#define UCS_QC_MAYBE UINT8_C(0x02)\n";
 print "\n";
 print "#define UCS_DECOMP_HEADER(ccc, nfdqc, nfkdqc, nfcqc, nfkcqc, compat_len, canon_len) ( \\\n";
