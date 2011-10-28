@@ -182,8 +182,11 @@ int main(int argc, char **argv) {
     expected = parse(nfd);
     found = ucs::nfd(input);
     TEST(test, expected, found);
-    expected->drop();
     found->drop();
+    found = ucs::nfd_opt(input);
+    TEST(test, expected, found);
+    found->drop();
+    expected->drop();
 
 #ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
@@ -195,8 +198,11 @@ int main(int argc, char **argv) {
     expected = parse(nfkd);
     found = ucs::nfkd(input);
     TEST(test, expected, found);
-    expected->drop();
     found->drop();
+    found = ucs::nfkd_opt(input);
+    TEST(test, expected, found);
+    found->drop();
+    expected->drop();
 #endif
 
 #ifndef UCS_NO_C
@@ -209,8 +215,11 @@ int main(int argc, char **argv) {
     expected = parse(nfc);
     found = ucs::nfc(input);
     TEST(test, expected, found);
-    expected->drop();
     found->drop();
+    found = ucs::nfc_opt(input);
+    TEST(test, expected, found);
+    found->drop();
+    expected->drop();
 
 #ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
@@ -222,8 +231,11 @@ int main(int argc, char **argv) {
     expected = parse(nfkc);
     found = ucs::nfkc(input);
     TEST(test, expected, found);
-    expected->drop();
     found->drop();
+    found = ucs::nfkc_opt(input);
+    TEST(test, expected, found);
+    found->drop();
+    expected->drop();
 #endif
 #endif
 

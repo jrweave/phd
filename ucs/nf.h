@@ -38,11 +38,19 @@ DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
+DPtr<uint32_t> *nfd_opt(DPtr<uint32_t> *codepoints)
+    throw (InvalidCodepointException, SizeUnknownException,
+    BadAllocException);
+
 #ifndef UCS_NO_K
 uint8_t nfkd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw (InvalidCodepointException, SizeUnknownException);
 
 DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
+    throw (InvalidCodepointException, SizeUnknownException,
+    BadAllocException);
+
+DPtr<uint32_t> *nfkd_opt(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif
@@ -56,11 +64,19 @@ DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
+DPtr<uint32_t> *nfc_opt(DPtr<uint32_t> *codepoints)
+    throw (InvalidCodepointException, SizeUnknownException,
+    BadAllocException);
+
 #ifndef UCS_NO_K
 uint8_t nfkc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw (InvalidCodepointException, SizeUnknownException);
 
 DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
+    throw (InvalidCodepointException, SizeUnknownException,
+    BadAllocException);
+
+DPtr<uint32_t> *nfkc_opt(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif

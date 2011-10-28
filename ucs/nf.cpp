@@ -184,7 +184,7 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
       ccc = (uint8_t) UCS_DECOMP_CCC(d);
     }
     if (lastccc > ccc && ccc != UINT8_C(0)) {
-      if (pos != NULL) {
+      if (pos != NULL && result == UCS_QC_YES) {
         *pos = i;
       }
       return UCS_QC_NO;
@@ -208,13 +208,13 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
       }
     }
     if (check == UCS_QC_NO) {
-      if (pos != NULL) {
+      if (pos != NULL && result == UCS_QC_YES) {
         *pos = i;
       }
       return UCS_QC_NO;
     }
-    if (check == UCS_QC_MAYBE && result != UCS_QC_MAYBE) {
-      if (pos != NULL) {
+    if (check == UCS_QC_MAYBE) {
+      if (pos != NULL && result == UCS_QC_YES) {
         *pos = i;
       }
       result = UCS_QC_MAYBE;
@@ -252,6 +252,26 @@ DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
   #endif
 }
 
+DPtr<uint32_t> *nfd_opt(DPtr<uint32_t> *codepoints)
+    throw(InvalidCodepointException, SizeUnknownException,
+    BadAllocException) {
+  #ifdef UCS_PLAY_DUMB
+  codepoints->hold();
+  return codepoints;
+  #else
+  try {
+    size_t n;
+    if (nfd_qc(codepoints, &n) == UCS_QC_YES) {
+      codepoints->hold();
+      return codepoints;
+    }
+    return nfd(codepoints);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+    JUST_RETHROW(BadAllocException, "(rethrow)")
+  #endif
+}
+
 #ifndef UCS_NO_K
 uint8_t nfkd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
@@ -274,6 +294,26 @@ DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
   #else
   try {
     return nfreturn(nfdecompose(codepoints, true));
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+    JUST_RETHROW(BadAllocException, "(rethrow)")
+  #endif
+}
+
+DPtr<uint32_t> *nfkd_opt(DPtr<uint32_t> *codepoints)
+    throw(InvalidCodepointException, SizeUnknownException,
+    BadAllocException) {
+  #ifdef UCS_PLAY_DUMB
+  codepoints->hold();
+  return codepoints;
+  #else
+  try {
+    size_t n;
+    if (nfkd_qc(codepoints, &n) == UCS_QC_YES) {
+      codepoints->hold();
+      return codepoints;
+    }
+    return nfkd(codepoints);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
@@ -373,6 +413,26 @@ DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
   #endif
 }
 
+DPtr<uint32_t> *nfc_opt(DPtr<uint32_t> *codepoints)
+    throw(InvalidCodepointException, SizeUnknownException,
+    BadAllocException) {
+  #ifdef UCS_PLAY_DUMB
+  codepoints->hold();
+  return codepoints;
+  #else
+  try {
+    size_t n;
+    if (nfc_qc(codepoints, &n) == UCS_QC_YES) {
+      codepoints->hold();
+      return codepoints;
+    }
+    return nfc(codepoints);
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+    JUST_RETHROW(BadAllocException, "(rethrow)")
+  #endif
+}
+
 #ifndef UCS_NO_K
 uint8_t nfkc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
@@ -395,6 +455,26 @@ DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
   #else
   try {
     return nfreturn(nfcompose(codepoints, true));
+  } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
+    JUST_RETHROW(SizeUnknownException, "(rethrow)")
+    JUST_RETHROW(BadAllocException, "(rethrow)")
+  #endif
+}
+
+DPtr<uint32_t> *nfkc_opt(DPtr<uint32_t> *codepoints)
+    throw(InvalidCodepointException, SizeUnknownException,
+    BadAllocException) {
+  #ifdef UCS_PLAY_DUMB
+  codepoints->hold();
+  return codepoints;
+  #else
+  try {
+    size_t n;
+    if (nfkc_qc(codepoints, &n) == UCS_QC_YES) {
+      codepoints->hold();
+      return codepoints;
+    }
+    return nfkc(codepoints);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
