@@ -97,6 +97,7 @@ int main(int argc, char **argv) {
     expected->drop();
     found->drop();
 
+#ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
     cerr << "NFKD " << nfkd << endl;
     expected = parse(nfkd);
@@ -104,7 +105,9 @@ int main(int argc, char **argv) {
     TEST(test, expected, found);
     expected->drop();
     found->drop();
+#endif
 
+#ifndef UCS_NO_C
     cerr << "INPUT " << str << endl;
     cerr << "NFC " << nfc << endl;
     expected = parse(nfc);
@@ -113,6 +116,7 @@ int main(int argc, char **argv) {
     expected->drop();
     found->drop();
 
+#ifndef UCS_NO_K
     cerr << "INPUT " << str << endl;
     cerr << "NFKC " << nfkc << endl;
     expected = parse(nfkc);
@@ -120,6 +124,8 @@ int main(int argc, char **argv) {
     TEST(test, expected, found);
     expected->drop();
     found->drop();
+#endif
+#endif
 
     input->drop();
 
