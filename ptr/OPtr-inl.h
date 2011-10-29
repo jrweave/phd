@@ -15,7 +15,7 @@ OPtr<obj_type>::OPtr() throw(BadAllocException)
 
 template<typename obj_type>
 OPtr<obj_type>::OPtr(obj_type *p) throw(BadAllocException)
-    : DPtr<obj_type>(p) {
+    : DPtr<obj_type>(p, 1) {
   // do nothing
 }
 
@@ -48,16 +48,6 @@ void OPtr<Ptr>::destroy() throw() {
   if (this->ptr() != NULL) {
     this->dptr()->drop();
   }
-}
-
-template<typename obj_type>
-bool OPtr<obj_type>::sizeKnown() const throw() {
-  return true;
-}
-
-template<typename obj_type>
-size_t OPtr<obj_type>::size() const throw() {
-  return 1;
 }
 
 template<typename obj_type>

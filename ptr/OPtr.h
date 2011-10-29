@@ -18,10 +18,6 @@ public:
   OPtr(const OPtr<obj_type> *optr) throw();
   virtual ~OPtr() throw();
 
-  // Inherited Methods
-  virtual bool sizeKnown() const throw();
-  virtual size_t size() const throw();
-
   // Operators
   OPtr<obj_type> &operator=(const OPtr<obj_type> &rhs) throw();
   OPtr<obj_type> &operator=(const OPtr<obj_type> *rhs) throw();

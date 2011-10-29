@@ -10,8 +10,6 @@ using namespace std;
 
 template<typename ptr_type>
 class MPtr : public DPtr<ptr_type> {
-private:
-  size_t num;
 protected:
   virtual void destroy() throw();
 public:
@@ -22,10 +20,6 @@ public:
   MPtr(const MPtr<ptr_type> &mptr) throw();
   MPtr(const MPtr<ptr_type> *mptr) throw();
   virtual ~MPtr() throw();
-
-  // Inherited Methods
-  virtual bool sizeKnown() const throw();
-  virtual size_t size() const throw();
 
   // Final Methods
   size_t sizeInBytes() const throw();

@@ -1,6 +1,7 @@
 #include "ucs/nf.h"
 
 #include <algorithm>
+#include <iostream>
 #include <new>
 #include <sstream>
 #include <vector>
@@ -100,7 +101,7 @@ bool nfvalid(const uint32_t codepoint) throw() {
 #endif /* UCS_TRUST_CODEPOINTS */
 
 #ifndef UCS_PLAY_DUMB
-DPtr<uint32_t> *nfreturn(DPtr<uint32_t> *p) {
+DPtr<uint32_t> *nfreturn(DPtr<uint32_t> *p) throw() {
   size_t i;
   for (i = 0; i < p->size(); i++) {
     (*p)[i] = UCS_UNPACK_CODEPOINT((*p)[i]);
@@ -108,6 +109,24 @@ DPtr<uint32_t> *nfreturn(DPtr<uint32_t> *p) {
   return p;
 }
 #endif /* UCS_PLAY_DUMB */
+
+#ifndef UCS_PLAY_DUMB
+template<typename iter_type>
+void nforder(iter_type it, iter_type end) throw() {
+  for (; it != end; it++) {
+    if (UCS_UNPACK_CCC(*it) > 0) {
+      iter_type start = it;
+      for (it++; it != end && UCS_UNPACK_CCC(*it) > 0; it++) {
+        // do nothing
+      }
+      // since combining class is in upper 8 bits,
+      // this will sort by combining class
+      stable_sort(start, it, nfcmpccc);
+      it--;
+    }
+  }
+}
+#endif
 
 #ifndef UCS_PLAY_DUMB
 DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
@@ -138,19 +157,7 @@ DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
       decomp.insert(decomp.end(), c, c + len);
     }
   }
-  vector<uint32_t>::iterator it;
-  for (it = decomp.begin(); it != decomp.end(); it++) {
-    if (UCS_UNPACK_CCC(*it) > 0) {
-      vector<uint32_t>::iterator start = it;
-      for (; it != decomp.end() && UCS_UNPACK_CCC(*it) > 0; it++) {
-        // do nothing
-      }
-      // since combining class is in upper 8 bits,
-      // this will sort by combining class
-      stable_sort(start, it, nfcmpccc);
-      it--;
-    }
-  }
+  nforder<vector<uint32_t>::iterator >(decomp.begin(), decomp.end());
   DPtr<uint32_t> *p = new MPtr<uint32_t>(decomp.size());
   for (i = 0; i < decomp.size(); i++) {
     (*p)[i] = decomp[i];
@@ -257,32 +264,113 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints, const bool compat)
     BadAllocException);
 #endif
 
+#ifndef UCS_PLAY_DUMB
 DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   try {
-    size_t n;
-    uint8_t qc;
-    qc = nfqc(codepoints, &n, use_c, use_k);
-    if (qc == UCS_QC_YES) {
-      codepoints->hold();
-      return codepoints;
+    uint8_t qc = UCS_QC_YES;
+    vector<size_t> bounds;
+    size_t i;
+    bool reorder = false;
+    for (i = 0; i < codepoints->size(); i++) {
+      const uint32_t *d = nflookupd((*codepoints)[i]);
+      if (d == NULL && !nfvalid((*codepoints)[i])) {
+        THROW(InvalidCodepointException, (*codepoints)[i]);
+      }
+      uint32_t ccc = d == NULL ? 0 : UCS_DECOMP_CCC(d);
+      reorder = reorder ||
+          (i > 0 && UCS_UNPACK_CCC((*codepoints)[i-1]) > ccc && ccc > 0);
+      (*codepoints)[i] = UCS_PACK(ccc, (*codepoints)[i]);
+      uint8_t q = d == NULL ? UCS_QC_YES :
+          (use_c ? (use_k ? UCS_DECOMP_NFKC_QC(d) : UCS_DECOMP_NFC_QC(d))
+                 : (use_k ? UCS_DECOMP_NFKD_QC(d) : UCS_DECOMP_NFD_QC(d)));
+      if (q != UCS_QC_YES) {
+        #ifndef UCS_NO_C
+        if (use_c) {
+          return nfcompose(nfreturn(codepoints), use_k);
+        }
+        #endif
+        if (qc == UCS_QC_YES) {
+          bounds.push_back(i == 0 ? i : i - 1);
+          qc = q;
+        }
+      } else {
+        if (qc != UCS_QC_YES) {
+          bounds.push_back(i);
+          qc = q;
+        }
+      }
     }
-    DPtr<uint32_t> *normed;
-    #ifdef UCS_NO_C
-    normed = nfdecompose(codepoints, use_k);
-    #else
-    if (use_c) {
-      normed = nfcompose(codepoints, use_k);
-    } else {
-      normed = nfdecompose(codepoints, use_k);
+    if (bounds.size() == 0) {
+      if (!reorder) {
+        codepoints->hold();
+        return codepoints;
+      }
+      MPtr<uint32_t> *reordered = new MPtr<uint32_t>(codepoints->size());
+      memcpy(reordered->dptr(), codepoints->dptr(),
+          codepoints->size() * sizeof(uint32_t));
+      nforder<uint32_t*>(reordered->dptr(),
+          reordered->dptr() + reordered->size());
+      nfreturn(codepoints);
+      return reordered;
     }
-    #endif
-    return normed;
+    if (qc != UCS_QC_YES) {
+      bounds.push_back(i);
+    }
+    vector<DPtr<uint32_t> *> norms;
+    norms.reserve(bounds.size() >> 1);
+    size_t total_len = 0;
+    for (i = 0; i < bounds.size(); i += 2) {
+      if (i == 0) {
+        total_len = bounds[i];
+      } else {
+        total_len += bounds[i] - bounds[i-1];
+      }
+      size_t len = bounds[i+1] - bounds[i];
+      DPtr<uint32_t> *part =
+          new DPtr<uint32_t>(codepoints->dptr() + bounds[i], len);
+      DPtr<uint32_t> *p;
+      p = nfdecompose(nfreturn(part), use_k);
+      part->drop();
+      total_len += p->size();
+      norms.push_back(p);
+    }
+    total_len += codepoints->size() - bounds[bounds.size() - 1];
+    DPtr<uint32_t> *result = new MPtr<uint32_t>(total_len);
+    total_len = 0;
+    for (i = 0; i < bounds.size(); i += 2) {
+      if (i == 0) {
+        memcpy(result->ptr(), codepoints->dptr(), bounds[i]*sizeof(uint32_t));
+        total_len += bounds[i];
+      } else {
+        memcpy(result->dptr() + total_len, codepoints->dptr() + bounds[i-1],
+            (bounds[i] - bounds[i-1]) * sizeof(uint32_t));
+        total_len += bounds[i] - bounds[i-1];
+      }
+      size_t halfi = i >> 1;
+      memcpy(result->dptr() + total_len, norms[halfi]->dptr(),
+          norms[halfi]->size() * sizeof(uint32_t));
+      total_len += norms[halfi]->size();
+    }
+    if (bounds[bounds.size() - 1] < codepoints->size()) {
+      memcpy(result->dptr() + total_len,
+          codepoints->dptr() + bounds[bounds.size() - 1],
+          (codepoints->size() - bounds[bounds.size() - 1]) *sizeof(uint32_t));
+    }
+    for (i = 0; i < norms.size(); i++) {
+      DPtr<uint32_t> *p = norms[i];
+      norms[i] = NULL;
+      p->drop();
+    }
+    nforder<uint32_t*>(result->dptr(), result->dptr() + result->size());
+    nfreturn(codepoints);
+    return nfreturn(result);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
 }
+#endif
 #endif
 
 DPtr<uint32_t> *nfd_opt(DPtr<uint32_t> *codepoints)

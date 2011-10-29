@@ -10,9 +10,6 @@ using namespace std;
 
 template<typename arr_type>
 class APtr : public DPtr<arr_type> {
-private:
-  size_t num;
-  bool num_known;
 protected:
   virtual void destroy() throw();
 public:
@@ -23,10 +20,6 @@ public:
   APtr(const APtr<arr_type> &mptr) throw();
   APtr(const APtr<arr_type> *mptr) throw();
   virtual ~APtr() throw();
-
-  // Inherited Methods
-  virtual bool sizeKnown() const throw();
-  virtual size_t size() const throw();
 
   // Operators
   APtr<arr_type> &operator=(const APtr<arr_type> &rhs) throw();

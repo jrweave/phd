@@ -9,9 +9,13 @@ using namespace std;
 
 template<typename ptr_type>
 class DPtr : public Ptr {
+protected:
+  size_t num;
+  bool size_known;
 public:
   DPtr() throw(BadAllocException);
   DPtr(ptr_type *p) throw(BadAllocException);
+  DPtr(ptr_type *p, size_t size) throw(BadAllocException);
   DPtr(const DPtr<ptr_type> &dptr) throw();
   DPtr(const DPtr<ptr_type> *dptr) throw();
   virtual ~DPtr() throw();
