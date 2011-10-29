@@ -4,7 +4,7 @@
 #include <new>
 #include <sstream>
 #include <vector>
-#include "ptr/APtr.h"
+#include "ptr/MPtr.h"
 
 #ifdef UCS_PLAY_DUMB
 #warning "No UCS normalization will actually occur since UCS_PLAY_DUMB is defined.  This is probably for performance optimization.  Be sure that this is the desired behavior.\n"
@@ -100,20 +100,17 @@ bool nfvalid(const uint32_t codepoint) throw() {
 #endif /* UCS_TRUST_CODEPOINTS */
 
 #ifndef UCS_PLAY_DUMB
-DPtr<uint32_t> *nfreturn(vector<uint32_t> *vec) THROWS(BadAllocException) {
-  APtr<uint32_t> *p = new APtr<uint32_t>(vec->size());
+DPtr<uint32_t> *nfreturn(DPtr<uint32_t> *p) {
   size_t i;
   for (i = 0; i < p->size(); i++) {
-    (*p)[i] = UCS_UNPACK_CODEPOINT(vec->at(i));
+    (*p)[i] = UCS_UNPACK_CODEPOINT((*p)[i]);
   }
-  delete vec;
   return p;
 }
-TRACE(BadAllocException, "(trace)")
 #endif /* UCS_PLAY_DUMB */
 
 #ifndef UCS_PLAY_DUMB
-vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
+MPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
     const bool use_compat)
     THROWS (InvalidCodepointException, SizeUnknownException,
     BadAllocException, bad_alloc) {
@@ -123,32 +120,29 @@ vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
   size_t i;
   size_t max = codepoints->size();
   const DPtr<uint32_t> &cps = *codepoints;
-  vector<uint32_t> *decomp;
-  try {
-    decomp = new vector<uint32_t>();
-    decomp->reserve(codepoints->size());
-  } RETHROW_BAD_ALLOC
+  vector<uint32_t> decomp;
+  decomp.reserve(codepoints->size());
   for (i = 0; i < max; i++) {
     const uint32_t *d = nflookupd(cps[i]);
     if (d == NULL) {
-      decomp->push_back(cps[i]);
+      decomp.push_back(cps[i]);
       continue;
     }
     if (use_compat) {
       const uint32_t len = UCS_DECOMP_COMPAT_LEN(d);
       const uint32_t *c = UCS_DECOMP_COMPAT_CHARS(d);
-      decomp->insert(decomp->end(), c, c + len);
+      decomp.insert(decomp.end(), c, c + len);
     } else {
       const uint32_t len = UCS_DECOMP_CANON_LEN(d);
       const uint32_t *c = UCS_DECOMP_CANON_CHARS(d);
-      decomp->insert(decomp->end(), c, c + len);
+      decomp.insert(decomp.end(), c, c + len);
     }
   }
   vector<uint32_t>::iterator it;
-  for (it = decomp->begin(); it != decomp->end(); it++) {
+  for (it = decomp.begin(); it != decomp.end(); it++) {
     if (UCS_UNPACK_CCC(*it) > 0) {
       vector<uint32_t>::iterator start = it;
-      for (; it != decomp->end() && UCS_UNPACK_CCC(*it) > 0; it++) {
+      for (; it != decomp.end() && UCS_UNPACK_CCC(*it) > 0; it++) {
         // do nothing
       }
       // since combining class is in upper 8 bits,
@@ -157,7 +151,11 @@ vector<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
       it--;
     }
   }
-  return decomp;
+  MPtr<uint32_t> *p = new MPtr<uint32_t>(decomp.size());
+  for (i = 0; i < decomp.size(); i++) {
+    (*p)[i] = decomp[i];
+  }
+  return p;
 }
 TRACE(BadAllocException, "Couldn't allocate memory for UCS decomposition.")
 #endif
@@ -324,32 +322,27 @@ DPtr<uint32_t> *nfkd_opt(DPtr<uint32_t> *codepoints)
 #ifndef UCS_NO_C
 
 #ifndef UCS_PLAY_DUMB
-vector<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
+DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
     const bool use_compat)
     THROWS(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  vector<uint32_t> *decomp = nfdecompose(codepoints, use_compat);
-  if (decomp->size() == 0) {
-    return decomp;
+  MPtr<uint32_t> *comp = nfdecompose(codepoints, use_compat);
+  if (comp->size() == 0) {
+    return comp;
   }
   try {
-    vector<uint32_t> *comp;
-    try {
-      comp = new vector<uint32_t>();
-      comp->reserve(codepoints->size());
-    } RETHROW_BAD_ALLOC
-    comp->push_back(decomp->at(0));
     size_t i;
-    for (i = 1; i < decomp->size(); i++) {
-      uint32_t cp = decomp->at(i);
+    size_t newsize = 1;
+    for (i = 1; i < comp->size(); i++) {
+      uint32_t cp = (*comp)[i];
       uint8_t ccc = UCS_UNPACK_CCC(cp);
       cp = UCS_UNPACK_CODEPOINT(cp);
       bool starter_found = false;
       uint32_t starter;
       size_t starti = 0;
       signed long j;
-      for (j = comp->size() - 1; j >= 0; j--) {
-        uint32_t cp2 = comp->at(j);
+      for (j = newsize - 1; j >= 0; j--) {
+        uint32_t cp2 = (*comp)[j];
         uint8_t ccc2 = UCS_UNPACK_CCC(cp2);
         cp2 = UCS_UNPACK_CODEPOINT(cp2);
         if (ccc2 == 0) {
@@ -363,23 +356,27 @@ vector<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
         }
       }
       if (!starter_found) {
-        comp->push_back(decomp->at(i));
+        (*comp)[newsize] = (*comp)[i];
+        newsize++;
         continue;
       }
       const uint64_t pair = (((uint64_t) starter) << 32) | ((uint64_t) cp);
       const uint64_t *lb = lower_bound(UCS_COMPOSITION_INDEX,
           UCS_COMPOSITION_INDEX + UCS_COMPOSITION_INDEX_LEN, pair);
       if (lb == UCS_COMPOSITION_INDEX + UCS_COMPOSITION_INDEX_LEN || *lb != pair) {
-        comp->push_back(decomp->at(i));
+        (*comp)[newsize] = (*comp)[i];
+        newsize++;
         continue;
       }
       uint32_t offset = lb - UCS_COMPOSITION_INDEX;
-      comp->at(starti) = UCS_COMPOSITIONS[offset];
+      (*comp)[starti] = UCS_COMPOSITIONS[offset];
     }
-    delete decomp;
-    return comp;
+    MPtr<uint32_t> *retcomp = new MPtr<uint32_t>(newsize);
+    memcpy(retcomp->ptr(), comp->ptr(), newsize * sizeof(uint32_t));
+    comp->drop();
+    return retcomp;
   } catch (BadAllocException &e) {
-    delete decomp;
+    comp->drop();
     RETHROW(e, "(rethrow)");
   }
 }
