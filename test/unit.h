@@ -17,13 +17,15 @@
   return true
 
 #define FAIL \
-  std::cerr << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
+  std::cerr << std::dec << __LINE__ << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
   return false
 
 #define PROG(cond) \
-  std::cerr << std::dec << __LINE__; \
   if (!(cond)) { FAIL; } \
-  std::cerr << ","
+  std::cerr << std::dec << __LINE__ << ","
+
+#define MARK(msg) \
+  std::cerr << "MARK " << __LINE__ << " " << msg << std::endl
 
 #define FINAL \
   if (__failures > 0) std::cerr << std::dec << __failures << " FAILURES OUT OF "; \

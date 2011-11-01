@@ -1,7 +1,5 @@
 #include "sys/endian.h"
 
-#include "sys/ints.h"
-
 namespace sys {
 
 using namespace std;
