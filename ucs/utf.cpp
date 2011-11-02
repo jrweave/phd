@@ -507,9 +507,13 @@ DPtr<uint32_t> *utf32dec(DPtr<uint32_t> *utf32str)
   }
   const uint32_t *at;
   bool flip = utf32flip(utf32str, &at);
-  if (!flip && at == utf32str->dptr()) { 
-    utf32str->hold();
-    return utf32str;
+  if (!flip) {
+    if (at == utf32str->dptr()) { 
+      utf32str->hold();
+      return utf32str;
+    } else {
+      return utf32str->sub(at - utf32str->dptr());
+    }
   }
   size_t len = 0;
   size_t newsize = utf32str->size() - (at - utf32str->dptr());
