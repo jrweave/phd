@@ -159,9 +159,7 @@ DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
   }
   nforder<vector<uint32_t>::iterator >(decomp.begin(), decomp.end());
   DPtr<uint32_t> *p = new MPtr<uint32_t>(decomp.size());
-  for (i = 0; i < decomp.size(); i++) {
-    (*p)[i] = decomp[i];
-  }
+  copy(decomp.begin(), decomp.end(), p->dptr());
   return p;
 }
 TRACE(BadAllocException, "Couldn't allocate memory for UCS decomposition.")
@@ -328,8 +326,7 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
         total_len += bounds[i] - bounds[i-1];
       }
       size_t len = bounds[i+1] - bounds[i];
-      DPtr<uint32_t> *part =
-          new DPtr<uint32_t>(codepoints->dptr() + bounds[i], len);
+      DPtr<uint32_t> *part = codepoints->sub(bounds[i], len);
       DPtr<uint32_t> *p;
       p = nfdecompose(nfreturn(part), use_k);
       part->drop();
@@ -484,10 +481,7 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
       uint32_t offset = lb - UCS_COMPOSITION_INDEX;
       (*comp)[starti] = UCS_COMPOSITIONS[offset];
     }
-    DPtr<uint32_t> *retcomp = new MPtr<uint32_t>(newsize);
-    memcpy(retcomp->ptr(), comp->ptr(), newsize * sizeof(uint32_t));
-    comp->drop();
-    return retcomp;
+    return comp->sub(0, newsize);
   } catch (BadAllocException &e) {
     comp->drop();
     RETHROW(e, "(rethrow)");
