@@ -6,31 +6,46 @@ using namespace std;
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr() throw(BadAllocException)
-    : Ptr(), num(0), size_known(false) {
+    : Ptr(), num(0), offset(0), size_known(false) {
   // do nothing
 }
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr(ptr_type *p) throw(BadAllocException)
-    : Ptr((void*)p), num(0), size_known(false) {
+    : Ptr((void*)p), num(0), offset(0), size_known(false) {
   // do nothing
 }
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr(ptr_type *p, size_t size) throw(BadAllocException)
-    : Ptr((void*)p), num(size), size_known(true) {
+    : Ptr((void*)p), num(size), offset(0), size_known(true) {
   // do nothing
 }
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> &dptr) throw()
-    : Ptr(&dptr), num(dptr.size()), size_known(dptr.sizeKnown()) {
+    : Ptr(&dptr), num(dptr.size()), offset(0), size_known(dptr.sizeKnown()) {
   // do nothing
 }
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr) throw()
-    : Ptr(dptr), num(dptr->size()), size_known(dptr->sizeKnown()) {
+    : Ptr(dptr), num(dptr->size()), offset(0), size_known(dptr->sizeKnown()) {
+  // do nothing
+}
+
+template<typename ptr_type>
+DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset)
+    throw()
+    : Ptr(dptr), num(dptr->sizeKnown() ? dptr->size() - offset : 0),
+      offset(offset), size_known(dptr->sizeKnown()) {
+  // do nothing
+}
+
+template<typename ptr_type>
+DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset, size_t len)
+    throw()
+    : Ptr(dptr), num(len), offset(offset), size_known(true) {
   // do nothing
 }
 
@@ -40,8 +55,13 @@ DPtr<ptr_type>::~DPtr() throw() {
 }
 
 template<typename ptr_type>
+void *DPtr<ptr_type>::ptr() const throw() {
+  return (void *)this->dptr();
+}
+
+template<typename ptr_type>
 ptr_type *DPtr<ptr_type>::dptr() const throw() {
-  return (ptr_type *)this->ptr();
+  return ((ptr_type *)this->p) + offset;
 }
 
 template<typename ptr_type>
@@ -55,11 +75,22 @@ size_t DPtr<ptr_type>::size() const throw() {
 }
 
 template<typename ptr_type>
+DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset) throw() {
+  return new DPtr<ptr_type>(this, this->offset + offset);
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
+  return new DPtr<ptr_type>(this, this->offset + offset, len);
+}
+
+template<typename ptr_type>
 DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> &rhs) throw() {
   Ptr *l = this;
   const Ptr *r = &rhs;
   *l = *r;
   this->num = rhs.num;
+  this->offset = rhs.offset;
   this->size_known = rhs.size_known;
   return *this;
 }
@@ -70,6 +101,7 @@ DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> *rhs) throw() {
   const Ptr *r = rhs;
   *l = r;
   this->num = rhs->num;
+  this->offset = rhs->offset;
   this->size_known = rhs->size_known;
   return *this;
 }
@@ -79,6 +111,7 @@ DPtr<ptr_type> &DPtr<ptr_type>::operator=(ptr_type *p)
     throw(BadAllocException) {
   Ptr::operator=((void*)p);
   this->num = 0;
+  this->offset = 0;
   this->size_known = false;
   return *this;
 }

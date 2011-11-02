@@ -43,15 +43,38 @@ MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr) throw()
 }
 
 template<typename ptr_type>
+MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr, size_t offset) throw()
+    : DPtr<ptr_type>(mptr, offset) {
+  // do nothing
+}
+
+template<typename ptr_type>
+MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr, size_t offset, size_t len)
+    throw()
+    : DPtr<ptr_type>(mptr, offset, len) {
+  // do nothing
+}
+
+template<typename ptr_type>
 MPtr<ptr_type>::~MPtr() throw() {
   this->destruct();
 }
 
 template<typename ptr_type>
 void MPtr<ptr_type>::destroy() throw() {
-  if (this->ptr() != NULL) {
-    free(this->ptr());
+  if (this->p != NULL) {
+    free(this->p);
   }
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset) throw() {
+  return new MPtr<ptr_type>(this, this->offset + offset);
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
+  return new MPtr<ptr_type>(this, this->offset + offset, len);
 }
 
 template<typename ptr_type>

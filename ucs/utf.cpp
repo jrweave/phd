@@ -87,7 +87,7 @@ DPtr<uint8_t> *utf8enc(DPtr<uint32_t> *codepoints)
     THROWX(SizeUnknownException);
   }
   if (codepoints->size() <= 0) {
-    return new MPtr<uint8_t>(NULL, 0);
+    return new MPtr<uint8_t>((uint8_t *)NULL, 0);
   }
   size_t len = 0;
   uint8_t *enc = (uint8_t *)calloc(codepoints->size() << 2, sizeof(uint8_t));
@@ -116,7 +116,7 @@ DPtr<uint32_t> *utf8dec(DPtr<uint8_t> *utf8str)
     THROWX(SizeUnknownException);
   }
   if (utf8str->size() <= 0) {
-    return new MPtr<uint32_t>(NULL, 0);
+    return new MPtr<uint32_t>((uint32_t*)NULL, 0);
   }
   size_t len = 0;
   uint32_t *dec = (uint32_t *)calloc(utf8str->size(), sizeof(uint32_t));
@@ -286,7 +286,7 @@ DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     THROWX(SizeUnknownException);
   }
   if (codepoints->size() <= 0) {
-    return new MPtr<uint16_t>(NULL, 0);
+    return new MPtr<uint16_t>((uint16_t*)NULL, 0);
   }
   size_t len = 0;
   size_t newsize = (codepoints->size() << 1) + (bom == NONE ? 0 : 1);
@@ -324,7 +324,7 @@ DPtr<uint32_t> *utf16dec(DPtr<uint16_t> *utf16str)
     THROWX(SizeUnknownException);
   }
   if (utf16str->size() <= 0) {
-    return new MPtr<uint32_t>(NULL, 0);
+    return new MPtr<uint32_t>((uint32_t*)NULL, 0);
   }
   const uint16_t *at;
   bool flip = utf16flip(utf16str, &at);

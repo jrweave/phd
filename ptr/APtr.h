@@ -12,6 +12,8 @@ template<typename arr_type>
 class APtr : public DPtr<arr_type> {
 protected:
   virtual void destroy() throw();
+  APtr(const APtr<arr_type> *aptr, size_t offset) throw();
+  APtr(const APtr<arr_type> *aptr, size_t offset, size_t len) throw();
 public:
   APtr() throw(BadAllocException);
   APtr(arr_type *p) throw(BadAllocException);
@@ -20,6 +22,10 @@ public:
   APtr(const APtr<arr_type> &mptr) throw();
   APtr(const APtr<arr_type> *mptr) throw();
   virtual ~APtr() throw();
+
+  // Overridden Methods
+  virtual DPtr<arr_type> *sub(size_t offset) throw();
+  virtual DPtr<arr_type> *sub(size_t offset, size_t len) throw();
 
   // Operators
   APtr<arr_type> &operator=(const APtr<arr_type> &rhs) throw();

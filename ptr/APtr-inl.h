@@ -49,15 +49,38 @@ APtr<arr_type>::APtr(const APtr<arr_type> *aptr) throw()
 }
 
 template<typename arr_type>
+APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset) throw()
+    : DPtr<arr_type>(aptr, offset) {
+  // do nothing
+}
+
+template<typename arr_type>
+APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset, size_t len)
+    throw()
+    : DPtr<arr_type>(aptr, offset, len) {
+  // do nothing
+}
+
+template<typename arr_type>
 APtr<arr_type>::~APtr() throw() {
   this->destruct();
 }
 
 template<typename arr_type>
 void APtr<arr_type>::destroy() throw() {
-  if (this->dptr() != NULL) {
-    delete[] this->dptr();
+  if (this->p != NULL) {
+    delete[] (arr_type *)this->p;
   }
+}
+
+template<typename arr_type>
+DPtr<arr_type> *APtr<arr_type>::sub(size_t offset) throw() {
+  return new APtr<arr_type>(this, this->offset + offset);
+}
+
+template<typename arr_type>
+DPtr<arr_type> *APtr<arr_type>::sub(size_t offset, size_t len) throw() {
+  return new APtr<arr_type>(this, this->offset + offset, len);
 }
 
 template<typename arr_type>

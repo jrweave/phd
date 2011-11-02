@@ -11,7 +11,10 @@ template<typename ptr_type>
 class DPtr : public Ptr {
 protected:
   size_t num;
+  size_t offset;
   bool size_known;
+  DPtr(const DPtr<ptr_type> *dptr, size_t offset) throw();
+  DPtr(const DPtr<ptr_type> *dptr, size_t offset, size_t len) throw();
 public:
   DPtr() throw(BadAllocException);
   DPtr(ptr_type *p) throw(BadAllocException);
@@ -21,9 +24,12 @@ public:
   virtual ~DPtr() throw();
 
   // Virtual Methods
+  virtual void *ptr() const throw();
   virtual ptr_type *dptr() const throw();
   virtual bool sizeKnown() const throw();
   virtual size_t size() const throw();
+  virtual DPtr<ptr_type> *sub(size_t offset) throw();
+  virtual DPtr<ptr_type> *sub(size_t offset, size_t len) throw();
 
   // Operators
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> &rhs) throw();

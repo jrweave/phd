@@ -83,15 +83,16 @@ Ptr &Ptr::operator=(const Ptr &rhs) throw() {
   if (this == &rhs) {
     return *this;
   }
-  *(this->global_refs) -= this->local_refs;
+  (*(this->global_refs)) -= this->local_refs;
   // destroy old pointer if no one else refers to it.
   if (*(this->global_refs) == 0) {
     this->destroy();
+    free(this->global_refs);
+    this->global_refs = NULL; // sanity
   }
   this->p = rhs.p;
-  this->local_refs = 1;
   this->global_refs = rhs.global_refs;
-  (*(this->global_refs))++;
+  (*(this->global_refs)) += this->local_refs;
   return *this;
 }
 

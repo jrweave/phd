@@ -32,22 +32,45 @@ OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr) throw()
 }
 
 template<typename obj_type>
+OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr, size_t offset) throw()
+    : DPtr<obj_type>(optr, offset) {
+  // do nothing
+}
+
+template<typename obj_type>
+OPtr<obj_type>::OPtr(const OPtr<obj_type> *optr, size_t offset, size_t len)
+    throw()
+    : DPtr<obj_type>(optr, offset, len) {
+  // do nothing
+}
+
+template<typename obj_type>
 OPtr<obj_type>::~OPtr() throw() {
   this->destruct();
 }
 
 template<typename obj_type>
 void OPtr<obj_type>::destroy() throw() {
-  if (this->ptr() != NULL) {
-    delete this->dptr();
+  if (this->p != NULL) {
+    delete (obj_type *)this->p;
   }
 }
 
 template<>
 void OPtr<Ptr>::destroy() throw() {
-  if (this->ptr() != NULL) {
-    this->dptr()->drop();
+  if (this->p != NULL) {
+    ((Ptr *)this->p)->drop();
   }
+}
+
+template<typename obj_type>
+DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset) throw() {
+  return new OPtr<obj_type>(this, this->offset + offset);
+}
+
+template<typename obj_type>
+DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset, size_t len) throw() {
+  return new OPtr<obj_type>(this, this->offset + offset, len);
 }
 
 template<typename obj_type>
