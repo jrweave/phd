@@ -44,12 +44,18 @@ TRACE(BadAllocException, "uncaught")
 bool testConstructors() THROWS(BadAllocException) {
   char *vp = (char *)malloc(sizeof(char));
   PROG(vp != NULL);
-  MPtr<char> *p = new MPtr<char>(vp, 0);
+  MPtr<char> *p = new MPtr<char>(vp, 1);
   MPtr<char> p3 (*p);
   MPtr<char> *p2 = new MPtr<char>(&p3);
   PROG(p->ptr() == vp);
+  PROG(p->sizeKnown());
+  PROG(p->size() == 1);
   PROG(p2->dptr() == vp);
+  PROG(p2->sizeKnown());
+  PROG(p2->size() == 1);
   PROG(p3.dptr() == vp);
+  PROG(p3.sizeKnown());
+  PROG(p3.size() == 1);
   p->hold();
   p2->drop(); // now p2 is invalid
   PROG(p->dptr() == vp);
@@ -61,6 +67,8 @@ bool testConstructors() THROWS(BadAllocException) {
   PROG(p->dptr() != p3.dptr());
   p3 = p;
   PROG(p->dptr() == p3.dptr());
+  PROG(p3.sizeKnown());
+  PROG(p3.size() == p->size());
   (*p)['a'] = 'a';
   p3['z'] = 'z';
   PROG(p3['z'] == 'z');

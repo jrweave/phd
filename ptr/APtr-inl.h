@@ -62,16 +62,16 @@ void APtr<arr_type>::destroy() throw() {
 
 template<typename arr_type>
 APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> &rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = &rhs;
+  DPtr<arr_type> *l = this;
+  const DPtr<arr_type> *r = &rhs;
   *l = *r;
   return *this;
 }
 
 template<typename arr_type>
 APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> *rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = rhs;
+  DPtr<arr_type> *l = this;
+  const DPtr<arr_type> *r = rhs;
   *l = r;
   return *this;
 }
@@ -79,7 +79,7 @@ APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> *rhs) throw() {
 template<typename arr_type>
 APtr<arr_type> &APtr<arr_type>::operator=(arr_type *p)
     throw(BadAllocException) {
-  Ptr::operator=((void*)p);
+  DPtr<arr_type>::operator=(p);
   return *this;
 }
 

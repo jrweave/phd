@@ -14,6 +14,18 @@ using namespace ptr;
 using namespace std;
 using namespace sys;
 
+template<typename T>
+void printseq(DPtr<T> *p) {
+  cerr << endl;
+  cerr << "ptr: " << p->ptr() << endl;
+  cerr << "size: " << p->size() << endl;
+  size_t i;
+  for (i = 0; i < p->size(); i++) {
+    cerr << hex << (uint32_t)((*p)[i]) << " ";
+  }
+  cerr << endl;
+}
+
 DPtr<uint32_t> *parse(const string &str) {
   vector<uint32_t> vec;
   stringstream ss (stringstream::in | stringstream::out);
@@ -30,6 +42,7 @@ DPtr<uint32_t> *parse(const string &str) {
 
 bool testRoundTripUTF8(DPtr<uint32_t> *codepoints) {
   DPtr<uint8_t> *enc = ucs::utf8enc(codepoints);
+  PROG(enc->sizeKnown());
   DPtr<uint32_t> *found = ucs::utf8dec(enc);
   PROG(found->sizeKnown());
   PROG(codepoints->size() == found->size());
@@ -42,6 +55,7 @@ bool testRoundTripUTF8(DPtr<uint32_t> *codepoints) {
 
 bool testRoundTripUTF16(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
   DPtr<uint16_t> *enc = ucs::utf16enc(codepoints, bom);
+  PROG(enc->sizeKnown());
   if (enc->size() > 0) {
     PROG(bom != ucs::NONE || ((*enc)[0] != UINT16_C(0xFEFF) && (*enc)[0] != UINT16_C(0xFFFE)));
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT16_C(0xFEFF)) || (is_big_endian() && (*enc)[0] == UINT16_C(0xFFFE)));
@@ -59,6 +73,7 @@ bool testRoundTripUTF16(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
 
 bool testRoundTripUTF32(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
   DPtr<uint32_t> *enc = ucs::utf32enc(codepoints, bom);
+  PROG(enc->sizeKnown());
   if (enc->size() > 0) {
     PROG(bom != ucs::NONE || ((*enc)[0] != UINT32_C(0x0000FEFF) && (*enc)[0] != UINT32_C(0xFFFE0000)));
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT32_C(0x0000FEFF)) || (is_big_endian() && (*enc)[0] == UINT32_C(0xFFFE0000)));

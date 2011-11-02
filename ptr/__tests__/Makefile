@@ -46,3 +46,9 @@ testAPtr : testAPtr.cpp ../APtr.h ../APtr-inl.h testDPtr
 	$(CC) $(CFLAGS) -o testAPtr testAPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
 	$(ECHO) [TEST] ./testAPtr
 	./testAPtr
+
+#testWPtr : testWPtr.cpp ../WPtr.h ../WPtr-inl.h testDPtr
+#	$(ECHO) $(CC) $(CFLAGS) -o testWPtr testWPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
+#	$(CC) $(CFLAGS) -o testWPtr testWPtr.cpp ../Ptr.o ../BadAllocException.o ../../ex/TraceableException.o
+#	$(ECHO) [TEST] ./testWPtr
+#	./testWPtr

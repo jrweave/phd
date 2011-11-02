@@ -52,16 +52,16 @@ void OPtr<Ptr>::destroy() throw() {
 
 template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> &rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = &rhs;
+  DPtr<obj_type> *l = this;
+  const DPtr<obj_type> *r = &rhs;
   *l = *r;
   return *this;
 }
 
 template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> *rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = rhs;
+  DPtr<obj_type> *l = this;
+  const DPtr<obj_type> *r = rhs;
   *l = r;
   return *this;
 }
@@ -69,7 +69,7 @@ OPtr<obj_type> &OPtr<obj_type>::operator=(const OPtr<obj_type> *rhs) throw() {
 template<typename obj_type>
 OPtr<obj_type> &OPtr<obj_type>::operator=(obj_type *p)
     throw(BadAllocException) {
-  Ptr::operator=((void*)p);
+  DPtr<obj_type>::operator=(p);
   return *this;
 }
 

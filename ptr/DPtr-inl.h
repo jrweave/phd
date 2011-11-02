@@ -59,6 +59,8 @@ DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> &rhs) throw() {
   Ptr *l = this;
   const Ptr *r = &rhs;
   *l = *r;
+  this->num = rhs.num;
+  this->size_known = rhs.size_known;
   return *this;
 }
 
@@ -67,6 +69,8 @@ DPtr<ptr_type> &DPtr<ptr_type>::operator=(const DPtr<ptr_type> *rhs) throw() {
   Ptr *l = this;
   const Ptr *r = rhs;
   *l = r;
+  this->num = rhs->num;
+  this->size_known = rhs->size_known;
   return *this;
 }
 
@@ -74,6 +78,8 @@ template<typename ptr_type>
 DPtr<ptr_type> &DPtr<ptr_type>::operator=(ptr_type *p)
     throw(BadAllocException) {
   Ptr::operator=((void*)p);
+  this->num = 0;
+  this->size_known = false;
   return *this;
 }
 

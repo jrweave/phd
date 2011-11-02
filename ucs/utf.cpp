@@ -289,10 +289,10 @@ DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     return new MPtr<uint16_t>(NULL, 0);
   }
   size_t len = 0;
-  uint16_t *enc = (uint16_t *)calloc(
-    (codepoints->size() << 1) + (bom == NONE ? 0 : 1), sizeof(uint16_t));
+  size_t newsize = (codepoints->size() << 1) + (bom == NONE ? 0 : 1);
+  uint16_t *enc = (uint16_t *)calloc(newsize, sizeof(uint16_t));
   if (enc == NULL) {
-    THROW(BadAllocException, (codepoints->size() << 1)*sizeof(uint16_t));
+    THROW(BadAllocException, newsize*sizeof(uint16_t));
   }
   if (bom != NONE) {
     if ((is_little_endian() && bom == BIG)

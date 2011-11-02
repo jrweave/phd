@@ -52,8 +52,10 @@ public:
   Ptr(const Ptr *ptr) throw();
   virtual ~Ptr() throw();
 
+  // Virtual Methods
+  virtual void *ptr() const throw();
+
   // Final Methods
-  void *ptr() const throw();
   void hold() throw();
   void drop() throw();
 

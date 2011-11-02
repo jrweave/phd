@@ -17,7 +17,7 @@ clean :
 	$(ECHO) cleaning up in .
 	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
 	-$(RM) -vfr *.dSYM
-	-for d in $(DIRS); do (cd $$d; $(MAKE) clean ); done
+	-for d in $(DIRS); do (cd $$d; $(MAKE) clean); done
 
 force_look :
 	true

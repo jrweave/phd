@@ -15,7 +15,7 @@ protected:
 public:
   MPtr() throw(BadAllocException);
   MPtr(ptr_type *p) throw(BadAllocException);
-  MPtr(ptr_type *p, size_t num) throw();
+  MPtr(ptr_type *p, size_t num) throw(BadAllocException);
   MPtr(size_t num) throw(BadAllocException);
   MPtr(const MPtr<ptr_type> &mptr) throw();
   MPtr(const MPtr<ptr_type> *mptr) throw();

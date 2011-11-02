@@ -17,7 +17,7 @@ MPtr<ptr_type>::MPtr(ptr_type *p) throw(BadAllocException)
 }
 
 template<typename ptr_type>
-MPtr<ptr_type>::MPtr(ptr_type *p, size_t num) throw()
+MPtr<ptr_type>::MPtr(ptr_type *p, size_t num) throw(BadAllocException)
     : DPtr<ptr_type>(p, num) {
   // do nothing
 }
@@ -61,16 +61,16 @@ size_t MPtr<ptr_type>::sizeInBytes() const throw() {
 
 template<typename ptr_type>
 MPtr<ptr_type> &MPtr<ptr_type>::operator=(const MPtr<ptr_type> &rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = &rhs;
+  DPtr<ptr_type> *l = this;
+  const DPtr<ptr_type> *r = &rhs;
   *l = *r;
   return *this;
 }
 
 template<typename ptr_type>
 MPtr<ptr_type> &MPtr<ptr_type>::operator=(const MPtr<ptr_type> *rhs) throw() {
-  Ptr *l = this;
-  const Ptr *r = rhs;
+  DPtr<ptr_type> *l = this;
+  const DPtr<ptr_type> *r = rhs;
   *l = r;
   return *this;
 }
@@ -78,7 +78,7 @@ MPtr<ptr_type> &MPtr<ptr_type>::operator=(const MPtr<ptr_type> *rhs) throw() {
 template<typename ptr_type>
 MPtr<ptr_type> &MPtr<ptr_type>::operator=(ptr_type *p)
     throw(BadAllocException) {
-  Ptr::operator=((void*)p);
+  DPtr<ptr_type>::operator=(p);
   return *this;
 }
 
