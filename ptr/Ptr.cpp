@@ -8,18 +8,18 @@ using namespace std;
 
 Ptr::Ptr() throw(BadAllocException)
     : p(NULL), local_refs(1) {
-  this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
+  this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
   if (this->global_refs == NULL) {
-    THROW(BadAllocException, sizeof(unsigned int));
+    THROW(BadAllocException, sizeof(uint32_t));
   }
   *(this->global_refs) = 1;
 }
 
 Ptr::Ptr(void *p) throw(BadAllocException)
     : p(p), local_refs(1) {
-  this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
+  this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
   if (this->global_refs == NULL) {
-    THROW(BadAllocException, sizeof(unsigned int));
+    THROW(BadAllocException, sizeof(uint32_t));
   }
   *(this->global_refs) = 1;
 }
@@ -106,9 +106,9 @@ Ptr &Ptr::operator=(void *p) throw(BadAllocException) {
       this->destroy();
     }
   } else {
-    this->global_refs = (unsigned int *)malloc(sizeof(unsigned int));
+    this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
     if (this->global_refs == NULL) {
-      THROW(BadAllocException, sizeof(unsigned int));
+      THROW(BadAllocException, sizeof(uint32_t));
     }
   }
   this->p = p;

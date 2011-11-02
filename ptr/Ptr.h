@@ -3,6 +3,7 @@
 
 #include "ex/TraceableException.h"
 #include "ptr/BadAllocException.h"
+#include "sys/ints.h"
 
 namespace ptr {
 
@@ -39,8 +40,8 @@ using namespace std;
  */
 class Ptr {
 private:
-  unsigned int *global_refs;
-  unsigned int local_refs;
+  uint32_t *global_refs;
+  uint32_t local_refs;
 protected:
   void *p; // subclasses, be careful
   virtual void destroy() throw();
