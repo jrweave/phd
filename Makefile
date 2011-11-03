@@ -1,7 +1,7 @@
 include Makefile.inc
 
 # When adding a new subdirectory, make sure to modify DIRS
-DIRS      = test sys ex ptr ucs
+DIRS      = test sys util ex ptr ucs
 EXE       = main
 OBJS      =
 OBJLIBS		=
@@ -28,14 +28,26 @@ $(EXE) : $(OBJLIBS)
 #$(ECHO) $(LD) -o $(EXE) $(OBJS) $(LIBS)
 #$(LD) -o $(EXE) $(OBJS) $(LIBS)
 
-ex : force_look
+test : force_look
+	$(ECHO) looking into test : $(MAKE) $(MFLAGS)
+	cd test; $(MAKE) $(MFLAGS)
+
+sys : test force_look
+	$(ECHO) looking into sys : $(MAKE) $(MFLAGS)
+	cd sys; $(MAKE) $(MFLAGS)
+
+util : test force_look
+	$(ECHO) looking into util : $(MAKE) $(MFLAGS)
+	cd util; $(MAKE) $(MFLAGS)
+
+ex : sys force_look
 	$(ECHO) looking into ex : $(MAKE) $(MFLAGS)
 	cd ex; $(MAKE) $(MFLAGS)
 
-ptr : force_look
+ptr : ex force_look
 	$(ECHO) looking into ptr : $(MAKE) $(MFLAGS)
 	cd ptr; $(MAKE) $(MFLAGS)
 
-ucs : force_look
+ucs : ptr force_look
 	$(ECHO) looking into ucs : $(MAKE) $(MFLAGS)
 	cd ucs; $(MAKE) $(MFLAGS)

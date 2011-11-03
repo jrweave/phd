@@ -91,5 +91,11 @@ int main(int argc, char **argv) {
 
   // delete[] nums; // memory error
 
+  DPtr<const int> *cnums = new MPtr<const int>(5);
+  cnums->hold();
+  (*cnums)[1];
+  cnums->drop();
+  cnums->drop();
+
   FINAL;
 }

@@ -16,6 +16,9 @@
   ex.amendStackTrace(__FILE__, __LINE__, __VA_ARGS__); \
   throw ex
 
+#define RETHROW_AS(type, e2) \
+  THROW(type, e2.what())
+
 #define THROWS(...) \
   throw(__VA_ARGS__) { \
     try

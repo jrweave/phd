@@ -5,6 +5,7 @@
 #include <sstream>
 #include "ptr/MPtr.h"
 #include "sys/endian.h"
+#include "util/funcs.h"
 
 namespace ucs {
 
@@ -12,23 +13,7 @@ using namespace ex;
 using namespace ptr;
 using namespace std;
 using namespace sys;
-
-InvalidEncodingException::InvalidEncodingException(const char *file,
-    const unsigned int line, const char *message, const uint32_t encoded)
-    throw()
-    : TraceableException(file, line, message), encoded(encoded) { 
-  // do nothing
-}
-
-InvalidEncodingException::~InvalidEncodingException() throw() {
-  // do nothing
-}
-
-const char *InvalidEncodingException::what() const throw() {
-  stringstream ss (stringstream::in | stringstream::out);
-  ss << TraceableException::what() << "\tcaused by invalid encoding 0x" << hex << this->encoded << "\n";
-  return ss.str().c_str();
-}
+using namespace util;
 
 size_t utf8len(const uint32_t codepoint) THROWS(InvalidEncodingException) {
   return utf8len(codepoint, NULL);

@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= ucs
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= nf.o utf.o
+OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o
 
 all : $(OBJS) __tests__
 
@@ -33,6 +33,14 @@ ucs_arrays.h : ucs_arrays.cpp
 ucs_arrays.cpp : scripts/index.pl scripts/UnicodeData.txt scripts/DerivedNormalizationProps.txt scripts/HangulSyllableType.txt scripts/NormalizationTest.txt
 	$(ECHO) generating ucs_arrays.h and ucs_arrays.cpp
 	cd scripts; perl index.pl 2> ../ucs_arrays.cpp | tee ../ucs_arrays.h
+
+InvalidCodepointException.o : InvalidCodepointException.h InvalidCodepointException.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o InvalidCodepointException.o InvalidCodepointException.cpp
+	$(CC) $(CFLAGS) -c -o InvalidCodepointException.o InvalidCodepointException.cpp
+
+InvalidEncodingException.o : InvalidEncodingException.h InvalidEncodingException.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o InvalidEncodingException.o InvalidEncodingException.cpp
+	$(CC) $(CFLAGS) -c -o InvalidEncodingException.o InvalidEncodingException.cpp
 
 nf.o : nf.h nf.cpp ucs_arrays.h ucs_arrays.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o nf.o nf.cpp

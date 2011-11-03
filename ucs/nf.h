@@ -1,29 +1,16 @@
 #ifndef __NF_H__
 #define __NF_H__
 
-#include "ex/TraceableException.h"
 #include "ptr/BadAllocException.h"
 #include "ptr/DPtr.h"
 #include "ptr/SizeUnknownException.h"
 #include "sys/ints.h"
+#include "ucs/InvalidCodepointException.h"
 
 namespace ucs {
 
-using namespace ex;
 using namespace ptr;
 using namespace std;
-
-class InvalidCodepointException : public TraceableException {
-private:
-  const uint32_t codepoint;
-public:
-  InvalidCodepointException(const char *file, const unsigned int line,
-    const uint32_t codepoint) throw();
-  virtual ~InvalidCodepointException() throw();
-
-  // Inherited Methods
-  const char *what() const throw();
-};
 
 #include "ucs_arrays.h"
 

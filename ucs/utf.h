@@ -6,24 +6,12 @@
 #include "ptr/DPtr.h"
 #include "ptr/SizeUnknownException.h"
 #include "sys/ints.h"
+#include "ucs/InvalidEncodingException.h"
 
 namespace ucs {
 
-using namespace ex;
 using namespace ptr;
 using namespace std;
-
-class InvalidEncodingException : public TraceableException {
-private:
-  const uint32_t encoded;
-public:
-  InvalidEncodingException(const char *file, const unsigned int line,
-    const char *message, const uint32_t encoded) throw();
-  virtual ~InvalidEncodingException() throw();
-
-  // Inherited Methods
-  const char *what() const throw();
-};
 
 enum BOM {
   LITTLE, ANY, NONE, BIG
