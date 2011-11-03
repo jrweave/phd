@@ -1,5 +1,9 @@
 #include "ucs/utf.h"
+#include "ucs/UTF8Iter.h"
+#include "ucs/UTF16Iter.h"
+#include "ucs/UTF32Iter.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -43,6 +47,13 @@ DPtr<uint32_t> *parse(const string &str) {
 bool testRoundTripUTF8(DPtr<uint32_t> *codepoints) {
   DPtr<uint8_t> *enc = ucs::utf8enc(codepoints);
   PROG(enc->sizeKnown());
+  ucs::UTF8Iter *begin = ucs::UTF8Iter::begin(enc);
+  ucs::UTF8Iter *end = ucs::UTF8Iter::end(enc);
+  PROG(begin->more() || codepoints->size() <= 0);
+  PROG(!end->more());
+  PROG(equal(*begin, *end, codepoints->dptr()));
+  delete begin;
+  delete end;
   DPtr<uint32_t> *found = ucs::utf8dec(enc);
   PROG(found->sizeKnown());
   PROG(codepoints->size() == found->size());
@@ -61,6 +72,13 @@ bool testRoundTripUTF16(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT16_C(0xFEFF)) || (is_big_endian() && (*enc)[0] == UINT16_C(0xFFFE)));
     PROG(bom != ucs::BIG || (is_little_endian() && (*enc)[0] == UINT16_C(0xFFFE)) || (is_big_endian() && (*enc)[0] == UINT16_C(0xFEFF)));
   }
+  ucs::UTF16Iter *begin = ucs::UTF16Iter::begin(enc);
+  ucs::UTF16Iter *end = ucs::UTF16Iter::end(enc);
+  PROG(begin->more() || codepoints->size() <= 0);
+  PROG(!end->more());
+  PROG(equal(*begin, *end, codepoints->dptr()));
+  delete begin;
+  delete end;
   DPtr<uint32_t> *found = ucs::utf16dec(enc);
   PROG(found->sizeKnown());
   PROG(codepoints->size() == found->size());
@@ -79,6 +97,13 @@ bool testRoundTripUTF32(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT32_C(0x0000FEFF)) || (is_big_endian() && (*enc)[0] == UINT32_C(0xFFFE0000)));
     PROG(bom != ucs::BIG || (is_little_endian() && (*enc)[0] == UINT32_C(0xFFFE0000)) || (is_big_endian() && (*enc)[0] == UINT32_C(0x0000FEFF)));
   }
+  ucs::UTF32Iter *begin = ucs::UTF32Iter::begin(enc);
+  ucs::UTF32Iter *end = ucs::UTF32Iter::end(enc);
+  PROG(begin->more() || codepoints->size() <= 0);
+  PROG(!end->more());
+  PROG(equal(*begin, *end, codepoints->dptr()));
+  delete begin;
+  delete end;
   DPtr<uint32_t> *found = ucs::utf32dec(enc);
   PROG(found->sizeKnown());
   PROG(codepoints->size() == found->size());

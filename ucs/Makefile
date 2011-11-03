@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= ucs
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o
+OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o UCSIter.o UTF8Iter.o UTF16Iter.o UTF32Iter.o
 
 all : $(OBJS) __tests__
 
@@ -49,3 +49,19 @@ nf.o : nf.h nf.cpp ucs_arrays.h ucs_arrays.cpp
 utf.o : utf.h utf.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o utf.o utf.cpp
 	$(CC) $(CFLAGS) -c -o utf.o utf.cpp
+
+UCSIter.o : UCSIter.h UCSIter.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
+	$(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
+
+UTF8Iter.o : UTF8Iter.h UTF8Iter.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o UTF8Iter.o UTF8Iter.cpp
+	$(CC) $(CFLAGS) -c -o UTF8Iter.o UTF8Iter.cpp
+
+UTF16Iter.o : UTF16Iter.h UTF16Iter.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o UTF16Iter.o UTF16Iter.cpp
+	$(CC) $(CFLAGS) -c -o UTF16Iter.o UTF16Iter.cpp
+
+UTF32Iter.o : UTF32Iter.h UTF32Iter.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o UTF32Iter.o UTF32Iter.cpp
+	$(CC) $(CFLAGS) -c -o UTF32Iter.o UTF32Iter.cpp
