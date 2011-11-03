@@ -1,5 +1,5 @@
-#ifndef __DPTR_H__
-#define __DPTR_H__
+#ifndef __PTR__DPTR_H__
+#define __PTR__DPTR_H__
 
 #include "ptr/Ptr.h"
 
@@ -44,4 +44,4 @@ public:
 
 #include "ptr/DPtr-inl.h"
 
-#endif /* __DPTR_H__ */
+#endif /* __PTR__DPTR_H__ */

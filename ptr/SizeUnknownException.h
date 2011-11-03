@@ -1,5 +1,5 @@
-#ifndef __SIZEUNKNOWNEXCEPTION_H__
-#define __SIZEUNKNOWNEXCEPTION_H__
+#ifndef __PTR__SIZEUNKNOWNEXCEPTION_H__
+#define __PTR__SIZEUNKNOWNEXCEPTION_H__
 
 #include <cstring>
 #include <new>
@@ -18,4 +18,4 @@ public:
 
 }
 
-#endif /* __SIZEUNKNOWNEXCEPTION_H__ */
+#endif /* __PTR__SIZEUNKNOWNEXCEPTION_H__ */

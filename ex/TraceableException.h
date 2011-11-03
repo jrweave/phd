@@ -1,5 +1,5 @@
-#ifndef __TRACEABLEEXCEPTION_H__
-#define __TRACEABLEEXCEPTION_H__
+#ifndef __EX__TRACEABLEEXCEPTION_H__
+#define __EX__TRACEABLEEXCEPTION_H__
 
 #include <exception>
 #include <iostream>
@@ -67,4 +67,4 @@ public:
 
 std::ostream &operator<<(std::ostream &stream, ex::TraceableException *ex);
 
-#endif /* __TRACEABLEEXCEPTION_H__ */
+#endif /* __EX__TRACEABLEEXCEPTION_H__ */

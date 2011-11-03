@@ -1,5 +1,5 @@
-#ifndef __UNIT_H__
-#define __UNIT_H__
+#ifndef __TEST__UNIT_H__
+#define __TEST__UNIT_H__
 
 #include <iostream>
 
@@ -33,4 +33,4 @@
   std::cerr << std::dec << __ntests << " TESTS\n"; \
   exit(__failures)
 
-#endif /* __UNIT_H__ */
+#endif /* __TEST__UNIT_H__ */

@@ -1,5 +1,5 @@
-#ifndef __UTF_H__
-#define __UTF_H__
+#ifndef __UCS__UTF_H__
+#define __UCS__UTF_H__
 
 #include "ex/TraceableException.h"
 #include "ptr/BadAllocException.h"
@@ -93,4 +93,4 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip,
 
 }
 
-#endif /* __UTF_H__ */
+#endif /* __UCS__UTF_H__ */

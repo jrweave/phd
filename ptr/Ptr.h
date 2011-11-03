@@ -1,5 +1,5 @@
-#ifndef __PTR_H__
-#define __PTR_H__
+#ifndef __PTR__PTR_H__
+#define __PTR__PTR_H__
 
 #include "ex/TraceableException.h"
 #include "ptr/BadAllocException.h"
@@ -68,4 +68,4 @@ public:
 
 }
 
-#endif /* __PTR_H__ */
+#endif /* __PTR__PTR_H__ */

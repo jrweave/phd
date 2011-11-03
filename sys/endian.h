@@ -1,5 +1,5 @@
-#ifndef __ENDIAN_H__
-#define __ENDIAN_H__
+#ifndef __SYS__ENDIAN_H__
+#define __SYS__ENDIAN_H__
 
 namespace sys {
 
@@ -11,4 +11,4 @@ bool is_little_endian();
 
 }
 
-#endif /* __ENDIAN_H__ */
+#endif /* __SYS__ENDIAN_H__ */

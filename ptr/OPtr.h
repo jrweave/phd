@@ -1,5 +1,5 @@
-#ifndef __OPTR_H__
-#define __OPTR_H__
+#ifndef __PTR__OPTR_H__
+#define __PTR__OPTR_H__
 
 #include "ptr/DPtr.h"
 
@@ -34,4 +34,4 @@ public:
 
 #include "ptr/OPtr-inl.h"
 
-#endif /* __OPTR_H__ */
+#endif /* __PTR__OPTR_H__ */

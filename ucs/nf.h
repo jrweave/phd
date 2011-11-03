@@ -1,5 +1,5 @@
-#ifndef __NF_H__
-#define __NF_H__
+#ifndef __UCS__NF_H__
+#define __UCS__NF_H__
 
 #include "ptr/BadAllocException.h"
 #include "ptr/DPtr.h"
@@ -71,4 +71,4 @@ DPtr<uint32_t> *nfkc_opt(DPtr<uint32_t> *codepoints)
 #endif /* !defined(UCS_NO_C) */
 }
 
-#endif /* __NF_H__ */
+#endif /* __UCS__NF_H__ */

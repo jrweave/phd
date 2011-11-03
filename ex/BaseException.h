@@ -1,5 +1,5 @@
-#ifndef __BASEEXCEPTION_H__
-#define __BASEEXCEPTION_H__
+#ifndef __EX__BASEEXCEPTIONS_H__
+#define __EX__BASEEXCEPTIONS_H__
 
 #include "ex/TraceableException.h"
 
@@ -30,4 +30,4 @@ public:
 
 #include "ex/BaseException-inl.h"
 
-#endif /* __BASEEXCEPTION_H__ */
+#endif /* __EX__BASEEXCEPTIONS_H__ */

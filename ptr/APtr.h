@@ -1,5 +1,5 @@
-#ifndef __APTR_H__
-#define __APTR_H__
+#ifndef __PTR__APTR_H__
+#define __PTR__APTR_H__
 
 #include <cstring>
 #include "ptr/DPtr.h"
@@ -37,4 +37,4 @@ public:
 
 #include "ptr/APtr-inl.h"
 
-#endif /* __APTR_H__ */
+#endif /* __PTR__APTR_H__ */

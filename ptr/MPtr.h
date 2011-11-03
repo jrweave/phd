@@ -1,5 +1,5 @@
-#ifndef __MPTR_H__
-#define __MPTR_H__
+#ifndef __PTR__MPTR_H__
+#define __PTR__MPTR_H__
 
 #include <cstring>
 #include "ptr/DPtr.h"
@@ -40,4 +40,4 @@ public:
 
 #include "ptr/MPtr-inl.h"
 
-#endif /* __MPTR_H__ */
+#endif /* __PTR__MPTR_H__ */

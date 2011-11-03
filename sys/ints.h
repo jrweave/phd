@@ -1,5 +1,5 @@
-#ifndef __INTS_H__
-#define __INTS_H__
+#ifndef __SYS__INTS_H__
+#define __SYS__INTS_H__
 
 #include "sys/sys.h"
 
@@ -15,4 +15,4 @@
 
 // adapt as necessary
 
-#endif /* __INTS_H__ */
+#endif /* __SYS__INTS_H__ */

@@ -1,5 +1,5 @@
-#ifndef __FUNCS_H__
-#define __FUNCS_H__
+#ifndef __UTIL__FUNCS_H__
+#define __UTIL__FUNCS_H__
 
 namespace util {
 
@@ -12,4 +12,4 @@ T &reverse_bytes(T &t);
 
 #include "util/funcs-inl.h"
 
-#endif /* __FUNCS_H__ */
+#endif /* __UTIL__FUNCS_H__ */

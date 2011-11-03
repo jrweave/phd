@@ -1,5 +1,5 @@
-#ifndef __INVALIDENCODINGEXCEPTION_H__
-#define __INVALIDENCODINGEXCEPTION_H__
+#ifndef __UCS__INVALIDENCODINGEXCEPTION_H__
+#define __UCS__INVALIDENCODINGEXCEPTION_H__
 
 #include "ex/TraceableException.h"
 
@@ -22,4 +22,4 @@ public:
 
 }
 
-#endif /* __INVALIDENCODINGEXCEPTION_H__ */
+#endif /* __UCS__INVALIDENCODINGEXCEPTION_H__ */

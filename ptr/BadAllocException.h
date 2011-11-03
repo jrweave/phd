@@ -1,5 +1,5 @@
-#ifndef __BADALLOCEXCEPTION_H__
-#define __BADALLOCEXCEPTION_H__
+#ifndef __PTR__BADALLOCEXCEPTION_H__
+#define __PTR__BADALLOCEXCEPTION_H__
 
 #include <cstring>
 #include <new>
@@ -32,4 +32,4 @@ public:
 
 }
 
-#endif /* __BADALLOCEXCEPTION_H__ */
+#endif /* __PTR__BADALLOCEXCEPTION_H__ */

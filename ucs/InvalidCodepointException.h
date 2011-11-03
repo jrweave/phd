@@ -1,5 +1,5 @@
-#ifndef __INVALIDCODEPOINTEXCEPTION_H__
-#define __INVALIDCODEPOINTEXCEPTION_H__
+#ifndef __UCS__INVALIDCODEPOINTEXCEPTION_H__
+#define __UCS__INVALIDCODEPOINTEXCEPTION_H__
 
 #include "ex/TraceableException.h"
 #include "sys/ints.h"
@@ -23,4 +23,4 @@ public:
 
 }
 
-#endif /* __INVALIDCODEPOINTEXCEPTION_H__ */
+#endif /* __UCS__INVALIDCODEPOINTEXCEPTION_H__ */
