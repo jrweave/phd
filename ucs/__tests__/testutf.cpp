@@ -47,11 +47,22 @@ DPtr<uint32_t> *parse(const string &str) {
 bool testRoundTripUTF8(DPtr<uint32_t> *codepoints) {
   DPtr<uint8_t> *enc = ucs::utf8enc(codepoints);
   PROG(enc->sizeKnown());
+  DPtr<uint8_t> *enc2 = new APtr<uint8_t>(enc->size());
+  size_t len = ucs::utf8enc(codepoints->dptr(),
+      codepoints->dptr() + codepoints->size(), enc2->dptr());
+  PROG(len == enc->size());
+  PROG(memcmp(enc->dptr(), enc2->dptr(), enc->size()*sizeof(uint8_t)) == 0);
+  enc2->drop();
   ucs::UTF8Iter *begin = ucs::UTF8Iter::begin(enc);
   ucs::UTF8Iter *end = ucs::UTF8Iter::end(enc);
   PROG(begin->more() || codepoints->size() <= 0);
   PROG(!end->more());
+  PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
+  begin->start();
+  PROG(true);
+  PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
+             *begin));
   delete begin;
   delete end;
   DPtr<uint32_t> *found = ucs::utf8dec(enc);
@@ -72,11 +83,21 @@ bool testRoundTripUTF16(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT16_C(0xFEFF)) || (is_big_endian() && (*enc)[0] == UINT16_C(0xFFFE)));
     PROG(bom != ucs::BIG || (is_little_endian() && (*enc)[0] == UINT16_C(0xFFFE)) || (is_big_endian() && (*enc)[0] == UINT16_C(0xFEFF)));
   }
+  DPtr<uint16_t> *enc2 = new APtr<uint16_t>(enc->size());
+  size_t len = ucs::utf16enc(codepoints->dptr(),
+      codepoints->dptr() + codepoints->size(), bom, enc2->dptr());
+  PROG(len == enc->size());
+  PROG(memcmp(enc->dptr(), enc2->dptr(), enc->size()*sizeof(uint16_t)) == 0);
+  enc2->drop();
   ucs::UTF16Iter *begin = ucs::UTF16Iter::begin(enc);
   ucs::UTF16Iter *end = ucs::UTF16Iter::end(enc);
   PROG(begin->more() || codepoints->size() <= 0);
   PROG(!end->more());
+  PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
+  begin->start();
+  PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
+             *begin));
   delete begin;
   delete end;
   DPtr<uint32_t> *found = ucs::utf16dec(enc);
@@ -97,11 +118,21 @@ bool testRoundTripUTF32(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
     PROG(bom != ucs::LITTLE || (is_little_endian() && (*enc)[0] == UINT32_C(0x0000FEFF)) || (is_big_endian() && (*enc)[0] == UINT32_C(0xFFFE0000)));
     PROG(bom != ucs::BIG || (is_little_endian() && (*enc)[0] == UINT32_C(0xFFFE0000)) || (is_big_endian() && (*enc)[0] == UINT32_C(0x0000FEFF)));
   }
+  DPtr<uint32_t> *enc2 = new APtr<uint32_t>(enc->size());
+  size_t len = ucs::utf32enc(codepoints->dptr(),
+      codepoints->dptr() + codepoints->size(), bom, enc2->dptr());
+  PROG(len == enc->size());
+  PROG(memcmp(enc->dptr(), enc2->dptr(), enc->size()*sizeof(uint32_t)) == 0);
+  enc2->drop();
   ucs::UTF32Iter *begin = ucs::UTF32Iter::begin(enc);
   ucs::UTF32Iter *end = ucs::UTF32Iter::end(enc);
   PROG(begin->more() || codepoints->size() <= 0);
   PROG(!end->more());
+  PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
+  begin->start();
+  PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
+             *begin));
   delete begin;
   delete end;
   DPtr<uint32_t> *found = ucs::utf32dec(enc);
@@ -175,15 +206,17 @@ int main(int argc, char **argv) {
     TEST(testRoundTripsIfDiff, str, nfkd, nfkc);
   }  
 
-  DPtr<uint32_t> *codepoints = new APtr<uint32_t>((size_t)0);
-  TEST(testRoundTrips, codepoints);
-  codepoints->drop();
+  ifs.close();
+
+  DPtr<uint32_t> *codepoints;
 
   codepoints = parse(string("26480 35199"));
   TEST(testRoundTrips, codepoints);
   codepoints->drop();
 
-  ifs.close();
+  codepoints = new APtr<uint32_t>((size_t)0);
+  TEST(testRoundTrips, codepoints);
+  codepoints->drop();
 
   FINAL;
 }

@@ -14,7 +14,9 @@ using namespace std;
 class UTF8Iter : public UCSIter {
 private:
   DPtr<uint8_t> *utf8str;
-  const uint8_t *mark;
+  const uint8_t *reset_mark;
+  const uint8_t *marker;
+  uint32_t reset_value;
   uint32_t value;
 public:
   UTF8Iter(DPtr<uint8_t> *utf8str) throw(SizeUnknownException);
@@ -31,6 +33,8 @@ public:
   virtual uint32_t current();
   virtual UCSIter *advance();
   virtual bool more();
+  virtual void mark();
+  virtual void reset();
 
   // Operators
   UTF8Iter &operator=(UTF8Iter &rhs);

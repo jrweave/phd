@@ -12,10 +12,20 @@ UTF32Iter::UTF32Iter(DPtr<uint32_t> *utf32str) throw(SizeUnknownException)
   this->utf32str->hold();
   if (this->utf32str->size() <= 0) {
     this->flip = false;
-    this->mark = NULL;
+    this->marker = NULL;
+    this->reset_mark = NULL;
+    this->value = 0;
+    this->reset_value = 0;
   } else {
-    this->flip = utf32flip(this->utf32str, &(this->mark));
-    this->value = utf32char(this->mark, this->flip, &(this->mark));
+    this->flip = utf32flip(this->utf32str, &(this->marker));
+    if (this->utf32str->dptr() + this->utf32str->size() == this->marker) {
+      this->marker = NULL;
+      this->value = 0;
+    } else {
+      this->value = utf32char(this->marker, this->flip, &(this->marker));
+    }
+    this->reset_mark = this->marker;
+    this->reset_value = this->value;
   }
 }
 
@@ -23,9 +33,11 @@ UTF32Iter::UTF32Iter(const UTF32Iter &copy)
     : UCSIter() {
   this->utf32str = copy.utf32str;
   this->utf32str->hold();
-  this->mark = copy.mark;
+  this->marker = copy.marker;
   this->flip = copy.flip;
   this->value = copy.value;
+  this->reset_mark = copy.reset_mark;
+  this->reset_value = copy.reset_value;
 }
 
 UTF32Iter::~UTF32Iter() {
@@ -41,13 +53,18 @@ UTF32Iter *UTF32Iter::end(DPtr<uint32_t> *utf32str) {
 }
 
 UCSIter *UTF32Iter::start() {
-  this->flip = utf32flip(this->utf32str, &(this->mark));
-  this->value = utf32char(this->mark, this->flip, &(this->mark));
+  if (this->utf32str->size() > 0) {
+    this->flip = utf32flip(this->utf32str, &(this->marker));
+    this->value = utf32char(this->marker, this->flip, &(this->marker));
+    if (this->marker == this->utf32str->dptr() + this->utf32str->size()) {
+      this->marker = NULL;
+    }
+  }
   return this;
 }
 
 UCSIter *UTF32Iter::finish() {
-  this->mark = NULL;
+  this->marker = NULL;
   return this;
 }
 
@@ -56,19 +73,29 @@ uint32_t UTF32Iter::current() {
 }
 
 UCSIter *UTF32Iter::advance() {
-  if (this->mark == NULL) {
+  if (this->marker == NULL) {
     return NULL;
   }
-  if (this->mark == this->utf32str->dptr() + this->utf32str->size()) {
-    this->mark = NULL;
+  if (this->marker == this->utf32str->dptr() + this->utf32str->size()) {
+    this->marker = NULL;
   } else {
-    this->value = utf32char(this->mark, this->flip, &(this->mark));
+    this->value = utf32char(this->marker, this->flip, &(this->marker));
   }
   return this;
 }
 
 bool UTF32Iter::more() {
-  return this->mark != NULL;
+  return this->marker != NULL;
+}
+
+void UTF32Iter::mark() {
+  this->reset_mark = this->marker;
+  this->reset_value = this->value;
+}
+
+void UTF32Iter::reset() {
+  this->marker = this->reset_mark;
+  this->value = this->reset_value;
 }
 
 UTF32Iter &UTF32Iter::operator=(UTF32Iter &rhs) {
@@ -77,17 +104,19 @@ UTF32Iter &UTF32Iter::operator=(UTF32Iter &rhs) {
     this->utf32str = rhs.utf32str;
     this->utf32str->hold();
     this->flip = rhs.flip;
-    this->mark = rhs.mark;
+    this->marker = rhs.marker;
     this->value = rhs.value;
+    this->reset_mark = rhs.reset_mark;
+    this->reset_value = rhs.reset_value;
   }
   return *this;
 }
 
 bool UTF32Iter::operator==(UTF32Iter &rhs) {
-  return this->mark == rhs.mark &&
+  return this->marker == rhs.marker &&
       this->utf32str->dptr() == rhs.utf32str->dptr() &&
       this->utf32str->size() == rhs.utf32str->size() &&
-      (this->mark == NULL || this->value == rhs.value) &&
+      (this->marker == NULL || this->value == rhs.value) &&
       (this->flip == rhs.flip);
 }
 

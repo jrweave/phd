@@ -46,7 +46,7 @@ nf.o : nf.h nf.cpp ucs_arrays.h ucs_arrays.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o nf.o nf.cpp
 	$(CC) $(CFLAGS) -c -o nf.o nf.cpp
 
-utf.o : utf.h utf.cpp
+utf.o : utf.h utf-inl.h utf.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o utf.o utf.cpp
 	$(CC) $(CFLAGS) -c -o utf.o utf.cpp
 

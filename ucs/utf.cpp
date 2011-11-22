@@ -66,6 +66,19 @@ size_t utf8len(const uint32_t codepoint, uint8_t *utf8val)
       "No valid UTF-8 encoding for invalid Unicode codepoint.", codepoint);
 }
 
+size_t utf8enc(const uint32_t *codepoints, const size_t len, uint8_t *out)
+    THROWS(InvalidEncodingException) {
+  size_t total_len = 0;
+  const uint32_t *end = codepoints + len;
+  for (; codepoints != end; codepoints++) {
+    size_t len = utf8len(*codepoints, out);
+    out += len;
+    total_len += len;
+  }
+  return total_len;
+}
+TRACE(InvalidEncodingException, "(trace)")
+
 DPtr<uint8_t> *utf8enc(DPtr<uint32_t> *codepoints)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException) {
   if (!codepoints->sizeKnown()) {
@@ -80,10 +93,7 @@ DPtr<uint8_t> *utf8enc(DPtr<uint32_t> *codepoints)
     THROW(BadAllocException, (codepoints->size() << 2)*sizeof(uint8_t));
   }
   try {
-    size_t i;
-    for (i = 0; i < codepoints->size(); i++) {
-      len += utf8len((*codepoints)[i], enc + len);
-    }
+    len = utf8enc(codepoints->dptr(), codepoints->size(), enc);
   } catch (InvalidEncodingException &e) {
     free(enc);
     RETHROW(e, "(rethrow)");
@@ -265,6 +275,30 @@ size_t utf16len(const uint32_t codepoint, const enum BOM bom,
   return len;
 }
 
+size_t utf16enc(const uint32_t *codepoints, const size_t len,
+    const enum BOM bom, uint16_t *out)
+    THROWS(InvalidEncodingException) {
+  size_t total_len = 0;
+  if (bom != NONE) {
+    if ((is_little_endian() && bom == BIG)
+        || (is_big_endian() && bom == LITTLE)) {
+      *out = UINT16_C(0xFFFE); // reverse
+    } else {
+      *out = UINT16_C(0xFEFF);
+    }
+    out++;
+    total_len++;
+  }
+  const uint32_t *end = codepoints + len;
+  for (; codepoints != end; codepoints++) {
+    size_t len = utf16len(*codepoints, bom, out);
+    out += len;
+    total_len += len;
+  }
+  return total_len;
+}
+TRACE(InvalidEncodingException, "(trace)")
+
 DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException) {
   if (!codepoints->sizeKnown()) {
@@ -279,19 +313,8 @@ DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
   if (enc == NULL) {
     THROW(BadAllocException, newsize*sizeof(uint16_t));
   }
-  if (bom != NONE) {
-    if ((is_little_endian() && bom == BIG)
-        || (is_big_endian() && bom == LITTLE)) {
-      enc[len++] = UINT16_C(0xFFFE); // reverse
-    } else {
-      enc[len++] = UINT16_C(0xFEFF);
-    }
-  }
-  size_t i;
   try {
-    for (i = 0; i < codepoints->size(); i++) {
-      len += utf16len((*codepoints)[i], bom, enc + len);
-    }
+    len = utf16enc(codepoints->dptr(), codepoints->size(), bom, enc);
   } catch (InvalidEncodingException &e) {
     free(enc);
     RETHROW(e, "(rethrow)");
@@ -436,6 +459,35 @@ size_t utf32len(const uint32_t codepoint, const enum BOM bom,
   return 1;
 }
 
+size_t utf32enc(const uint32_t *codepoints, const size_t len,
+    const enum BOM bom, uint32_t *out)
+    THROWS(InvalidEncodingException) {
+  size_t total_len = 0;
+  if (bom != NONE) {
+    if ((is_little_endian() && bom == BIG)
+        || (is_big_endian() && bom == LITTLE)) {
+      *out = UINT32_C(0xFFFE0000); // reverse
+    } else {
+      *out = UINT32_C(0x0000FEFF);
+    }
+    out++;
+    total_len++;
+  }
+  if (bom == NONE && is_big_endian()) {
+    memmove(out, codepoints, len*sizeof(uint32_t));
+    total_len += len;
+  } else {
+    const uint32_t *end = codepoints + len;
+    for (; codepoints != end; codepoints++) {
+      utf32len(*codepoints, bom, out);
+      out++;
+      total_len++;
+    }
+  }
+  return total_len;
+}
+TRACE(InvalidEncodingException, "(trace)")
+
 DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints,
     const enum BOM bom)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException) {
@@ -461,19 +513,8 @@ DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints,
   if (enc == NULL) {
     THROW(BadAllocException, (codepoints->size() << 1)*sizeof(uint32_t));
   }
-  if (bom != NONE) {
-    if ((is_little_endian() && bom == BIG)
-        || (is_big_endian() && bom == LITTLE)) {
-      enc[len++] = UINT32_C(0xFFFE0000); // reverse
-    } else {
-      enc[len++] = UINT32_C(0x0000FEFF);
-    }
-  }
   try {
-    size_t i;
-    for (i = 0; i < codepoints->size(); i++) {
-      len += utf32len((*codepoints)[i], bom, enc + len);
-    }
+    len = utf32enc(codepoints->dptr(), codepoints->size(), bom, enc);
   } catch (InvalidEncodingException &e) {
     free(enc);
     RETHROW(e, "(rethrow)");

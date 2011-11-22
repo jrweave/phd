@@ -6,7 +6,7 @@ using namespace std;
 
 template<typename ptr_type>
 DPtr<ptr_type>::DPtr() throw(BadAllocException)
-    : Ptr(), num(0), offset(0), size_known(false) {
+    : Ptr(), num(0), offset(0), size_known(true) {
   // do nothing
 }
 

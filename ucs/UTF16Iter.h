@@ -14,7 +14,9 @@ using namespace std;
 class UTF16Iter : public UCSIter {
 private:
   DPtr<uint16_t> *utf16str;
-  const uint16_t *mark;
+  const uint16_t *reset_mark;
+  const uint16_t *marker;
+  uint32_t reset_value;
   uint32_t value;
   bool flip;
 public:
@@ -32,6 +34,8 @@ public:
   virtual uint32_t current();
   virtual UCSIter *advance();
   virtual bool more();
+  virtual void mark();
+  virtual void reset();
 
   // Operators
   UTF16Iter &operator=(UTF16Iter &rhs);

@@ -11,9 +11,14 @@ UTF8Iter::UTF8Iter(DPtr<uint8_t> *utf8str) throw(SizeUnknownException)
   }
   this->utf8str->hold();
   if (this->utf8str->size() <= 0) {
-    this->mark = NULL;
+    this->marker = NULL;
+    this->reset_mark = NULL;
+    this->value = 0;
+    this->reset_value = 0;
   } else {
-    this->value = utf8char(this->utf8str->dptr(), &(this->mark));
+    this->value = utf8char(this->utf8str->dptr(), &(this->marker));
+    this->reset_mark = this->marker;
+    this->reset_value = this->value;
   }
 }
 
@@ -21,8 +26,10 @@ UTF8Iter::UTF8Iter(const UTF8Iter &copy)
     : UCSIter() {
   this->utf8str = copy.utf8str;
   this->utf8str->hold();
-  this->mark = copy.mark;
+  this->marker = copy.marker;
   this->value = copy.value;
+  this->reset_mark = copy.reset_mark;
+  this->reset_value = copy.reset_value;
 }
 
 UTF8Iter::~UTF8Iter() {
@@ -38,13 +45,15 @@ UTF8Iter *UTF8Iter::end(DPtr<uint8_t> *utf8str) {
 }
 
 UCSIter *UTF8Iter::start() {
-  this->mark = this->utf8str->dptr();
-  this->value = utf8char(this->mark, &(this->mark));
+  if (this->utf8str->size() > 0) {
+    this->marker = this->utf8str->dptr();
+    this->value = utf8char(this->marker, &(this->marker));
+  }
   return this;
 }
 
 UCSIter *UTF8Iter::finish() {
-  this->mark = NULL;
+  this->marker = NULL;
   return this;
 }
 
@@ -53,19 +62,29 @@ uint32_t UTF8Iter::current() {
 }
 
 UCSIter *UTF8Iter::advance() {
-  if (this->mark == NULL) {
+  if (this->marker == NULL) {
     return NULL;
   }
-  if (this->mark == this->utf8str->dptr() + this->utf8str->size()) {
-    this->mark = NULL;
+  if (this->marker == this->utf8str->dptr() + this->utf8str->size()) {
+    this->marker = NULL;
   } else {
-    this->value = utf8char(this->mark, &(this->mark));
+    this->value = utf8char(this->marker, &(this->marker));
   }
   return this;
 }
 
 bool UTF8Iter::more() {
-  return this->mark != NULL;
+  return this->marker != NULL;
+}
+
+void UTF8Iter::mark() {
+  this->reset_mark = this->marker;
+  this->reset_value = this->value;
+}
+
+void UTF8Iter::reset() {
+  this->marker = this->reset_mark;
+  this->value = this->reset_value;
 }
 
 UTF8Iter &UTF8Iter::operator=(UTF8Iter &rhs) {
@@ -73,17 +92,19 @@ UTF8Iter &UTF8Iter::operator=(UTF8Iter &rhs) {
     this->utf8str->drop();
     this->utf8str = rhs.utf8str;
     this->utf8str->hold();
-    this->mark = rhs.mark;
+    this->marker = rhs.marker;
     this->value = rhs.value;
+    this->reset_mark = rhs.reset_mark;
+    this->reset_value = rhs.reset_value;
   }
   return *this;
 }
 
 bool UTF8Iter::operator==(UTF8Iter &rhs) {
-  return this->mark == rhs.mark &&
+  return this->marker == rhs.marker &&
       this->utf8str->dptr() == rhs.utf8str->dptr() &&
       this->utf8str->size() == rhs.utf8str->size() &&
-      (this->mark == NULL || this->value == rhs.value);
+      (this->marker == NULL || this->value == rhs.value);
 }
 
 bool UTF8Iter::operator!=(UTF8Iter &rhs) {

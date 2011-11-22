@@ -23,6 +23,13 @@ size_t utf8len(const uint32_t codepoint) throw(InvalidEncodingException);
 size_t utf8len(const uint32_t codepoint, uint8_t *utf8val)
     throw(InvalidEncodingException);
 
+template<typename input_iter, typename output_iter>
+size_t utf8enc(input_iter begin, input_iter end, output_iter out)
+    throw(InvalidEncodingException);
+
+size_t utf8enc(const uint32_t *codepoints, const size_t len, uint8_t *out)
+    throw(InvalidEncodingException);
+
 DPtr<uint8_t> *utf8enc(DPtr<uint32_t> *codepoints)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException);
 
@@ -43,6 +50,13 @@ size_t utf16len(const uint32_t codepoint, const enum BOM bom)
 
 size_t utf16len(const uint32_t codepoint, const enum BOM bom,
     uint16_t *utf16val) throw(InvalidEncodingException);
+
+template<typename input_iter, typename output_iter>
+size_t utf16enc(input_iter begin, input_iter end, const enum BOM bom,
+    output_iter out) throw(InvalidEncodingException);
+
+size_t utf16enc(const uint32_t *codepoints, const size_t len,
+    const enum BOM bom, uint16_t *out) throw(InvalidEncodingException);
 
 DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException);
@@ -71,6 +85,13 @@ size_t utf32len(const uint32_t codepoint, const enum BOM bom)
 size_t utf32len(const uint32_t codepoint, const enum BOM bom,
     uint32_t *utf32val) throw(InvalidEncodingException);
 
+template<typename input_iter, typename output_iter>
+size_t utf32enc(input_iter begin, input_iter end, const enum BOM bom,
+    output_iter out) throw(InvalidEncodingException);
+
+size_t utf32enc(const uint32_t *codepoints, const size_t len,
+    const enum BOM bom, uint32_t *out) throw(InvalidEncodingException);
+
 DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     throw(SizeUnknownException, InvalidEncodingException, BadAllocException);
 
@@ -92,5 +113,7 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip,
     const uint32_t **next) throw(InvalidEncodingException);
 
 }
+
+#include "ucs/utf-inl.h"
 
 #endif /* __UCS__UTF_H__ */
