@@ -12,6 +12,10 @@
 #define THROW(type, ...) \
   throw type(__FILE__, __LINE__, __VA_ARGS__) 
 
+#define RETHROWX(ex) \
+  ex.amendStackTrace(__FILE__, __LINE__); \
+  throw ex
+
 #define RETHROW(ex, ...) \
   ex.amendStackTrace(__FILE__, __LINE__, __VA_ARGS__); \
   throw ex
@@ -41,6 +45,7 @@ private:
   const char *file;
   const unsigned int line;
   const char *message;
+protected:
   vector<string> stack_trace;
 public:
   TraceableException(const char *file, const unsigned int line)

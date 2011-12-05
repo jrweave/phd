@@ -20,6 +20,7 @@ private:
   uint32_t value;
   bool flip;
 public:
+  UTF32Iter() throw(BadAllocException);
   UTF32Iter(DPtr<uint32_t> *utf32str) throw(SizeUnknownException);
   UTF32Iter(const UTF32Iter &copy);
   virtual ~UTF32Iter();
@@ -43,6 +44,7 @@ public:
   bool operator!=(UTF32Iter &rhs);
   uint32_t operator*();
   UTF32Iter &operator++();
+  UTF32Iter operator++(int);
 };
 
 }

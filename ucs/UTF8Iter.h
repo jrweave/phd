@@ -19,6 +19,7 @@ private:
   uint32_t reset_value;
   uint32_t value;
 public:
+  UTF8Iter() throw(BadAllocException);
   UTF8Iter(DPtr<uint8_t> *utf8str) throw(SizeUnknownException);
   UTF8Iter(const UTF8Iter &copy);
   virtual ~UTF8Iter();
@@ -42,6 +43,7 @@ public:
   bool operator!=(UTF8Iter &rhs);
   uint32_t operator*();
   UTF8Iter &operator++();
+  UTF8Iter operator++(int);
 };
 
 }

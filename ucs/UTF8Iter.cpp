@@ -1,8 +1,20 @@
 #include "ucs/UTF8Iter.h"
 
+#include "ptr/MPtr.h"
 #include "ucs/utf.h"
 
 namespace ucs {
+
+UTF8Iter::UTF8Iter() throw(BadAllocException)
+    : UCSIter(), utf8str(NULL) {
+  try {
+    this->utf8str = new MPtr<uint8_t>();
+  } JUST_RETHROW(BadAllocException, "(rethrow)")
+  this->marker = NULL;
+  this->reset_mark = NULL;
+  this->value = 0;
+  this->reset_value = 0;
+}
 
 UTF8Iter::UTF8Iter(DPtr<uint8_t> *utf8str) throw(SizeUnknownException)
     : UCSIter(), utf8str(utf8str) {
@@ -117,6 +129,12 @@ uint32_t UTF8Iter::operator*() {
 
 UTF8Iter &UTF8Iter::operator++() {
   return *((UTF8Iter*)(this->advance()));
+}
+
+UTF8Iter UTF8Iter::operator++(int) {
+  UTF8Iter ret = *this;
+  this->advance();
+  return ret;
 }
 
 }
