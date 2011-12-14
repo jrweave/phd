@@ -113,7 +113,7 @@ public:
   LangTag() throw(BadAllocException); // "i-default"
   LangTag(DPtr<uint8_t> *ascii)
       throw(SizeUnknownException, MalformedLangTagException);
-  LangTag(LangTag &copy) throw();
+  LangTag(const LangTag &copy) throw();
   virtual ~LangTag() throw();
 
   // Final Methods
@@ -129,9 +129,9 @@ public:
   virtual LangTag *extlangify() throw(BadAllocException);
 
   // Operators
-  LangTag &operator=(LangTag &rhs) throw();
-  bool operator==(LangTag &rhs) throw();
-  bool operator!=(LangTag &rhs) throw();
+  LangTag &operator=(const LangTag &rhs) throw();
+  bool operator==(const LangTag &rhs) throw();
+  bool operator!=(const LangTag &rhs) throw();
 };
 
 }

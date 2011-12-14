@@ -18,7 +18,9 @@ using namespace std;
 
 LangTag::LangTag() throw(BadAllocException)
     : ascii(NULL), canonical(false), extlang_form(false) {
-  NEW(this->ascii, MPtr<uint8_t>, 9);
+  try {
+    NEW(this->ascii, MPtr<uint8_t>, 9);
+  } RETHROW_BAD_ALLOC
   (*(this->ascii))[0] = LANG_CHAR_LOWERCASE_I;
   (*(this->ascii))[1] = LANG_CHAR_HYPHEN;
   (*(this->ascii))[2] = LANG_CHAR_LOWERCASE_D;
@@ -43,7 +45,7 @@ LangTag::LangTag(DPtr<uint8_t> *ascii)
   this->ascii->hold();
 }
 
-LangTag::LangTag(LangTag &copy) throw()
+LangTag::LangTag(const LangTag &copy) throw()
     : ascii(copy.ascii), canonical(copy.canonical),
       extlang_form(copy.extlang_form) {
   this->ascii->hold();
@@ -364,7 +366,7 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
 }
 TRACE(BadAllocException, "(trace)")
 
-LangTag &LangTag::operator=(LangTag &rhs) throw() {
+LangTag &LangTag::operator=(const LangTag &rhs) throw() {
   this->ascii->drop();
   this->ascii = rhs.ascii;
   this->ascii->hold();
@@ -373,7 +375,7 @@ LangTag &LangTag::operator=(LangTag &rhs) throw() {
   return *this;
 }
 
-bool LangTag::operator==(LangTag &rhs) throw() {
+bool LangTag::operator==(const LangTag &rhs) throw() {
   if (this->ascii->size() != rhs.ascii->size()) {
     return false;
   }
@@ -404,7 +406,7 @@ bool LangTag::operator==(LangTag &rhs) throw() {
   return true;
 }
 
-bool LangTag::operator!=(LangTag &rhs) throw() {
+bool LangTag::operator!=(const LangTag &rhs) throw() {
   return !(*this == rhs);
 }
 

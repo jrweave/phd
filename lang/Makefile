@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= lang
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= MalformedLangTagException.o LangTag.o
+OBJS		= MalformedLangTagException.o LangTag.o MalformedLangRangeException.o LangRange.o
 
 all : build __tests__
 
@@ -44,3 +44,11 @@ MalformedLangTagException.o : MalformedLangTagException.h MalformedLangTagExcept
 LangTag.o : LangTag.h LangTag-inl.h LangTag.cpp lang_arrays.h lang_arrays.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o LangTag.o LangTag.cpp
 	$(CC) $(CFLAGS) -c -o LangTag.o LangTag.cpp
+
+MalformedLangRangeException.o : MalformedLangRangeException.h MalformedLangRangeException.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o MalformedLangRangeException.o MalformedLangRangeException.cpp
+	$(CC) $(CFLAGS) -c -o MalformedLangRangeException.o MalformedLangRangeException.cpp
+
+LangRange.o : LangRange.h LangRange-inl.h LangRange.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o LangRange.o LangRange.cpp
+	$(CC) $(CFLAGS) -c -o LangRange.o LangRange.cpp
