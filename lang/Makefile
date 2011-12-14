@@ -4,7 +4,14 @@ SUBDIR	= lang
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
 OBJS		= MalformedLangTagException.o LangTag.o
 
-all : $(OBJS) __tests__
+all : build __tests__
+
+thorough : runtests
+	cd __tests__; $(MAKE) $(MFLAGS) thorough
+
+build : prep $(OBJS)
+
+prep : lang_arrays.h lang_arrays.cpp
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)

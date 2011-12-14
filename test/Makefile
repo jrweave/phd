@@ -5,7 +5,14 @@ CFLAGS  = $(PRJCFLAGS) -I..
 OBJS		=
 
 # no __tests__
-all : $(OBJS)
+all : build
+
+thorough : runtests
+	#cd __tests__; $(MAKE) $(MFLAGS) thorough
+
+build : prep $(OBJS)
+
+prep :
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)

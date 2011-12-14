@@ -1,8 +1,9 @@
 include ../../Makefile.inc
 
-SUBDIR	= ucs/__tests__
-CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testnf testutf
+SUBDIR		= ucs/__tests__
+CFLAGS		= $(PRJCFLAGS) -I../..
+TESTS			= testnf testutf
+THOROUGH	= testnf_thoroughly
 
 all :
 
@@ -10,7 +11,10 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	$(ECHO) -$(RM) -f $(TESTS)
 	-$(RM) -vf $(TESTS)
+	-$(RM) -vf $(THOROUGH)
 	-$(RM) -vfr *.dSYM
+
+thorough : runtests $(THOROUGH)
 
 runtests : $(TESTS)
 
@@ -32,41 +36,44 @@ testnf : testnf.cpp ../nf.h ../nf.o
 	$(CC) $(CFLAGS) -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
 	$(ECHO) [TEST] ./testnf
 	./testnf
-	$(ECHO) running test $(SUBDIR)/testnf with -DUCS_NO_K
-	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_K -c -o __nf.o nf.cpp
-	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_K -c -o __nf.o nf.cpp; cd -
-	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_K -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -DUCS_NO_K -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(ECHO) [TEST] ./testnf
-	./testnf
-	$(ECHO) running test $(SUBDIR)/testnf with -DUCS_NO_C
-	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_C -c -o __nf.o nf.cpp
-	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_C -c -o __nf.o nf.cpp; cd -
-	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_C -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -DUCS_NO_C -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(ECHO) [TEST] ./testnf
-	./testnf
-	$(ECHO) running test $(SUBDIR)/testnf with -DUCS_NO_K -DUCS_NO_C
-	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_K -DUCS_NO_C -c -o __nf.o nf.cpp
-	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_K -DUCS_NO_C -c -o __nf.o nf.cpp; cd -
-	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_K -DUCS_NO_C -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -DUCS_NO_K -DUCS_NO_C -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(ECHO) [TEST] ./testnf
-	./testnf
-	$(ECHO) running test $(SUBDIR)/testnf with -DUCS_TRUST_CODEPOINTS
-	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o __nf.o nf.cpp
-	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o __nf.o nf.cpp; cd -
-	$(ECHO) $(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(ECHO) [TEST] ./testnf
-	./testnf
-	$(ECHO) running test $(SUBDIR)/testnf with -DUCS_PLAY_DUMB
-	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_PLAY_DUMB -c -o __nf.o nf.cpp
-	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_PLAY_DUMB -c -o __nf.o nf.cpp; cd -
-	$(ECHO) $(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
-	$(ECHO) [TEST] ./testnf
-	./testnf
 	-$(RM) -vf ../__nf.o
 	$(ECHO) $(CC) $(CFLAGS) -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
 	$(CC) $(CFLAGS) -o testnf testnf.cpp ../nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+
+testnf_thoroughly :
+	$(ECHO) running test $(SUBDIR)/testnf_thoroughly with -DUCS_NO_K
+	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_K -c -o __nf.o nf.cpp
+	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_K -c -o __nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_K -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -DUCS_NO_K -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(ECHO) [TEST] ./testnf_thoroughly
+	./testnf_thoroughly
+	$(ECHO) running test $(SUBDIR)/testnf_thoroughly with -DUCS_NO_C
+	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_C -c -o __nf.o nf.cpp
+	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_C -c -o __nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_C -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -DUCS_NO_C -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(ECHO) [TEST] ./testnf_thoroughly
+	./testnf_thoroughly
+	$(ECHO) running test $(SUBDIR)/testnf_thoroughly with -DUCS_NO_K -DUCS_NO_C
+	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_NO_K -DUCS_NO_C -c -o __nf.o nf.cpp
+	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_NO_K -DUCS_NO_C -c -o __nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_NO_K -DUCS_NO_C -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -DUCS_NO_K -DUCS_NO_C -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(ECHO) [TEST] ./testnf_thoroughly
+	./testnf_thoroughly
+	$(ECHO) running test $(SUBDIR)/testnf_thoroughly with -DUCS_TRUST_CODEPOINTS
+	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o __nf.o nf.cpp
+	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_TRUST_CODEPOINTS -c -o __nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -DUCS_TRUST_CODEPOINTS -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(ECHO) [TEST] ./testnf_thoroughly
+	./testnf_thoroughly
+	$(ECHO) running test $(SUBDIR)/testnf_thoroughly with -DUCS_PLAY_DUMB
+	$(ECHO) $(CC) $(CFLAGS) -I.. -DUCS_PLAY_DUMB -c -o __nf.o nf.cpp
+	cd ..; $(CC) $(CFLAGS) -I.. -DUCS_PLAY_DUMB -c -o __nf.o nf.cpp; cd -
+	$(ECHO) $(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -DUCS_PLAY_DUMB -o testnf_thoroughly testnf.cpp ../__nf.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../../ptr/alloc.o
+	$(ECHO) [TEST] ./testnf_thoroughly
+	./testnf_thoroughly
+	-$(RM) -vf ../__nf.o

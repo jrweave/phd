@@ -4,7 +4,14 @@ SUBDIR	= ptr
 CFLAGS  = $(PRJCFLAGS) -I..
 OBJS		= alloc.o BadAllocException.o Ptr.o SizeUnknownException.o
 
-all : $(OBJS) __tests__
+all : build __tests__
+
+thorough : runtests
+	cd __tests__; $(MAKE) $(MFLAGS) thorough
+
+build : prep $(OBJS)
+
+prep :
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)

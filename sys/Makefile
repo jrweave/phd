@@ -4,7 +4,14 @@ SUBDIR	= sys
 CFLAGS  = $(PRJCFLAGS) -I..
 OBJS		= endian.o
 
-all : $(OBJS) __tests__
+all : build __tests__
+
+thorough : runtests
+	cd __tests__; $(MAKE) $(MFLAGS) thorough
+
+build : prep $(OBJS)
+
+prep :
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)

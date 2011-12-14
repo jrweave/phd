@@ -4,7 +4,14 @@ SUBDIR	= ucs
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
 OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o UCSIter.o UTF8Iter.o UTF16Iter.o UTF32Iter.o
 
-all : $(OBJS) __tests__
+all : build __tests__
+
+thorough : runtests
+	cd __tests__; $(MAKE) $(MFLAGS) thorough
+
+build : prep $(OBJS)
+
+prep : ucs_arrays.h ucs_arrays.cpp
 
 __tests__ : force_look
 	$(ECHO) looking into $(SUBDIR)/__tests__ : $(MAKE) $(MFLAGS)

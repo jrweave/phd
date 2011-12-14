@@ -12,6 +12,8 @@ clean :
 	-$(RM) -vf $(TESTS)
 	-$(RM) -vfr *.dSYM
 
+thorough : runtests
+
 runtests : $(TESTS)
 
 force_look :

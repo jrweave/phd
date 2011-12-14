@@ -7,17 +7,29 @@ OBJS      =
 OBJLIBS		=
 LIBS      = -L.
 
-all : $(DIRS) $(EXE)
+all : build $(EXE)
+
+thorough : runtests
+	$(ECHO) building with thorough tests
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) thorough; $(MAKE) $(MFLAGS) thorough); done
 
 runtests : all force_look
 	$(ECHO) running tests
-	-for d in $(DIRS); do (cd $$d; $(MAKE) runtests); done
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) runtests; $(MAKE) $(MFLAGS) runtests); done
+
+build : prep
+	$(ECHO) building
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) build; $(MAKE) $(MFLAGS) build); done
+
+prep :
+	$(ECHO) preparing build
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) prep; $(MAKE) $(MFLAGS) prep); done
 
 clean :
-	$(ECHO) cleaning up in .
+	$(ECHO) cleaning up
 	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
 	-$(RM) -vfr *.dSYM
-	-for d in $(DIRS); do (cd $$d; $(MAKE) clean); done
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) clean; $(MAKE) $(MFLAGS) clean); done
 
 force_look :
 	true
