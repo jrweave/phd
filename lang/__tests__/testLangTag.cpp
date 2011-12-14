@@ -18,13 +18,15 @@ void print(DPtr<uint8_t> *ascii) {
 }
 
 DPtr<uint8_t> *str2ptr(const char *str) {
-  DPtr<uint8_t> *p = new MPtr<uint8_t>(strlen(str));
+  DPtr<uint8_t> *p;
+  NEW(p, MPtr<uint8_t>, strlen(str));
   copy(str, str + strlen(str), p->dptr());
   return p;
 }
 
 LangTag *ptr2tag(DPtr<uint8_t> *ptr) throw(MalformedLangTagException) {
-  LangTag *tag = new LangTag(ptr);
+  LangTag *tag;
+  NEW(tag, LangTag, ptr);
   ptr->drop();
   return tag;
 }
@@ -102,7 +104,7 @@ bool equiv(LangTag *tag, DPtr<uint8_t> *full, DPtr<uint8_t> *lang,
     priv->drop();
     part->drop();
   }
-  delete tag;
+  DELETE(tag);
   PASS;
 }
 
@@ -116,42 +118,46 @@ bool atypical(LangTag *tag, bool privateuse, bool grandfathered,
   PROG(tag->isGrandfathered() == grandfathered);
   PROG(tag->isRegularGrandfathered() == regular);
   PROG(tag->isIrregularGrandfathered() == irregular);
-  delete tag;
+  DELETE(tag);
   PASS;
 }
 
 bool malformed(DPtr<uint8_t> *mal) {
   try {
-    delete ptr2tag(mal);
-    mal->drop();
+    LangTag *tag = ptr2tag(mal);
+    DELETE(tag);
     FAIL;
   } catch (MalformedLangTagException &e) {
-    mal->drop();
     cerr << e.what() << endl;
+    mal->drop();
     PASS;
   }
 }
 
 bool equal(LangTag *l, LangTag *r) {
   PROG(*l == *r);
-  delete l;
-  delete r;
+  DELETE(l);
+  DELETE(r);
   PASS;
 }
 
 bool unequal(LangTag *l, LangTag *r) {
   PROG(*l != *r);
-  delete l;
-  delete r;
+  DELETE(l);
+  DELETE(r);
   PASS;
 }
 
 int main (int argc, char **argv) {
   INIT;
 
+  LangTag *tag;
+
   // default construction
-  TEST(equiv, new LangTag(), str2ptr("i-default"), NULL, NULL, NULL, NULL, NULL, NULL);
-  TEST(atypical, new LangTag(), false, true, false, true);
+  NEW(tag, LangTag);
+  TEST(equiv, tag, str2ptr("i-default"), NULL, NULL, NULL, NULL, NULL, NULL);
+  NEW(tag, LangTag);
+  TEST(atypical, tag, false, true, false, true);
 
   // test cases from appendix a
   TEST(equiv, str2tag("de"), str2ptr("de"), str2ptr("de"), NULL, NULL, NULL, NULL, NULL);

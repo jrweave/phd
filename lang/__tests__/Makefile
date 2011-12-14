@@ -19,7 +19,7 @@ force_look :
 
 testLangTag : testLangTag.cpp ../LangTag.o
 	$(ECHO) running test $(SUBDIR)/testLangTag
-	$(ECHO) $(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o
-	$(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o
+	$(ECHO) $(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
 	$(ECHO) [TEST] ./testLangTag
 	./testLangTag

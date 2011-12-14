@@ -8,7 +8,7 @@ namespace ucs {
 UTF8Iter::UTF8Iter() throw(BadAllocException)
     : UCSIter(), utf8str(NULL) {
   try {
-    this->utf8str = new MPtr<uint8_t>();
+    NEW(this->utf8str, MPtr<uint8_t>);
   } JUST_RETHROW(BadAllocException, "(rethrow)")
   this->marker = NULL;
   this->reset_mark = NULL;
@@ -49,11 +49,15 @@ UTF8Iter::~UTF8Iter() {
 }
 
 UTF8Iter *UTF8Iter::begin(DPtr<uint8_t> *utf8str) {
-  return new UTF8Iter(utf8str);
+  UTF8Iter *iter;
+  NEW(iter, UTF8Iter, utf8str);
+  return iter;
 }
 
 UTF8Iter *UTF8Iter::end(DPtr<uint8_t> *utf8str) {
-  return (UTF8Iter *)((new UTF8Iter(utf8str))->finish());
+  UTF8Iter *iter;
+  NEW(iter, UTF8Iter, utf8str);
+  return (UTF8Iter *)iter->finish();
 }
 
 UCSIter *UTF8Iter::start() {

@@ -85,24 +85,28 @@ DPtr<uint8_t> *utf8enc(DPtr<uint32_t> *codepoints)
     THROWX(SizeUnknownException);
   }
   if (codepoints->size() <= 0) {
-    return new MPtr<uint8_t>((uint8_t *)NULL, 0);
+    DPtr<uint8_t> *d;
+    NEW(d, MPtr<uint8_t>, (uint8_t*)NULL, 0);
+    return d;
   }
   size_t len = 0;
-  uint8_t *enc = (uint8_t *)calloc(codepoints->size() << 2, sizeof(uint8_t));
-  if (enc == NULL) {
+  uint8_t *enc;
+  if (!alloc(enc, codepoints->size() << 2)) {
     THROW(BadAllocException, (codepoints->size() << 2)*sizeof(uint8_t));
   }
   try {
     len = utf8enc(codepoints->dptr(), codepoints->size(), enc);
   } catch (InvalidEncodingException &e) {
-    free(enc);
+    dalloc(enc);
     RETHROW(e, "(rethrow)");
   }
-  enc = (uint8_t *)realloc(enc, len*sizeof(uint8_t));
-  if (enc == NULL) {
+  if (!ralloc(enc, len)) {
+    dalloc(enc);
     THROW(BadAllocException, len*sizeof(uint8_t));
   }
-  return new MPtr<uint8_t>(enc, len);
+  DPtr<uint8_t> *d;
+  NEW(d, MPtr<uint8_t>, enc, len);
+  return d;
 }
 
 DPtr<uint32_t> *utf8dec(DPtr<uint8_t> *utf8str)
@@ -111,11 +115,13 @@ DPtr<uint32_t> *utf8dec(DPtr<uint8_t> *utf8str)
     THROWX(SizeUnknownException);
   }
   if (utf8str->size() <= 0) {
-    return new MPtr<uint32_t>((uint32_t*)NULL, 0);
+    DPtr<uint32_t> *d;
+    NEW(d, MPtr<uint32_t>, (uint32_t*)NULL, 0);
+    return d;
   }
   size_t len = 0;
-  uint32_t *dec = (uint32_t *)calloc(utf8str->size(), sizeof(uint32_t));
-  if (dec == NULL) {
+  uint32_t *dec;
+  if (!alloc(dec, utf8str->size())) {
     THROW(BadAllocException, utf8str->size() * sizeof(uint32_t));
   }
   int i;
@@ -126,14 +132,16 @@ DPtr<uint32_t> *utf8dec(DPtr<uint8_t> *utf8str)
       dec[len++] = utf8char(at, &at);
     }
   } catch (InvalidEncodingException &e) {
-    free(dec);
+    dalloc(dec);
     RETHROW(e, "(rethrow)");
   }
-  dec = (uint32_t *)realloc(dec, len*sizeof(uint32_t));
-  if (dec == NULL) {
+  if (!ralloc(dec, len)) {
+    dalloc(dec);
     THROW(BadAllocException, len*sizeof(uint32_t));
   }
-  return new MPtr<uint32_t>(dec, len);
+  DPtr<uint32_t> *d;
+  NEW(d, MPtr<uint32_t>, dec, len);
+  return d;
 }
 
 size_t utf8nchars(const DPtr<uint8_t> *utf8str)
@@ -305,25 +313,29 @@ DPtr<uint16_t> *utf16enc(DPtr<uint32_t> *codepoints, const enum BOM bom)
     THROWX(SizeUnknownException);
   }
   if (codepoints->size() <= 0) {
-    return new MPtr<uint16_t>((uint16_t*)NULL, 0);
+    DPtr<uint16_t> *d;
+    NEW(d, MPtr<uint16_t>, (uint16_t*)NULL, 0);
+    return d;
   }
   size_t len = 0;
   size_t newsize = (codepoints->size() << 1) + (bom == NONE ? 0 : 1);
-  uint16_t *enc = (uint16_t *)calloc(newsize, sizeof(uint16_t));
-  if (enc == NULL) {
+  uint16_t *enc;
+  if (!alloc(enc, newsize)) {
     THROW(BadAllocException, newsize*sizeof(uint16_t));
   }
   try {
     len = utf16enc(codepoints->dptr(), codepoints->size(), bom, enc);
   } catch (InvalidEncodingException &e) {
-    free(enc);
+    dalloc(enc);
     RETHROW(e, "(rethrow)");
   }
-  enc = (uint16_t *)realloc(enc, len*sizeof(uint16_t));
-  if (enc == NULL) {
+  if (!ralloc(enc, len)) {
+    dalloc(enc);
     THROW(BadAllocException, len*sizeof(uint16_t));
   }
-  return new MPtr<uint16_t>(enc, len);
+  DPtr<uint16_t> *d;
+  NEW(d, MPtr<uint16_t>, enc, len);
+  return d;
 }
 
 DPtr<uint32_t> *utf16dec(DPtr<uint16_t> *utf16str)
@@ -332,13 +344,15 @@ DPtr<uint32_t> *utf16dec(DPtr<uint16_t> *utf16str)
     THROWX(SizeUnknownException);
   }
   if (utf16str->size() <= 0) {
-    return new MPtr<uint32_t>((uint32_t*)NULL, 0);
+    DPtr<uint32_t> *d;
+    NEW(d, MPtr<uint32_t>, (uint32_t*)NULL, 0);
+    return d;
   }
   const uint16_t *at;
   bool flip = utf16flip(utf16str, &at);
   size_t newsize = utf16str->size() - (at - utf16str->dptr());
-  uint32_t *dec = (uint32_t *)calloc(newsize, sizeof(uint32_t));
-  if (dec == NULL) {
+  uint32_t *dec;
+  if (!alloc(dec, newsize)) {
     THROW(BadAllocException, newsize * sizeof(uint32_t));
   }
   const uint16_t *end = utf16str->dptr() + utf16str->size();
@@ -346,11 +360,13 @@ DPtr<uint32_t> *utf16dec(DPtr<uint16_t> *utf16str)
   for (len = 0; at != end; len++) {
     dec[len] = utf16char(at, flip, &at);
   }
-  dec = (uint32_t *)realloc(dec, len*sizeof(uint32_t));
-  if (dec == NULL) {
+  if (!ralloc(dec, len)) {
+    dalloc(dec);
     THROW(BadAllocException, len * sizeof(uint32_t));
   }
-  return new MPtr<uint32_t>(dec, len);
+  DPtr<uint32_t> *d;
+  NEW(d, MPtr<uint32_t>, dec, len);
+  return d;
 }
 
 size_t utf16nchars(const DPtr<uint16_t> *utf16str) throw(SizeUnknownException,
@@ -508,18 +524,19 @@ DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints,
     return codepoints;
   }
   size_t len = 0;
-  uint32_t *enc = (uint32_t *)calloc(
-    (codepoints->size() << 1) + (bom == NONE ? 0 : 1), sizeof(uint32_t));
-  if (enc == NULL) {
+  uint32_t *enc;
+  if (!alloc(enc, (codepoints->size() << 1) + (bom == NONE ? 0 : 1))) {
     THROW(BadAllocException, (codepoints->size() << 1)*sizeof(uint32_t));
   }
   try {
     len = utf32enc(codepoints->dptr(), codepoints->size(), bom, enc);
   } catch (InvalidEncodingException &e) {
-    free(enc);
+    dalloc(enc);
     RETHROW(e, "(rethrow)");
   }
-  return new MPtr<uint32_t>(enc, len);
+  DPtr<uint32_t> *d;
+  NEW(d, MPtr<uint32_t>, enc, len);
+  return d;
 }
 
 DPtr<uint32_t> *utf32dec(DPtr<uint32_t> *utf32str)
@@ -543,8 +560,8 @@ DPtr<uint32_t> *utf32dec(DPtr<uint32_t> *utf32str)
   }
   size_t len = 0;
   size_t newsize = utf32str->size() - (at - utf32str->dptr());
-  uint32_t *dec = (uint32_t *)calloc(newsize, sizeof(uint32_t));
-  if (dec == NULL) {
+  uint32_t *dec;
+  if (!alloc(dec, newsize)) {
     THROW(BadAllocException, newsize * sizeof(uint32_t));
   }
 
@@ -557,7 +574,9 @@ DPtr<uint32_t> *utf32dec(DPtr<uint32_t> *utf32str)
       reverse_bytes<uint32_t>(dec[i]);
     }
   }
-  return new MPtr<uint32_t>(dec, newsize); 
+  DPtr<uint32_t> *d;
+  NEW(d, MPtr<uint32_t>, dec, newsize);
+  return d;
 }
 
 size_t utf32nchars(const DPtr<uint32_t> *utf32str) throw(SizeUnknownException,

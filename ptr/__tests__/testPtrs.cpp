@@ -51,8 +51,8 @@ bool testComprehensive(ptr_type *p, DPtr<ptr_type> *p2) {
     PROG(p2->size() == p4->size());
     PROG(**p2 == **p4);
     PROG((*p2)[index] == (*p4)[index]);
-    p3->drop();
     p4->drop();
+    p3->drop();
     PASS;
   } catch (BadAllocException &e) {
     cerr << e.what();
@@ -64,38 +64,34 @@ int main(int argc, char **argv) {
   INIT;
   
   size_t size = 10;
-  int *nums = (int *)calloc(size, sizeof(int));
+  int *nums;
+  alloc(nums, size);
   size_t i;
   for (i = 0; i < size; i++) {
     nums[i] = i;
   }
 
-  DPtr<int> *p = new DPtr<int>(nums, size);
+  DPtr<int> *p;
+  NEW(p, DPtr<int>, nums, size);
   TEST(testComprehensive, nums, p);
   p->drop(); // won't delete nums because is DPtr
 
-  p = new MPtr<int>(nums, size);
+  NEW(p, MPtr<int>, nums, size);
   TEST(testComprehensive, nums, p);
   p->drop(); // will delete nums because is MPtr
 
-  // free(nums); // memory error
+  // dalloc(nums); // memory error
 
-  nums = new int[size];
+  NEW_ARRAY(nums, int, size);
   for (i = 0; i < size; i++) {
     nums[i] = i;
   }
 
-  p = new APtr<int>(nums, size);
+  NEW(p, APtr<int>, nums, size);
   TEST(testComprehensive, nums, p);
   p->drop();
 
-  // delete[] nums; // memory error
-
-  DPtr<const int> *cnums = new MPtr<const int>(5);
-  cnums->hold();
-  (*cnums)[1];
-  cnums->drop();
-  cnums->drop();
+  // DELETE_ARRAY(nums); // memory error
 
   FINAL;
 }

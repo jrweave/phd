@@ -1,5 +1,7 @@
 #include "ptr/DPtr.h"
 
+#include "ptr/alloc.h"
+
 namespace ptr {
 
 using namespace std;
@@ -55,6 +57,16 @@ DPtr<ptr_type>::~DPtr() throw() {
 }
 
 template<typename ptr_type>
+void DPtr<ptr_type>::reset(ptr_type *p, bool sizeknown, size_t size)
+    THROWS(BadAllocException) {
+  Ptr::reset(p);
+  this->size_known = sizeknown;
+  this->num = sizeknown ? size : 0;
+  this->offset = 0;
+}
+TRACE(BadAllocException, "(trace)")
+
+template<typename ptr_type>
 void *DPtr<ptr_type>::ptr() const throw() {
   return (void *)this->dptr();
 }
@@ -76,12 +88,26 @@ size_t DPtr<ptr_type>::size() const throw() {
 
 template<typename ptr_type>
 DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset) throw() {
-  return new DPtr<ptr_type>(this, this->offset + offset);
+  DPtr<ptr_type> *d;
+  NEW(d, DPtr<ptr_type>, this, this->offset + offset);
+  return d;
 }
 
 template<typename ptr_type>
 DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
-  return new DPtr<ptr_type>(this, this->offset + offset, len);
+  DPtr<ptr_type> *d;
+  NEW(d, DPtr<ptr_type>, this, this->offset + offset, len);
+  return d;
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *DPtr<ptr_type>::stand() throw(BadAllocException) {
+  return this->alone() ? this : NULL;
+}
+
+template<typename ptr_type>
+bool DPtr<ptr_type>::standable() const throw() {
+  return this->alone();
 }
 
 template<typename ptr_type>

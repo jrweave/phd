@@ -26,6 +26,8 @@ public:
   // Overridden Methods
   virtual DPtr<arr_type> *sub(size_t offset) throw();
   virtual DPtr<arr_type> *sub(size_t offset, size_t len) throw();
+  virtual DPtr<arr_type> *stand() throw(BadAllocException);
+  virtual bool standable() const throw();
 
   // Operators
   APtr<arr_type> &operator=(const APtr<arr_type> &rhs) throw();

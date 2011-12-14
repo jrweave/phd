@@ -34,7 +34,8 @@ void print(IRIRef &iriref) {
 
 DPtr<uint8_t> *str2ptr(const char *str) {
   size_t len = strlen(str);
-  DPtr<uint8_t> *ptr = new MPtr<uint8_t>(len);
+  DPtr<uint8_t> *ptr;
+  NEW(ptr, MPtr<uint8_t>, len);
   if (sizeof(char) == sizeof(uint8_t)) {
     memcpy(ptr->dptr(), str, len*sizeof(char));
   } else {
@@ -46,7 +47,8 @@ DPtr<uint8_t> *str2ptr(const char *str) {
 IRIRef *ptr2iri(DPtr<uint8_t> *p) throw(MalformedIRIRefException) {
   IRIRef *iriref = NULL;
   try {
-    iriref = new IRIRef(p);
+    NEW(iriref, IRIRef, p);
+    p->drop();
   } catch (MalformedIRIRefException &e) {
     RETHROW(e, "(rethrow)");
   }
@@ -136,22 +138,27 @@ bool equiv(IRIRef *iriref, DPtr<uint8_t> *scheme, DPtr<uint8_t> *user_info,
     part->drop();
     fragment->drop();
   }
-  delete iriref;
+  DELETE(iriref);
   PASS;
 }
 
 bool malformed(DPtr<uint8_t> *mal) {
   try {
-    IRIRef *iriref = new IRIRef(mal);
+    IRIRef *iriref;
+    NEW(iriref, IRIRef, mal);
+    mal->drop();
+    DELETE(iriref);
+    return false;
   } catch (MalformedIRIRefException &e) {
     cerr << e.what() << endl;
+    mal->drop();
     return true;
   }
-  return false;
 }
 
 int main (int argc, char **argv) {
   INIT;
+  IRIRef *i;
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9"),
       str2ptr("eXAMPLE"), NULL, str2ptr("a"), NULL,
       str2ptr("/./b/../b/%63/%7bfoo%7d/ros%C3%A9"), NULL, NULL);
@@ -161,7 +168,8 @@ int main (int argc, char **argv) {
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9")->normalize(),
       str2ptr("example"), NULL, str2ptr("a"), NULL,
       str2ptr("/b/c/%7Bfoo%7D/ros\xC3\xA9"), NULL, NULL);
-  TEST(equiv, new IRIRef(), NULL, NULL, NULL, NULL, str2ptr(""), NULL, NULL);
+  NEW(i, IRIRef);
+  TEST(equiv, i, NULL, NULL, NULL, NULL, str2ptr(""), NULL, NULL);
   TEST(equiv, str2iri(""), NULL, NULL, NULL, NULL, str2ptr(""), NULL, NULL);
   TEST(equiv, str2iri("tag:jrweave@gmail.com,2011:#me"), str2ptr("tag"),
       NULL, NULL, NULL, str2ptr("jrweave@gmail.com,2011:"), NULL,

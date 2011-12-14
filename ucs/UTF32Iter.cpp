@@ -8,7 +8,7 @@ namespace ucs {
 UTF32Iter::UTF32Iter() throw(BadAllocException)
     : UCSIter(), utf32str(NULL) {
   try {
-    this->utf32str = new MPtr<uint32_t>();
+    NEW(this->utf32str, MPtr<uint32_t>);
   } JUST_RETHROW(BadAllocException, "(rethrow)")
   this->flip = false;
   this->marker = NULL;
@@ -58,11 +58,15 @@ UTF32Iter::~UTF32Iter() {
 }
 
 UTF32Iter *UTF32Iter::begin(DPtr<uint32_t> *utf32str) {
-  return new UTF32Iter(utf32str);
+  UTF32Iter *iter;
+  NEW(iter, UTF32Iter, utf32str);
+  return iter;
 }
 
 UTF32Iter *UTF32Iter::end(DPtr<uint32_t> *utf32str) {
-  return (UTF32Iter *)((new UTF32Iter(utf32str))->finish());
+  UTF32Iter *iter;
+  NEW(iter, UTF32Iter, utf32str);
+  return (UTF32Iter *) iter->finish();
 }
 
 UCSIter *UTF32Iter::start() {

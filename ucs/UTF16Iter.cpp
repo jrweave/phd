@@ -8,7 +8,7 @@ namespace ucs {
 UTF16Iter::UTF16Iter() throw(BadAllocException)
     : UCSIter(), utf16str(NULL) {
   try {
-    this->utf16str = new MPtr<uint16_t>();
+    NEW(this->utf16str, MPtr<uint16_t>);
   } JUST_RETHROW(BadAllocException, "(rethrow)")
   this->flip = false;
   this->marker = NULL;
@@ -58,11 +58,15 @@ UTF16Iter::~UTF16Iter() {
 }
 
 UTF16Iter *UTF16Iter::begin(DPtr<uint16_t> *utf16str) {
-  return new UTF16Iter(utf16str);
+  UTF16Iter *iter;
+  NEW(iter, UTF16Iter, utf16str);
+  return iter;
 }
 
 UTF16Iter *UTF16Iter::end(DPtr<uint16_t> *utf16str) {
-  return (UTF16Iter *)((new UTF16Iter(utf16str))->finish());
+  UTF16Iter *iter;
+  NEW(iter, UTF16Iter, utf16str);
+  return (UTF16Iter *) iter->finish();
 }
 
 UCSIter *UTF16Iter::start() {

@@ -13,6 +13,8 @@ protected:
   size_t num;
   size_t offset;
   bool size_known;
+  void reset(ptr_type *p, bool sizeknown, size_t size)
+      throw(BadAllocException);
   DPtr(const DPtr<ptr_type> *dptr, size_t offset) throw();
   DPtr(const DPtr<ptr_type> *dptr, size_t offset, size_t len) throw();
 public:
@@ -30,6 +32,8 @@ public:
   virtual size_t size() const throw();
   virtual DPtr<ptr_type> *sub(size_t offset) throw();
   virtual DPtr<ptr_type> *sub(size_t offset, size_t len) throw();
+  virtual DPtr<ptr_type> *stand() throw(BadAllocException);
+  virtual bool standable() const throw();
 
   // Operators
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> &rhs) throw();

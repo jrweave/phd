@@ -6,12 +6,44 @@
 using namespace ptr;
 using namespace std;
 
+bool testStand() THROWS(BadAllocException) {
+  DPtr<int> *p1;
+  NEW(p1, APtr<int>, 2);
+  (*p1)[0] = 0;
+  (*p1)[1] = 1;
+  DPtr<int> *p2;
+  NEW(p2, APtr<int>, (APtr<int>*)p1);
+  DPtr<int> *p3 = p2;
+  p3->hold();
+  PROG(p1->standable());
+  PROG(p2->standable());
+  PROG(p3->standable());
+  p2 = p2->stand();
+  PROG(p1->ptr() == p3->ptr());
+  PROG(p1->ptr() != p2->ptr());
+  PROG(p1->size() == p2->size());
+  PROG(memcmp(p1->dptr(), p2->dptr(), 2*sizeof(int)) == 0);
+  p2->drop();
+  p2 = p1->sub(1, p1->size() - 1);
+  PROG(p2->standable());
+  p1->drop();
+  int *x = p3->dptr();
+  p3->drop();
+  p2 = p2->stand();
+  PROG(x + 1 == p2->dptr());
+  p2->drop();
+  PASS;
+}
+TRACE(BadAllocException, "(trace)")
+
 bool testInt() THROWS(BadAllocException) {
   int val = -382;
-  int *ip = new int[2];
+  int *ip;
+  NEW_ARRAY(ip, int, 2);
   *ip = val;
   ip[1] = val + 1;
-  APtr<int> *p = new APtr<int>(ip, 2);
+  APtr<int> *p;
+  NEW(p, APtr<int>, ip, 2);
   PROG((int*)p->ptr() == ip);
   PROG(p->dptr() == ip);
   PROG(**p == val);
@@ -30,7 +62,7 @@ bool testInt() THROWS(BadAllocException) {
   PROG(p->dptr() == ip);
   p->drop(); // p is invalid
   //p->hold(); // memory error
-  p = new APtr<int>(1);
+  NEW(p, APtr<int>, 1);
   **p = val;
   PROG((*p)[0] == val);
   (*p)[0] = 0;
@@ -44,11 +76,14 @@ bool testInt() THROWS(BadAllocException) {
 TRACE(BadAllocException, "uncaught")
 
 bool testConstructors() THROWS(BadAllocException) {
-  char *vp = new char[1];
+  char *vp;
+  NEW_ARRAY(vp, char, 1);
   PROG(vp != NULL);
-  APtr<char> *p = new APtr<char>(vp);
+  APtr<char> *p;
+  NEW(p, APtr<char>, vp);
   APtr<char> p3 (*p);
-  APtr<char> *p2 = new APtr<char>(&p3);
+  APtr<char> *p2;
+  NEW(p2, APtr<char>, &p3);
   PROG(p->ptr() == vp);
   PROG(p2->dptr() == vp);
   PROG(p3.dptr() == vp);
@@ -59,7 +94,7 @@ bool testConstructors() THROWS(BadAllocException) {
   p->drop();
   p->drop(); // now p is invalid
   PROG(p3.dptr() == vp);
-  p = new APtr<char>(5832);
+  NEW(p, APtr<char>, 5832);
   PROG(p->dptr() != p3.dptr());
   p3 = p;
   PROG(p->dptr() == p3.dptr());
@@ -81,7 +116,9 @@ bool testArrayOfDPtrs() THROWS(BadAllocException) {
   PROG(strings.size() == 5);
   int i;
   for (i = 0; i < 5; i++) {
-    strings[i] = new string(cstrs[i]);
+    string *s;
+    NEW(s, string, cstrs[i]);
+    strings[i] = s;
   }
   PROG(true);
   for (i = 0; i < 5; i++) {
@@ -105,5 +142,6 @@ int main (int argc, char **argv) {
   TEST(testInt);
   TEST(testConstructors);
   TEST(testArrayOfDPtrs);
+  TEST(testStand);
   FINAL;
 }

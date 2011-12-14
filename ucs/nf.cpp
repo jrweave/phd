@@ -141,7 +141,8 @@ DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
     }
   }
   nforder<vector<uint32_t>::iterator >(decomp.begin(), decomp.end());
-  DPtr<uint32_t> *p = new MPtr<uint32_t>(decomp.size());
+  DPtr<uint32_t> *p;
+  NEW(p, MPtr<uint32_t>, decomp.size());
   copy(decomp.begin(), decomp.end(), p->dptr());
   return p;
 }
@@ -288,7 +289,8 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
         codepoints->hold();
         return codepoints;
       }
-      MPtr<uint32_t> *reordered = new MPtr<uint32_t>(codepoints->size());
+      MPtr<uint32_t> *reordered;
+      NEW(reordered, MPtr<uint32_t>, codepoints->size());
       memcpy(reordered->dptr(), codepoints->dptr(),
           codepoints->size() * sizeof(uint32_t));
       nforder<uint32_t*>(reordered->dptr(),
@@ -317,7 +319,8 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
       norms.push_back(p);
     }
     total_len += codepoints->size() - bounds[bounds.size() - 1];
-    DPtr<uint32_t> *result = new MPtr<uint32_t>(total_len);
+    DPtr<uint32_t> *result;
+    NEW(result, MPtr<uint32_t>, total_len);
     total_len = 0;
     for (i = 0; i < bounds.size(); i += 2) {
       if (i == 0) {
@@ -464,7 +467,9 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
       uint32_t offset = lb - UCS_COMPOSITION_INDEX;
       (*comp)[starti] = UCS_COMPOSITIONS[offset];
     }
-    return comp->sub(0, newsize);
+    DPtr<uint32_t> *ret = comp->sub(0, newsize);
+    comp->drop();
+    return ret;
   } catch (BadAllocException &e) {
     comp->drop();
     RETHROW(e, "(rethrow)");

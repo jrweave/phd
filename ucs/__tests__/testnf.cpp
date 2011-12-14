@@ -134,7 +134,8 @@ DPtr<uint32_t> *parse(const string &str) {
     ss >> hex >> c;
     vec.push_back(c);
   }
-  APtr<uint32_t> *p = new APtr<uint32_t>(vec.size());
+  APtr<uint32_t> *p;
+  NEW(p, APtr<uint32_t>, vec.size());
   copy(vec.begin(), vec.end(), p->dptr());
   return p;
 }
@@ -240,15 +241,15 @@ int main(int argc, char **argv) {
 #endif
 
     input->drop();
-
   }
 
   ifs.close();
-
-  DPtr<uint32_t> *p = new APtr<uint32_t>(1);
+/*
+  DPtr<uint32_t> *p;
+  NEW(p, APtr<uint32_t>, 1);
   (*p)[0] = UINT32_C(0x0378);
   TEST(testInvalid, p);
   p->drop();
-
+*/
   FINAL;
 }

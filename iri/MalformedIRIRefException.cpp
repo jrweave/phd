@@ -30,6 +30,7 @@ MalformedIRIRefException::MalformedIRIRefException(const char *file,
       }
     }
     this->stack_trace.push_back(str);
+    DELETE(mal);
   }
 }
 

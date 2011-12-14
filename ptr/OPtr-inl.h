@@ -52,7 +52,7 @@ OPtr<obj_type>::~OPtr() throw() {
 template<typename obj_type>
 void OPtr<obj_type>::destroy() throw() {
   if (this->p != NULL) {
-    delete (obj_type *)this->p;
+    DELETE((obj_type *)this->p);
   }
 }
 
@@ -65,12 +65,34 @@ void OPtr<Ptr>::destroy() throw() {
 
 template<typename obj_type>
 DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset) throw() {
-  return new OPtr<obj_type>(this, this->offset + offset);
+  DPtr<obj_type> *d;
+  NEW(d, OPtr<obj_type>, this, this->offset + offset);
+  return d;
 }
 
 template<typename obj_type>
 DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset, size_t len) throw() {
-  return new OPtr<obj_type>(this, this->offset + offset, len);
+  DPtr<obj_type> *d;
+  NEW(d, OPtr<obj_type>, this, this->offset + offset, len);
+  return d;
+}
+
+template<typename obj_type>
+DPtr<obj_type> *OPtr<obj_type>::stand() throw(BadAllocException) {
+  if (this->alone()) {
+    return this;
+  }
+  // Making a copy of the underlying object depends on a copy constructor
+  // or assignment operator.  Since we do not wish to restrict the
+  // usefulness of this class to such objects, we simply return NULL.
+  // In the future, it is conceivable to subclass OPtr to something
+  // that will use the copy constructor or assignment operator.
+  return NULL;
+}
+
+template<typename obj_type>
+bool OPtr<obj_type>::standable() const throw() {
+  return this->alone();
 }
 
 template<typename obj_type>

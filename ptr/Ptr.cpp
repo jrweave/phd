@@ -1,6 +1,8 @@
 #include "ptr/Ptr.h"
 
 #include <cstdlib>
+#include <iostream>
+#include "ptr/alloc.h"
 
 namespace ptr {
 
@@ -8,8 +10,7 @@ using namespace std;
 
 Ptr::Ptr() throw(BadAllocException)
     : p(NULL), local_refs(1) {
-  this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
-  if (this->global_refs == NULL) {
+  if (!alloc(this->global_refs, 1)) {
     THROW(BadAllocException, sizeof(uint32_t));
   }
   *(this->global_refs) = 1;
@@ -17,8 +18,7 @@ Ptr::Ptr() throw(BadAllocException)
 
 Ptr::Ptr(void *p) throw(BadAllocException)
     : p(p), local_refs(1) {
-  this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
-  if (this->global_refs == NULL) {
+  if (!alloc(this->global_refs, 1)) {
     THROW(BadAllocException, sizeof(uint32_t));
   }
   *(this->global_refs) = 1;
@@ -45,10 +45,30 @@ void Ptr::destruct() throw() {
     if (*(this->global_refs) == 0) {
       this->destroy();
       this->p = NULL;
-      free(this->global_refs);
+      dalloc(this->global_refs);
       this->global_refs = NULL;
     }
   }
+}
+
+void Ptr::reset(void *p) throw(BadAllocException) {
+  uint32_t *global;
+  if (!alloc(global, 1)) {
+    THROW(BadAllocException, sizeof(uint32_t));
+  }
+  *global = this->local_refs;
+  this->destruct();
+  this->p = p;
+  this->global_refs = global;
+  this->local_refs = *global;
+}
+
+uint32_t Ptr::localRefs() const throw() {
+  return this->local_refs;
+}
+
+uint32_t Ptr::globalRefs() const throw() {
+  return *(this->global_refs);
 }
 
 void *Ptr::ptr() const throw() {
@@ -67,11 +87,16 @@ void Ptr::drop() throw() {
     if (*(this->global_refs) == 0) {
       this->destroy();
       this->p = NULL;
-      free(this->global_refs);
+      dalloc(this->global_refs);
       this->global_refs = NULL;
     }
-    delete this;
+    void *x = this;
+    DELETE(this);
   }
+}
+
+bool Ptr::alone() const throw() {
+  return *(this->global_refs) == 1;
 }
 
 void Ptr::destroy() throw() {
@@ -80,40 +105,44 @@ void Ptr::destroy() throw() {
 }
 
 Ptr &Ptr::operator=(const Ptr &rhs) throw() {
-  if (this == &rhs) {
+  return *this = &rhs;
+}
+
+Ptr &Ptr::operator=(const Ptr *rhs) throw() {
+  if (this == rhs) {
     return *this;
   }
   (*(this->global_refs)) -= this->local_refs;
   // destroy old pointer if no one else refers to it.
   if (*(this->global_refs) == 0) {
     this->destroy();
-    free(this->global_refs);
+    dalloc(this->global_refs);
     this->global_refs = NULL; // sanity
   }
-  this->p = rhs.p;
-  this->global_refs = rhs.global_refs;
+  this->p = rhs->p;
+  this->global_refs = rhs->global_refs;
   (*(this->global_refs)) += this->local_refs;
   return *this;
 }
 
-Ptr &Ptr::operator=(const Ptr *rhs) throw() {
-  return *this = *rhs;
-}
-
 Ptr &Ptr::operator=(void *p) throw(BadAllocException) {
-  if (this->local_refs == *(this->global_refs)) {
+  (*(this->global_refs)) -= this->local_refs;
+  if (*(this->global_refs) == 0) {
     if (this->p != p) {
       this->destroy();
     }
   } else {
-    this->global_refs = (uint32_t *)malloc(sizeof(uint32_t));
-    if (this->global_refs == NULL) {
+    if (!alloc(this->global_refs, 1)) {
       THROW(BadAllocException, sizeof(uint32_t));
     }
   }
   this->p = p;
-  this->local_refs = 1;
-  (*(this->global_refs)) = 1;
+  (*(this->global_refs)) = this->local_refs;
+  return *this;
+}
+
+Ptr *Ptr::thisAddr() throw() {
+  return this;
 }
 
 }

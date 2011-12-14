@@ -23,6 +23,8 @@ public:
   // Overridden Methods
   virtual DPtr<obj_type> *sub(size_t offset) throw();
   virtual DPtr<obj_type> *sub(size_t offset, size_t len) throw();
+  virtual DPtr<obj_type> *stand() throw(BadAllocException);
+  virtual bool standable() const throw();
 
   // Operators
   OPtr<obj_type> &operator=(const OPtr<obj_type> &rhs) throw();

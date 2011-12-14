@@ -1,6 +1,8 @@
 #include "ptr/APtr.h"
 
+#include <algorithm>
 #include <new>
+#include "ptr/alloc.h"
 
 namespace ptr {
 
@@ -28,7 +30,7 @@ template<typename arr_type>
 APtr<arr_type>::APtr(size_t num) throw(BadAllocException)
     : DPtr<arr_type>((arr_type*)NULL, num) {
   try {
-    this->p = new arr_type[num];
+    NEW_ARRAY(this->p, arr_type, num);
   } catch (bad_alloc &ba) {
     // num*sizeof(arr_type) may be a low estimate since
     // we're creating an array with new and not malloc
@@ -69,18 +71,50 @@ APtr<arr_type>::~APtr() throw() {
 template<typename arr_type>
 void APtr<arr_type>::destroy() throw() {
   if (this->p != NULL) {
-    delete[] (arr_type *)this->p;
+    DELETE_ARRAY((arr_type *)this->p);
   }
 }
 
 template<typename arr_type>
 DPtr<arr_type> *APtr<arr_type>::sub(size_t offset) throw() {
-  return new APtr<arr_type>(this, this->offset + offset);
+  DPtr<arr_type> *d;
+  NEW(d, APtr<arr_type>, this, this->offset + offset);
+  return d;
 }
 
 template<typename arr_type>
 DPtr<arr_type> *APtr<arr_type>::sub(size_t offset, size_t len) throw() {
-  return new APtr<arr_type>(this, this->offset + offset, len);
+  DPtr<arr_type> *d;
+  NEW(d, APtr<arr_type>, this, this->offset + offset, len);
+  return d;
+}
+
+template<typename arr_type>
+DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
+  if (this->alone()) {
+    return this;
+  }
+  if (!this->sizeKnown()) {
+    return NULL;
+  }
+  arr_type *arr = NULL;
+  try {
+    NEW_ARRAY(arr, arr_type, this->size());
+  } RETHROW_BAD_ALLOC
+  copy(this->dptr(), this->dptr() + this->size(), arr);
+  if (this->localRefs() > 1) {
+    DPtr<arr_type> *d;
+    NEW(d, APtr<arr_type>, arr, this->size());
+    this->drop();
+    return d;
+  }
+  DPtr<arr_type>::reset(arr, true, this->size());
+  return this;
+}
+
+template<typename arr_type>
+bool APtr<arr_type>::standable() const throw() {
+  return this->alone() || this->sizeKnown();
 }
 
 template<typename arr_type>

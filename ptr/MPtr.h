@@ -26,6 +26,8 @@ public:
   // Overridden Methods
   virtual DPtr<ptr_type> *sub(size_t offset) throw();
   virtual DPtr<ptr_type> *sub(size_t offset, size_t len) throw();
+  virtual DPtr<ptr_type> *stand() throw(BadAllocException);
+  virtual bool standable() const throw();
 
   // Final Methods
   size_t sizeInBytes() const throw();

@@ -18,7 +18,7 @@ force_look :
 	true
 
 testendian : testendian.cpp ../endian.h ../endian.o ../ints.h ../sys.h
-	$(ECHO) $(CC) $(CFLAGS) -o testendian testendian.cpp ../endian.o
-	$(CC) $(CFLAGS) -o testendian testendian.cpp ../endian.o
+	$(ECHO) $(CC) $(CFLAGS) -o testendian testendian.cpp ../endian.o ../../ptr/alloc.o
+	$(CC) $(CFLAGS) -o testendian testendian.cpp ../endian.o ../../ptr/alloc.o
 	$(ECHO) [TEST] ./testendian
 	./testendian

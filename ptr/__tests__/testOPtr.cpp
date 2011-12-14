@@ -9,11 +9,13 @@ using namespace std;
 bool testVector() THROWS(BadAllocException) {
   int i;
   int nums = 11;
-  vector<int > *vec = new vector<int>();
+  vector<int > *vec;
+  NEW(vec, vector<int>);
   for (i = 0; i < nums; i++) {
     vec->push_back(i);
   }
-  OPtr<vector<int> > *p = new OPtr<vector<int> >(vec);
+  OPtr<vector<int> > *p;
+  NEW(p, OPtr<vector<int> >, vec);
   PROG((vector<int>*)p->ptr() == vec);
   PROG(p->dptr() == vec);
   PROG(**p == *vec);
@@ -28,7 +30,8 @@ bool testVector() THROWS(BadAllocException) {
     p->drop();
   }
   PROG(p->dptr() == vec);
-  vector<int> *vec2 = new vector<int>();
+  vector<int> *vec2;
+  NEW(vec2, vector<int>);
   *p = vec2;
   // vec is no longer a valid pointer
   // vec->push_back(100); // should create memory error
@@ -43,11 +46,14 @@ bool testVector() THROWS(BadAllocException) {
 TRACE(BadAllocException, "uncaught")
 
 bool testConstructors() THROWS(BadAllocException) {
-  vector<int> *vec = new vector<int>();
+  vector<int> *vec;
+  NEW(vec, vector<int>);
   PROG(vec != NULL);
-  OPtr<vector<int> > *p = new OPtr<vector<int> >(vec);
+  OPtr<vector<int> > *p;
+  NEW(p, OPtr<vector<int> >, vec);
   OPtr<vector<int> > p3 (*p);
-  OPtr<vector<int> > *p2 = new OPtr<vector<int> >(&p3);
+  OPtr<vector<int> > *p2;
+  NEW(p2, OPtr<vector<int> >, &p3);
   PROG(p->ptr() == vec);
   PROG(p2->dptr() == vec);
   PROG(p3.dptr() == vec);
@@ -60,8 +66,9 @@ bool testConstructors() THROWS(BadAllocException) {
   p->drop(); // now p is invalid
   // vec is still valid
   PROG(p3.dptr() == vec);
-  vector<int> *vec2 = new vector<int>();
-  p = new OPtr<vector<int> >(vec2); // p is valid
+  vector<int> *vec2;
+  NEW(vec2, vector<int>);
+  NEW(p, OPtr<vector<int> >, vec2); // p is valid
   p3 = p;
   // vec is now invalid due to no Ptr reference
   // vec->size(); // should create memory error

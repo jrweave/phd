@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 #include "iri/MalformedIRIRefException.h"
 #include "ptr/BadAllocException.h"
@@ -25,7 +26,7 @@ using namespace ucs;
 IRIRef::IRIRef() throw(BadAllocException)
     : normalized(false) {
   try {
-    this->utf8str = new MPtr<uint8_t>();
+    NEW(this->utf8str, MPtr<uint8_t>);
   } JUST_RETHROW(BadAllocException, "(rethrow)")
 }
 
@@ -39,7 +40,9 @@ IRIRef::IRIRef(DPtr<uint8_t> *utf8str)
   UTF8Iter end (utf8str);
   end.finish();
   if (!isIRIReference(begin, end)) {
-      THROW(MalformedIRIRefException, new UTF8Iter(utf8str));
+      UTF8Iter *iter;
+      NEW(iter, UTF8Iter, utf8str);
+      THROW(MalformedIRIRefException, iter);
   }
   this->utf8str = utf8str;
   this->utf8str->hold();
@@ -333,51 +336,50 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
 
   uint8_t *normed = NULL;
   DPtr<uint8_t> *normal = NULL;
-  DPtr<uint8_t> *temp = NULL;
+
+  if (this->utf8str->standable()) {
+    this->utf8str = this->utf8str->stand();
+    normal = this->utf8str;
+    normal->hold();
+  } else {
+    NEW(normal, MPtr<uint8_t>, this->utf8str->size());
+  }
+  normed = normal->dptr();
 
   // Percent encoding; decode if IUnreserved
   size_t i, j, k;
+  j = 0;
   k = 0;
   for (i = 0; i < this->utf8str->size(); i = j) {
     for (j = i; j < this->utf8str->size()
         && (*(this->utf8str))[j] != (uint8_t) IRI_CHAR_PERCENT; j++) {
       // loop does the work
     }
-    if (i == 0) {
-      if (j < this->utf8str->size()) {
-        normed = (uint8_t *) calloc(this->utf8str->size(), sizeof(uint8_t));
-        if (normed == NULL) {
-          THROW(BadAllocException, this->utf8str->size() * sizeof(uint8_t));
-        }
-      } else {
-        normal = this->utf8str;
-        normal->hold();
-        break;
-      }
-    }
-    memcpy(normed + k, this->utf8str->dptr() + i,
-        (j-i)*sizeof(uint8_t));
+    memmove(normed + k, this->utf8str->dptr() + i, (j - i) * sizeof(uint8_t));
     k += (j - i);
-    if (j < this->utf8str->size()) {
-      // decode percent-encoding
-      uint8_t n = (((uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+1])) << 4)
-          | (uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+2]);
-      if (IRIRef::isIUnreserved(n)) {
-        normed[k++] = n;
-        j += 3;
-      } else {
-        normed[k++] = (*(this->utf8str))[j++];
-        uint8_t c = (*(this->utf8str))[j++];
-        normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
-            (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
-        c = (*(this->utf8str))[j++];
-        normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
-            (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
-      }
+    if (j >= this->utf8str->size()) {
+      break;
+    }
+    // decode percent-encoding
+    uint8_t n = (((uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+1])) << 4)
+        | (uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+2]);
+    if (IRIRef::isIUnreserved(n)) {
+      normed[k++] = n;
+      j += 3;
+    } else {
+      normed[k++] = (*(this->utf8str))[j++];
+      uint8_t c = (*(this->utf8str))[j++];
+      normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
+          (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
+      c = (*(this->utf8str))[j++];
+      normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
+          (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
     }
   }
-  if (normal == NULL) {
-    normal = new MPtr<uint8_t>(normed, k);
+  if (k < this->utf8str->size()) {
+    DPtr<uint8_t> *temp = normal->sub(0, k);
+    normal->drop();
+    normal = temp;
   }
 
   // Character normalization; NFC
@@ -385,10 +387,10 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
   normal->drop();
   DPtr<uint32_t> *codepoints2 = nfc_opt(codepoints);
   codepoints->drop();
-  temp = utf8enc(codepoints2);
+  normal = utf8enc(codepoints2);
   codepoints2->drop();
   this->utf8str->drop();
-  this->utf8str = temp;
+  this->utf8str = normal;
 
   // Path normalization
   this->resolve(NULL);
@@ -549,7 +551,8 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
         DPtr<uint8_t> *base_host = base->getPart(HOST);
         DPtr<uint8_t> *base_path = base->getPart(PATH);
         if (base_host != NULL && base_path->size() > 0) {
-          DPtr<uint8_t> *newpath = new MPtr<uint8_t>(path->size() + 1);
+          DPtr<uint8_t> *newpath;
+          NEW(newpath, MPtr<uint8_t>, path->size() + 1);
           (*newpath)[0] = (uint8_t) IRI_CHAR_SLASH;
           memcpy(newpath->dptr() + 1, path->dptr(),
               path->size() * sizeof(uint8_t));
@@ -562,7 +565,8 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
                slash--) {
             // loop does the work; finds last slash in base path
           }
-          DPtr<uint8_t> *newpath = new MPtr<uint8_t>(slash + path->size());
+          DPtr<uint8_t> *newpath;
+          NEW(newpath, MPtr<uint8_t>, slash + path->size());
           memcpy(newpath->dptr(), base_path->dptr(), slash * sizeof(uint8_t));
           memcpy(newpath->dptr() + slash, path->dptr(),
               path->size() * sizeof(uint8_t));
@@ -591,7 +595,8 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
       + path->size()
       + (query == NULL ? 0 : query->size() + 1)
       + (fragment == NULL ? 0 : fragment->size() + 1);
-  uint8_t *iristr = (uint8_t *) calloc(len, sizeof(uint8_t));
+  uint8_t *iristr = NULL;
+  alloc(iristr, len);
   if (iristr != NULL) {
     len = 0;
     if (scheme != NULL) {
@@ -641,7 +646,7 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
     THROW(BadAllocException, len * sizeof(uint8_t));
   }
   this->utf8str->drop();
-  this->utf8str = new MPtr<uint8_t>(iristr, len);
+  NEW(this->utf8str, MPtr<uint8_t>, iristr, len);
 
   return this->resolve(NULL);
 }

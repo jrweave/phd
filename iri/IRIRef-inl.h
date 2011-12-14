@@ -562,29 +562,4 @@ bool isPctEncoded(iter begin, iter end) {
   return begin != end && IRI_CHAR_IS_HEXDIG(*begin);
 }
 
-template<typename iter>
-IRIRef *parseIRIRef(iter begin, iter end) throw(BadAllocException) {
-  if (!isIRIReference(begin, end)) {
-    return NULL;
-  }
-  size_t len;
-  iter temp = begin;
-  for (len = 0; temp != end; ++len) {
-    ++temp;
-  }
-  uint8_t *utf8str = (uint8_t *)calloc(len << 2, sizeof(uint8_t));
-  if (utf8str == NULL) {
-    THROW(BadAllocException, (len << 2) * sizeof(uint8_t));
-  }
-  len = utf8enc(begin, end, utf8str);
-  uint8_t *utf8str2 = (uint8_t *)realloc(utf8str, len*sizeof(uint8_t));
-  if (utf8str2 == NULL) {
-    free(utf8str);
-    THROW(BadAllocException, len*sizeof(uint8_t));
-  }
-  try {
-    return new MPtr<uint8_t>(utf8str2, len);
-  } RETHROW_BAD_ALLOC
-}
-
 }

@@ -1,5 +1,8 @@
 #include "ptr/MPtr.h"
 
+#include <algorithm>
+#include "ptr/alloc.h"
+
 namespace ptr {
 
 using namespace std;
@@ -24,10 +27,12 @@ MPtr<ptr_type>::MPtr(ptr_type *p, size_t num) throw(BadAllocException)
 
 template<typename ptr_type>
 MPtr<ptr_type>::MPtr(size_t num) throw(BadAllocException)
-    : DPtr<ptr_type>((ptr_type *)calloc(num, sizeof(ptr_type)), num) {
-  if (this->ptr() == NULL && num != 0) {
+    : DPtr<ptr_type>((ptr_type*)NULL, num) {
+  ptr_type *q;
+  if (!alloc(q, num)) {
     THROW(BadAllocException, num*sizeof(ptr_type));
   }
+  this->p = q;
 }
 
 template<typename ptr_type>
@@ -63,23 +68,55 @@ MPtr<ptr_type>::~MPtr() throw() {
 template<typename ptr_type>
 void MPtr<ptr_type>::destroy() throw() {
   if (this->p != NULL) {
-    free(this->p);
+    dalloc(this->p);
   }
 }
 
 template<typename ptr_type>
 DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset) throw() {
-  return new MPtr<ptr_type>(this, this->offset + offset);
+  DPtr<ptr_type> *d;
+  NEW(d, MPtr<ptr_type>, this, this->offset + offset);
+  return d;
 }
 
 template<typename ptr_type>
 DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
-  return new MPtr<ptr_type>(this, this->offset + offset, len);
+  DPtr<ptr_type> *d;
+  NEW(d, MPtr<ptr_type>, this, this->offset + offset, len);
+  return d;
 }
 
 template<typename ptr_type>
 size_t MPtr<ptr_type>::sizeInBytes() const throw() {
   return this->size() * sizeof(ptr_type);
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
+  if (this->alone()) {
+    return this;
+  }
+  if (!this->sizeKnown()) {
+    return NULL;
+  }
+  ptr_type *p;
+  if (!alloc(p, this->size())) {
+    THROW(BadAllocException, this->size() * sizeof(ptr_type));
+  }
+  copy(this->dptr(), this->dptr() + this->size(), p);
+  if (this->localRefs() > 1) {
+    DPtr<ptr_type> *d;
+    NEW(d, MPtr<ptr_type>, p, this->size());
+    this->drop();
+    return d;
+  }
+  DPtr<ptr_type>::reset(p, true, this->size());
+  return this;
+}
+
+template<typename ptr_type>
+bool MPtr<ptr_type>::standable() const throw() {
+  return this->alone() || this->sizeKnown();
 }
 
 template<typename ptr_type>

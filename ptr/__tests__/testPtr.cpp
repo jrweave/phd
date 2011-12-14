@@ -1,13 +1,17 @@
 #include "ptr/Ptr.h"
-
 #include "test/unit.h"
+
+#include "ptr/alloc.h"
+#include "sys/ints.h"
 
 using namespace ptr;
 using namespace std;
 
 bool testOverall() THROWS(BadAllocException) {
-  void *vp = malloc(1);
-  Ptr *p = new Ptr(vp);
+  uint8_t *vp;
+  PROG(alloc(vp, 1));
+  Ptr *p;
+  NEW(p, Ptr, vp);
   PROG(p->ptr() == vp);
   int max = 10;
   int i;
@@ -18,31 +22,35 @@ bool testOverall() THROWS(BadAllocException) {
     p->drop();
   }
   PROG(p->ptr() == vp);
-  void *vp2 = malloc(1);
+  uint8_t *vp2;
+  PROG(alloc(vp2, 1));
   *p = vp2;
   // vp is still a valid pointer
-  free(vp);
+  dalloc(vp);
   PROG(p->ptr() != vp);
   PROG(p->ptr() == vp2);
   p->hold();
   p->drop();
   p->drop(); // this deletes p
-  // p->drop(); // should create memory error 
+  //p->drop(); // should create memory error 
   // vp2 is still a valid pointer
-  free(vp2);
+  dalloc(vp2);
   PASS;
 }
 TRACE(BadAllocException, "uncaught")
 
 bool testConstructors() THROWS(BadAllocException) {
   PROG(true);
-  void *vp = malloc(1);
+  uint8_t *vp;
+  PROG(alloc(vp, 1));
   PROG(vp != NULL);
-  Ptr *p = new Ptr(vp);
+  Ptr *p;
+  NEW(p, Ptr, vp);
   PROG(true);
   Ptr p3 (*p);
   PROG(true);
-  Ptr *p2 = new Ptr(&p3);
+  Ptr *p2;
+  NEW(p2, Ptr, &p3);
   PROG(p->ptr() == vp);
   PROG(p2->ptr() == vp);
   PROG(p3.ptr() == vp);
@@ -51,10 +59,11 @@ bool testConstructors() THROWS(BadAllocException) {
   PROG(p->ptr() == vp);
   PROG(p3.ptr() == vp);
   p->drop();
-  //p->drop(); // now p is invalid
+  p->drop(); // now p is invalid
   PROG(p3.ptr() == vp);
-  void *vp2 = malloc(1);
-  p = new Ptr(vp2);
+  uint8_t *vp2;
+  PROG(alloc(vp2, 1));
+  NEW(p, Ptr, vp2);
   p3 = p;
   PROG(p->ptr() == vp2);
   PROG(p3.ptr() == vp2);
@@ -65,9 +74,9 @@ bool testConstructors() THROWS(BadAllocException) {
   p->drop(); // now p is invalid
   PROG(p3.ptr() == vp2);
   // vp is still valid
-  free(vp);
+  dalloc(vp);
   // vp2 will remain valid unless freed
-  free(vp2);
+  dalloc(vp2);
   PASS;
 }
 TRACE(BadAllocException, "uncaught")

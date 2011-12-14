@@ -1,6 +1,8 @@
 #ifndef __UTIL__FUNCS_H__
 #define __UTIL__FUNCS_H__
 
+#include <cstddef>
+
 namespace util {
 
 using namespace std;

@@ -42,10 +42,14 @@ class Ptr {
 private:
   uint32_t *global_refs;
   uint32_t local_refs;
+  Ptr *thisAddr() throw();
 protected:
   void *p; // subclasses, be careful
   virtual void destroy() throw();
   void destruct() throw();
+  void reset(void *p) throw(BadAllocException);
+  uint32_t localRefs() const throw();
+  uint32_t globalRefs() const throw();
 public:
   Ptr() throw(BadAllocException);
   Ptr(void *p) throw(BadAllocException);
@@ -59,6 +63,7 @@ public:
   // Final Methods
   void hold() throw();
   void drop() throw();
+  bool alone() const throw();
 
   // Operators
   Ptr &operator=(const Ptr &rhs) throw();

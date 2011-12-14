@@ -137,9 +137,6 @@ bool isPctEncoded(iter begin, iter end);
 
 class IRIRef;
 
-template<typename iter>
-IRIRef *parseIRIRef(iter begin, iter end) throw(BadAllocException);
-
 enum IRIRefPart {
   SCHEME, USER_INFO, HOST, PORT, PATH, QUERY, FRAGMENT
 };

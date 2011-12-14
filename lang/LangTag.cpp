@@ -17,7 +17,8 @@ using namespace std;
 #include "lang/lang_arrays.cpp"
 
 LangTag::LangTag() throw(BadAllocException)
-    : ascii(new MPtr<uint8_t>(9)), canonical(false), extlang_form(false) {
+    : ascii(NULL), canonical(false), extlang_form(false) {
+  NEW(this->ascii, MPtr<uint8_t>, 9);
   (*(this->ascii))[0] = LANG_CHAR_LOWERCASE_I;
   (*(this->ascii))[1] = LANG_CHAR_HYPHEN;
   (*(this->ascii))[2] = LANG_CHAR_LOWERCASE_D;
@@ -222,6 +223,17 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
     return this;
   }
 
+  if (this->ascii->standable()) {
+    this->ascii = this->ascii->stand();
+  } else {
+    DPtr<uint8_t> *a;
+    NEW(a, MPtr<uint8_t>, this->ascii->size());
+    memcpy(a->dptr(), this->ascii->dptr(),
+           this->ascii->size() * sizeof(uint8_t));
+    this->ascii->drop();
+    this->ascii = a;
+  }
+
   if (this->isGrandfathered()) {
     // just go to lowercase
     uint8_t *begin = this->ascii->dptr();
@@ -278,8 +290,8 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
         }
       }
       stable_sort(extmarks.begin(), extmarks.end(), compare_first_only);
-      uint8_t *newexts = (uint8_t *) calloc(part->size(), sizeof(uint8_t));
-      if (newexts == NULL) {
+      uint8_t *newexts;
+      if (!alloc(newexts, part->size())) {
         THROW(BadAllocException, part->size() * sizeof(uint8_t));
       }
       mark = newexts;
@@ -293,7 +305,7 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
         }
       }
       memcpy(part->dptr(), newexts, part->size() * sizeof(uint8_t));
-      free(newexts);
+      dalloc(newexts);
     }
     part->drop();
   }
@@ -337,7 +349,8 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
   const uint8_t *prefix = lookup(lang->dptr(), lang->size(),
       LANG_EXTLANG_SUBTAG_PREFIX_VALUES, preflen);
   if (prefix != NULL) {
-    DPtr<uint8_t> *s = new MPtr<uint8_t>(preflen + 1 + this->ascii->size());
+    DPtr<uint8_t> *s;
+    NEW(s, MPtr<uint8_t>, preflen + 1 + this->ascii->size());
     memcpy(s->dptr(), prefix, preflen * sizeof(uint8_t));
     (*s)[preflen] = LANG_CHAR_HYPHEN;
     memcpy(s->dptr() + preflen + 1, this->ascii->dptr(),
@@ -345,6 +358,7 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
     this->ascii->drop();
     this->ascii = s;
   }
+  lang->drop();
   this->extlang_form = true;
   return this;
 }
@@ -517,6 +531,7 @@ void LangTag::normalizePart(enum LangTagPart p)
   }
 
   if (this->replaceSection(part, lookup_array)) {
+    part->drop();
     return;
   }
 
@@ -545,6 +560,7 @@ void LangTag::normalizePart(enum LangTagPart p)
       }
       break;
   }
+  part->drop();
 }
 TRACE(BadAllocException, "(trace)")
 
@@ -572,7 +588,8 @@ bool LangTag::replaceSection(DPtr<uint8_t> *part, const void **lookup_array)
     size_t frontlen = begin - this->ascii->dptr();
     size_t taillen = this->ascii->size() - frontlen - part->size();
     size_t totallen = frontlen + newlen + taillen;
-    DPtr<uint8_t> *s = new MPtr<uint8_t>(totallen);
+    DPtr<uint8_t> *s;
+    NEW(s, MPtr<uint8_t>, totallen);
     memcpy(s->dptr(), this->ascii->dptr(), frontlen * sizeof(uint8_t));
     memcpy(s->dptr() + frontlen, begin, newlen * sizeof(uint8_t));
     memcpy(s->dptr() + frontlen + newlen, end, taillen * sizeof(uint8_t));
