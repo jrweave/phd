@@ -604,40 +604,6 @@ print STDERR "\n";
 print STDERR "#endif /* !defined(UCS_NO_C) */\n";
 print STDERR "\n";
 
-#print "#ifndef UCS_NO_C\n";
-#print "\n";
-#print "extern const uint32_t UCS_COMPOSITION_RANGES_LEN;\n";
-#print "extern const uint64_t UCS_COMPOSITION_RANGES[];\n";
-#print "extern const uint32_t UCS_COMPOSITION_OFFSETS[];\n";
-#print "extern const uint32_t UCS_COMPOSITIONS[];\n";
-#print "\n";
-#print "#endif /* UCS_NO_C */\n";
-#print "\n";
-#
-#print STDERR "#ifndef UCS_NO_C\n";
-#print STDERR "\n";
-#print STDERR "const uint32_t UCS_COMPOSITION_RANGES_LEN = UINT32_C(" . scalar(@cranges) . ");\n";
-#print STDERR "\n";
-#print STDERR "const uint64_t UCS_COMPOSITION_RANGES[" . scalar(@cranges) . "] = {\n";
-#foreach (@cranges) {
-#	@pair = split(' ' , $_);
-#	printf(STDERR "\tUINT64_C(0x%04X%08X),\n", $pair[0], $pair[1]);
-#}
-#print STDERR "};\n";
-#print STDERR "\n";
-#print STDERR "const uint32_t UCS_COMPOSITION_OFFSETS[" . scalar(@cindex) . "] = {\n";
-#foreach (@cindex) {
-#	print STDERR "\tUINT32_C($_),\n";
-#}
-#print STDERR "};\n";
-#print STDERR "\n";
-#print STDERR "const uint32_t UCS_COMPOSITIONS[" . scalar(@keys) . "] = {\n";
-#foreach (@keys) {
-#	printf(STDERR "\tUINT32_C(0x%04X),\n", $comp_pairs{$_});
-#}
-#print STDERR "};\n";
-#print STDERR "\n";
-
 # END
 
 print "#endif /* !defined(UCS_PLAY_DUMB) */\n";
