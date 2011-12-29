@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= sys
 CFLAGS  = $(PRJCFLAGS) -I..
-OBJS		= endian.o
+OBJS		= endian.o char.o
 
 all : build __tests__
 
@@ -33,3 +33,7 @@ force_look :
 endian.o : endian.cpp endian.h ints.h
 	$(ECHO) $(CC) $(CFLAGS) -c -o endian.o endian.cpp
 	$(CC) $(CFLAGS) -c -o endian.o endian.cpp
+
+char.o : char.cpp char.h ints.h
+	$(ECHO) $(CC) $(CFLAGS) -c -o char.o char.cpp
+	$(CC) $(CFLAGS) -c -o char.o char.cpp

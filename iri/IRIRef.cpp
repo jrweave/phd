@@ -65,9 +65,9 @@ IRIRef::~IRIRef() throw() {
 }
 
 bool IRIRef::isIPChar(const uint32_t codepoint) throw() {
-  return codepoint == IRI_CHAR_COLON
-    || codepoint == IRI_CHAR_AT
-    || codepoint == IRI_CHAR_PERCENT // for pct-encoded
+  return codepoint == to_ascii(':')
+    || codepoint == to_ascii('@')
+    || codepoint == to_ascii('%') // for pct-encoded
     || IRIRef::isUnreserved(codepoint)
     || IRIRef::isSubDelim(codepoint);
 }
@@ -78,12 +78,12 @@ bool IRIRef::isReserved(const uint32_t codepoint) throw() {
 }
 
 bool IRIRef::isUnreserved(const uint32_t codepoint) throw() {
-  return IRI_CHAR_IS_ALPHA(codepoint)
-    || IRI_CHAR_IS_DIGIT(codepoint)
-    || codepoint == IRI_CHAR_HYPHEN
-    || codepoint == IRI_CHAR_PERIOD
-    || codepoint == IRI_CHAR_UNDERSCORE
-    || codepoint == IRI_CHAR_TILDE;
+  return is_alpha(codepoint)
+    || is_digit(codepoint)
+    || codepoint == to_ascii('-')
+    || codepoint == to_ascii('.')
+    || codepoint == to_ascii('_')
+    || codepoint == to_ascii('~');
 }
 
 bool IRIRef::isIUnreserved(const uint32_t codepoint) throw() {
@@ -112,27 +112,27 @@ bool IRIRef::isUCSChar(const uint32_t codepoint) throw() {
 }
 
 bool IRIRef::isSubDelim(const uint32_t codepoint) throw() {
-  return codepoint == IRI_CHAR_EXCLAMATION_MARK
-    || codepoint == IRI_CHAR_DOLLAR_SIGN
-    || codepoint == IRI_CHAR_AMPERSAND
-    || codepoint == IRI_CHAR_APOSTROPHE
-    || codepoint == IRI_CHAR_LEFT_PARENTHESIS
-    || codepoint == IRI_CHAR_RIGHT_PARENTHESIS
-    || codepoint == IRI_CHAR_ASTERISK
-    || codepoint == IRI_CHAR_PLUS
-    || codepoint == IRI_CHAR_COMMA
-    || codepoint == IRI_CHAR_SEMICOLON
-    || codepoint == IRI_CHAR_EQUALS;
+  return codepoint == to_ascii('!')
+    || codepoint == to_ascii('$')
+    || codepoint == to_ascii('&')
+    || codepoint == to_ascii('\'')
+    || codepoint == to_ascii('(')
+    || codepoint == to_ascii(')')
+    || codepoint == to_ascii('*')
+    || codepoint == to_ascii('+')
+    || codepoint == to_ascii(',')
+    || codepoint == to_ascii(';')
+    || codepoint == to_ascii('=');
 }
 
 bool IRIRef::isGenDelim(const uint32_t codepoint) throw() {
-  return codepoint == IRI_CHAR_COLON
-    || codepoint == IRI_CHAR_SLASH
-    || codepoint == IRI_CHAR_QUESTION_MARK
-    || codepoint == IRI_CHAR_HASH
-    || codepoint == IRI_CHAR_LEFT_SQUARE_BRACKET
-    || codepoint == IRI_CHAR_RIGHT_SQUARE_BRACKET
-    || codepoint == IRI_CHAR_AT;
+  return codepoint == to_ascii(':')
+    || codepoint == to_ascii('/')
+    || codepoint == to_ascii('?')
+    || codepoint == to_ascii('#')
+    || codepoint == to_ascii('[')
+    || codepoint == to_ascii(']')
+    || codepoint == to_ascii('@');
 }
 
 bool IRIRef::isIPrivate(const uint32_t codepoint) throw() {
@@ -179,7 +179,7 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 
   // SCHEME
   for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_COLON; mark++) {
+      && (*(this->utf8str))[mark] != (uint8_t) to_ascii(':'); mark++) {
     // loop does the work
   }
   if (mark == this->utf8str->size()) {
@@ -210,24 +210,24 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
   // These parts exist only if hierarchy starts with //.
   if (part == USER_INFO || part == HOST || part == PORT) {
     if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) IRI_CHAR_SLASH) {
+        || (*(this->utf8str))[offset] != (uint8_t) to_ascii('/')) {
       return NULL;
     }
     offset++;
     if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) IRI_CHAR_SLASH) {
+        || (*(this->utf8str))[offset] != (uint8_t) to_ascii('/')) {
       return NULL;
     }
     offset++;
 
     // USER_INFO
     for (mark = offset; mark < this->utf8str->size()
-        && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_AT
-        && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_SLASH; ++mark) {
+        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('@')
+        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); ++mark) {
       // loop does the work
     }
     if (mark >= this->utf8str->size()
-        || (*(this->utf8str))[mark] == (uint8_t) IRI_CHAR_SLASH) {
+        || (*(this->utf8str))[mark] == (uint8_t) to_ascii('/')) {
       if (part == USER_INFO) {
         return NULL;
       }
@@ -241,17 +241,17 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 
     // HOST
     if (offset < this->utf8str->size() &&
-        (*(this->utf8str))[offset] == (uint8_t) IRI_CHAR_LEFT_SQUARE_BRACKET) {
+        (*(this->utf8str))[offset] == (uint8_t) to_ascii('[')) {
       for (mark = offset; mark < this->utf8str->size() &&
-          (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_RIGHT_SQUARE_BRACKET;
+          (*(this->utf8str))[mark] != (uint8_t) to_ascii(']');
           ++mark) {
         // loop does the work
       }
       ++mark;
     } else {
       for (mark = offset; mark < this->utf8str->size()
-          && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_COLON
-          && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_SLASH; ++mark) {
+          && (*(this->utf8str))[mark] != (uint8_t) to_ascii(':')
+          && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); ++mark) {
         // loop does the work
       }
     }
@@ -266,12 +266,12 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
     // No need to check part == PORT.  It is definitely PORT
     // by process of elimination.
     if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) IRI_CHAR_COLON) {
+        || (*(this->utf8str))[offset] != (uint8_t) to_ascii(':')) {
       return NULL;
     }
     offset++;
     for (mark = offset; mark < this->utf8str->size()
-        && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_SLASH; mark++) {
+        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); mark++) {
       // loop does the work
     }
     return this->utf8str->sub(offset, mark - offset);
@@ -279,18 +279,18 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
   
   // Skip over //authority if necessary.
   if (this->utf8str->size() - offset >= 2
-      && (*(this->utf8str))[offset] == (uint8_t) IRI_CHAR_SLASH
-      && (*(this->utf8str))[offset + 1] == (uint8_t) IRI_CHAR_SLASH) {
+      && (*(this->utf8str))[offset] == (uint8_t) to_ascii('/')
+      && (*(this->utf8str))[offset + 1] == (uint8_t) to_ascii('/')) {
     for (offset += 2; offset < this->utf8str->size()
-        && (*(this->utf8str))[offset] != (uint8_t) IRI_CHAR_SLASH; offset++) {
+        && (*(this->utf8str))[offset] != (uint8_t) to_ascii('/'); offset++) {
       // loop does the work
     }
   }
 
   // PATH
   for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_QUESTION_MARK
-      && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_HASH; mark++) {
+      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('?')
+      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('#'); mark++) {
     // loop does the work
   }
   if (part == PATH) {
@@ -303,10 +303,10 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
   if (offset >= this->utf8str->size()) {
     return NULL;
   }
-  if ((*(this->utf8str))[offset] == (uint8_t) IRI_CHAR_QUESTION_MARK) {
+  if ((*(this->utf8str))[offset] == (uint8_t) to_ascii('?')) {
     offset++;
     for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) IRI_CHAR_HASH; mark++) {
+      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('#'); mark++) {
       // loop does the work
     }
     if (part == QUERY) {
@@ -322,7 +322,7 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 
   // FRAGMENT
   if (offset >= this->utf8str->size()
-      || (*(this->utf8str))[offset] != (uint8_t) IRI_CHAR_HASH) {
+      || (*(this->utf8str))[offset] != (uint8_t) to_ascii('#')) {
     return NULL;
   }
   offset++;
@@ -352,7 +352,7 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
   k = 0;
   for (i = 0; i < this->utf8str->size(); i = j) {
     for (j = i; j < this->utf8str->size()
-        && (*(this->utf8str))[j] != (uint8_t) IRI_CHAR_PERCENT; j++) {
+        && (*(this->utf8str))[j] != (uint8_t) to_ascii('%'); j++) {
       // loop does the work
     }
     memmove(normed + k, this->utf8str->dptr() + i, (j - i) * sizeof(uint8_t));
@@ -369,11 +369,9 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
     } else {
       normed[k++] = (*(this->utf8str))[j++];
       uint8_t c = (*(this->utf8str))[j++];
-      normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
-          (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
+      normed[k++] = to_upper(c);
       c = (*(this->utf8str))[j++];
-      normed[k++] = IRI_CHAR_IS_LOWERCASE_ALPHA(c) ?
-          (c - (uint8_t) (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A)) : c;
+      normed[k++] = to_upper(c);
     }
   }
   if (k < this->utf8str->size()) {
@@ -399,18 +397,14 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
   DPtr<uint8_t> *part = this->getPart(SCHEME);
   if (part != NULL) {
     for (i = 0; i < part->size(); i++) {
-      if (IRI_CHAR_IS_UPPERCASE_ALPHA((*part)[i])) {
-        (*part)[i] += (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A);
-      }
+      (*part)[i] = to_lower((*part)[i]);
     }
     part->drop();
   }
   part = this->getPart(HOST);
   if (part != NULL) {
     for (i = 0; i < part->size(); i++) {
-      if (IRI_CHAR_IS_UPPERCASE_ALPHA((*part)[i])) {
-        (*part)[i] += (IRI_CHAR_LOWERCASE_A - IRI_CHAR_UPPERCASE_A);
-      }
+      (*part)[i] = to_lower((*part)[i]);
     }
     part->drop();
   }
@@ -437,29 +431,29 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
     size_t j = 0;
     while (i < normal->size()) {
       if (normal->size() - i >= 3
-          && (*normal)[i] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+2] == (uint8_t) IRI_CHAR_SLASH) {
+          && (*normal)[i] == (uint8_t) to_ascii('.')
+          && (*normal)[i+1] == (uint8_t) to_ascii('.')
+          && (*normal)[i+2] == (uint8_t) to_ascii('/')) {
         i += 3;
       } else  if (normal->size() - i >= 2
-          && (*normal)[i] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_SLASH) {
+          && (*normal)[i] == (uint8_t) to_ascii('.')
+          && (*normal)[i+1] == (uint8_t) to_ascii('/')) {
         i += 2;
       } else if (normal->size() - i >= 3
-          && (*normal)[i] == (uint8_t) IRI_CHAR_SLASH
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+2] == (uint8_t) IRI_CHAR_SLASH) {
+          && (*normal)[i] == (uint8_t) to_ascii('/')
+          && (*normal)[i+1] == (uint8_t) to_ascii('.')
+          && (*normal)[i+2] == (uint8_t) to_ascii('/')) {
         i += 2;
       } else if (normal->size() - i == 2
-          && (*normal)[i] == (uint8_t) IRI_CHAR_SLASH
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_PERIOD) {
-        (*normal)[++i] = (uint8_t) IRI_CHAR_SLASH;
+          && (*normal)[i] == (uint8_t) to_ascii('/')
+          && (*normal)[i+1] == (uint8_t) to_ascii('.')) {
+        (*normal)[++i] = (uint8_t) to_ascii('/');
       } else if (normal->size() - i >= 4
-          && (*normal)[i] == (uint8_t) IRI_CHAR_SLASH
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+2] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+3] == (uint8_t) IRI_CHAR_SLASH) {
-        for (; j > 0 && (*normal)[j-1] != (uint8_t) IRI_CHAR_SLASH; j--) {
+          && (*normal)[i] == (uint8_t) to_ascii('/')
+          && (*normal)[i+1] == (uint8_t) to_ascii('.')
+          && (*normal)[i+2] == (uint8_t) to_ascii('.')
+          && (*normal)[i+3] == (uint8_t) to_ascii('/')) {
+        for (; j > 0 && (*normal)[j-1] != (uint8_t) to_ascii('/'); j--) {
           // loop does the work
         }
         if (j > 0) {
@@ -467,27 +461,27 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
         }
         i += 3;
       } else if (normal->size() - i == 3
-          && (*normal)[i] == (uint8_t) IRI_CHAR_SLASH
-          && (*normal)[i+1] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i+2] == (uint8_t) IRI_CHAR_PERIOD) {
-        for (; j > 0 && (*normal)[j-1] != (uint8_t) IRI_CHAR_SLASH; j--) {
+          && (*normal)[i] == (uint8_t) to_ascii('/')
+          && (*normal)[i+1] == (uint8_t) to_ascii('.')
+          && (*normal)[i+2] == (uint8_t) to_ascii('.')) {
+        for (; j > 0 && (*normal)[j-1] != (uint8_t) to_ascii('/'); j--) {
           // loop does the work
         }
         if (j > 0) {
           j--; // get rid of the slash, too
         }
         i += 2;
-        (*normal)[i] = (uint8_t) IRI_CHAR_SLASH;
+        (*normal)[i] = (uint8_t) to_ascii('/');
       } else if (normal->size() - i == 1
-          && (*normal)[i] == (uint8_t) IRI_CHAR_PERIOD) {
+          && (*normal)[i] == (uint8_t) to_ascii('.')) {
         i += 1;
       } else if (normal->size() - i == 2
-          && (*normal)[i] == (uint8_t) IRI_CHAR_PERIOD
-          && (*normal)[i] == (uint8_t) IRI_CHAR_PERIOD) {
+          && (*normal)[i] == (uint8_t) to_ascii('.')
+          && (*normal)[i] == (uint8_t) to_ascii('.')) {
         i += 2;
       } else {
         size_t k;
-        for (k = i + 1; k < normal->size() && (*normal)[k] != IRI_CHAR_SLASH;
+        for (k = i + 1; k < normal->size() && (*normal)[k] != to_ascii('/');
             k++) {
           // loop does the work
         }
@@ -543,7 +537,7 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
         query = base->getPart(QUERY);
       }
     } else {
-      if ((*path)[0] == (uint8_t) IRI_CHAR_SLASH) {
+      if ((*path)[0] == (uint8_t) to_ascii('/')) {
         path->drop();
         path = this->getPart(PATH);
       } else {
@@ -553,7 +547,7 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
         if (base_host != NULL && base_path->size() > 0) {
           DPtr<uint8_t> *newpath;
           NEW(newpath, MPtr<uint8_t>, path->size() + 1);
-          (*newpath)[0] = (uint8_t) IRI_CHAR_SLASH;
+          (*newpath)[0] = (uint8_t) to_ascii('/');
           memcpy(newpath->dptr() + 1, path->dptr(),
               path->size() * sizeof(uint8_t));
           path->drop();
@@ -561,7 +555,7 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
         } else {
           size_t slash;
           for (slash = base_path->size();
-               slash > 0 && (*base_path)[slash-1] != (uint8_t) IRI_CHAR_SLASH;
+               slash > 0 && (*base_path)[slash-1] != (uint8_t) to_ascii('/');
                slash--) {
             // loop does the work; finds last slash in base path
           }
@@ -602,21 +596,21 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
     if (scheme != NULL) {
       memcpy(iristr + len, scheme->dptr(), scheme->size() * sizeof(uint8_t));
       len += scheme->size();
-      iristr[len++] = (uint8_t) IRI_CHAR_COLON;
+      iristr[len++] = (uint8_t) to_ascii(':');
     }
     if (host != NULL) {
-      iristr[len++] = (uint8_t) IRI_CHAR_SLASH;
-      iristr[len++] = (uint8_t) IRI_CHAR_SLASH;
+      iristr[len++] = (uint8_t) to_ascii('/');
+      iristr[len++] = (uint8_t) to_ascii('/');
       if (user_info != NULL) {
         memcpy(iristr + len, user_info->dptr(),
             user_info->size() * sizeof(uint8_t));
         len += user_info->size();
-        iristr[len++] = (uint8_t) IRI_CHAR_AT;
+        iristr[len++] = (uint8_t) to_ascii('@');
       }
       memcpy(iristr + len, host->dptr(), host->size() * sizeof(uint8_t));
       len += host->size();
       if (port != NULL) {
-        iristr[len++] = (uint8_t) IRI_CHAR_COLON;
+        iristr[len++] = (uint8_t) to_ascii(':');
         memcpy(iristr + len, port->dptr(), port->size() * sizeof(uint8_t));
         len += port->size();
       }
@@ -624,12 +618,12 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
     memcpy(iristr + len, path->dptr(), path->size() * sizeof(uint8_t));
     len += path->size();
     if (query != NULL) {
-      iristr[len++] = (uint8_t) IRI_CHAR_QUESTION_MARK;
+      iristr[len++] = (uint8_t) to_ascii('?');
       memcpy(iristr + len, query->dptr(), query->size() * sizeof(uint8_t));
       len += query->size();
     }
     if (fragment != NULL) {
-      iristr[len++] = (uint8_t) IRI_CHAR_HASH;
+      iristr[len++] = (uint8_t) to_ascii('#');
       memcpy(iristr + len, fragment->dptr(),
           fragment->size() * sizeof(uint8_t));
       len += fragment->size();

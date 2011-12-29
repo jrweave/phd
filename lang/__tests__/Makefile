@@ -21,14 +21,14 @@ force_look :
 
 testLangTag : testLangTag.cpp ../LangTag.o
 	$(ECHO) running test $(SUBDIR)/testLangTag
-	$(ECHO) $(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
+	$(ECHO) $(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o ../../sys/char.o
+	$(CC) $(CFLAGS) -o testLangTag testLangTag.cpp ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o ../../sys/char.o
 	$(ECHO) [TEST] ./testLangTag
 	./testLangTag
 
 testLangRange : testLangRange.cpp ../LangRange.o ../LangTag.o
 	$(ECHO) running test $(SUBDIR)/testLangRange
-	$(ECHO) $(CC) $(CFLAGS) -o testLangRange testLangRange.cpp ../LangRange.o ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../MalformedLangRangeException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -o testLangRange testLangRange.cpp ../LangRange.o ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../MalformedLangRangeException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o
+	$(ECHO) $(CC) $(CFLAGS) -o testLangRange testLangRange.cpp ../LangRange.o ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../MalformedLangRangeException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o ../../sys/char.o
+	$(CC) $(CFLAGS) -o testLangRange testLangRange.cpp ../LangRange.o ../LangTag.o ../../ptr/SizeUnknownException.o ../MalformedLangTagException.o ../MalformedLangRangeException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ptr/alloc.o ../../sys/char.o
 	$(ECHO) [TEST] ./testLangRange
 	./testLangRange

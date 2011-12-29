@@ -44,8 +44,8 @@ class TraceableException : public exception {
 private:
   const char *file;
   const unsigned int line;
-  const char *message;
 protected:
+  char message[128];
   vector<string> stack_trace;
 public:
   TraceableException(const char *file, const unsigned int line)

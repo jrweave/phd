@@ -34,7 +34,7 @@ template<typename iter>
 bool isIRI(iter begin, iter end) {
   debug("isIRI", begin, end);
   iter mark;
-  for (mark = begin; mark != end && *mark != IRI_CHAR_COLON; ++mark) {
+  for (mark = begin; mark != end && *mark != to_ascii(':'); ++mark) {
     // loop does the work
   }
   if (mark == end || !isScheme(begin, mark)) {
@@ -42,8 +42,8 @@ bool isIRI(iter begin, iter end) {
   }
   ++mark;
   begin = mark;
-  for (; mark != end && *mark != IRI_CHAR_QUESTION_MARK
-      && *mark != IRI_CHAR_HASH; ++mark) {
+  for (; mark != end && *mark != to_ascii('?')
+      && *mark != to_ascii('#'); ++mark) {
     // loop does the work
   }
   if (!isIHierPart(begin, mark)) {
@@ -52,10 +52,10 @@ bool isIRI(iter begin, iter end) {
   if (mark == end) {
     return true;
   }
-  if (*mark == IRI_CHAR_QUESTION_MARK) {
+  if (*mark == to_ascii('?')) {
     ++mark;
     begin = mark;
-    for (; mark != end && *mark != IRI_CHAR_HASH; ++mark) {
+    for (; mark != end && *mark != to_ascii('#'); ++mark) {
       // loop does the work
     }
     if (!isIQuery(begin, mark)) {
@@ -73,8 +73,8 @@ template<typename iter>
 bool isIRelativeRef(iter begin, iter end) {
   debug("isRelativeRef", begin, end);
   iter mark;
-  for (mark = begin; mark != end && *mark != IRI_CHAR_QUESTION_MARK
-      && *mark != IRI_CHAR_HASH; ++mark) {
+  for (mark = begin; mark != end && *mark != to_ascii('?')
+      && *mark != to_ascii('#'); ++mark) {
     // loop does the work
   }
   if (!isIRelativePart(begin, mark)) {
@@ -83,10 +83,10 @@ bool isIRelativeRef(iter begin, iter end) {
   if (mark == end) {
     return true;
   }
-  if (*mark == IRI_CHAR_QUESTION_MARK) {
+  if (*mark == to_ascii('?')) {
     ++mark;
     begin = mark;
-    for (; mark != end && *mark != IRI_CHAR_HASH; ++mark) {
+    for (; mark != end && *mark != to_ascii('#'); ++mark) {
       // loop does the work
     }
     if (!isIQuery(begin, mark)) {
@@ -103,13 +103,13 @@ bool isIRelativeRef(iter begin, iter end) {
 template<typename iter>
 bool isScheme(iter begin, iter end) {
   debug("isScheme", begin, end);
-  if (begin == end || !IRI_CHAR_IS_ALPHA(*begin)) {
+  if (begin == end || !is_alpha(*begin)) {
     return false;
   }
   for (++begin; begin != end; ++begin) {
-    if (!IRI_CHAR_IS_ALPHA(*begin) && !IRI_CHAR_IS_DIGIT(*begin) &&
-        *begin != IRI_CHAR_PLUS && *begin != IRI_CHAR_HYPHEN &&
-        *begin != IRI_CHAR_PERIOD) {
+    if (!is_alpha(*begin) && !is_digit(*begin) &&
+        *begin != to_ascii('+') && *begin != to_ascii('-') &&
+        *begin != to_ascii('.')) {
       return false;
     }
   }
@@ -121,14 +121,14 @@ bool isIHierPart(iter begin, iter end) {
   debug("isIHierPart", begin, end);
   iter slash;
   slash = begin;
-  if (slash != end && *slash == IRI_CHAR_SLASH) {
+  if (slash != end && *slash == to_ascii('/')) {
     ++slash;
-    if (slash != end && *slash == IRI_CHAR_SLASH) {
+    if (slash != end && *slash == to_ascii('/')) {
       ++slash;
       iter auth;
       auth = slash;
       for (++slash; slash != end &&
-          *slash != IRI_CHAR_SLASH; ++slash) {
+          *slash != to_ascii('/'); ++slash) {
         // loop does the work
       }
       if (isIAuthority(auth, slash) && isIPathAbsEmpty(slash, end)) {
@@ -146,14 +146,14 @@ bool isIRelativePart(iter begin, iter end) {
   debug("isIRelativePart", begin, end);
   iter slash;
   slash = begin;
-  if (slash != end && *slash == IRI_CHAR_SLASH) {
+  if (slash != end && *slash == to_ascii('/')) {
     ++slash;
-    if (slash != end && *slash == IRI_CHAR_SLASH) {
+    if (slash != end && *slash == to_ascii('/')) {
       ++slash;
       iter auth;
       auth = slash;
       for (++slash; slash != end &&
-          *slash != IRI_CHAR_SLASH; ++slash) {
+          *slash != to_ascii('/'); ++slash) {
         // loop does the work
       }
       if (isIAuthority(auth, slash) && isIPathAbsEmpty(slash, end)) {
@@ -170,7 +170,7 @@ template<typename iter>
 bool isIAuthority(iter begin, iter end) {
   debug("isIAuthority", begin, end);
   iter mark;
-  for (mark = begin; mark != end && *mark != IRI_CHAR_AT; ++mark) {
+  for (mark = begin; mark != end && *mark != to_ascii('@'); ++mark) {
     // loop does the work
   }
   if (mark == end) {
@@ -182,8 +182,8 @@ bool isIAuthority(iter begin, iter end) {
       ++mark;
       begin = mark;
   }
-  if (*begin == IRI_CHAR_LEFT_SQUARE_BRACKET) {
-    for (; mark != end && *mark != IRI_CHAR_RIGHT_SQUARE_BRACKET; ++mark) {
+  if (*begin == to_ascii('[')) {
+    for (; mark != end && *mark != to_ascii(']'); ++mark) {
       // loop does the work
     }
     if (mark == end) {
@@ -191,9 +191,9 @@ bool isIAuthority(iter begin, iter end) {
     }
     ++mark;
     return isIHost(begin, mark) && (mark == end ||
-        (*mark == IRI_CHAR_COLON && isPort(++mark, end)));
+        (*mark == to_ascii(':') && isPort(++mark, end)));
   }
-  for (; mark != end && *mark != IRI_CHAR_COLON; ++mark) {
+  for (; mark != end && *mark != to_ascii(':'); ++mark) {
     // loop does the work
   }
   return isIHost(begin, mark) && (mark == end || isPort(++mark, end));
@@ -203,7 +203,7 @@ template<typename iter>
 bool isIUserInfo(iter begin, iter end) {
   debug("isIUserInfo", begin, end);
   for(; begin != end; ++begin) {
-    if (*begin != IRI_CHAR_COLON && !IRIRef::isIUnreserved(*begin) &&
+    if (*begin != to_ascii(':') && !IRIRef::isIUnreserved(*begin) &&
         !IRIRef::isSubDelim(*begin)) {
       iter start = begin;
       if (++begin == end) return false;
@@ -227,7 +227,7 @@ bool isIHost(iter begin, iter end) {
 template<typename iter>
 bool isIPLiteral(iter begin, iter end) {
   debug("isIPLiteral", begin, end);
-  if (begin == end || *begin != IRI_CHAR_LEFT_SQUARE_BRACKET) {
+  if (begin == end || *begin != to_ascii('[')) {
     return false;
   }
   ++begin;
@@ -240,7 +240,7 @@ bool isIPLiteral(iter begin, iter end) {
   for (++begin; begin != end; ++begin) {
     ++finish;
   }
-  if (*finish != IRI_CHAR_RIGHT_SQUARE_BRACKET) {
+  if (*finish != to_ascii(']')) {
     return false;
   }
   return isIPv6Address(start, finish) || isIPvFutureAddress(start, finish);
@@ -259,19 +259,19 @@ bool isIPv4Address(iter begin, iter end) {
     if (nparts > 4) {
       return false;
     }
-    if (begin == end || *begin == IRI_CHAR_PERIOD) {
+    if (begin == end || *begin == to_ascii('.')) {
       bool valid = part.size() > 0 && (
-        (part.size() == 1 && IRI_CHAR_IS_DIGIT(part[0]))           ||
-        (part.size() == 2 && part[0] != IRI_CHAR_ZERO &&
-         IRI_CHAR_IS_DIGIT(part[0]) && IRI_CHAR_IS_DIGIT(part[1])) ||
-        (part.size() == 3 && part[0] == IRI_CHAR_ONE &&
-         IRI_CHAR_IS_DIGIT(part[1]) && IRI_CHAR_IS_DIGIT(part[2])) ||
-        (part.size() == 3 && part[0] == IRI_CHAR_TWO &&
-         IRI_CHAR_ZERO <= part[1] && part[1] <= IRI_CHAR_FOUR &&
-         IRI_CHAR_IS_DIGIT(part[2]))                               ||
-        (part.size() == 3 && part[0] == IRI_CHAR_TWO &&
-         part[1] == IRI_CHAR_FIVE && IRI_CHAR_ZERO <= part[2] &&
-         part[2] <= IRI_CHAR_FIVE)                                 );
+        (part.size() == 1 && is_digit(part[0]))           ||
+        (part.size() == 2 && part[0] != to_ascii('0') &&
+         is_digit(part[0]) && is_digit(part[1])) ||
+        (part.size() == 3 && part[0] == to_ascii('1') &&
+         is_digit(part[1]) && is_digit(part[2])) ||
+        (part.size() == 3 && part[0] == to_ascii('2') &&
+         to_ascii('0') <= part[1] && part[1] <= to_ascii('4') &&
+         is_digit(part[2]))                               ||
+        (part.size() == 3 && part[0] == to_ascii('2') &&
+         part[1] == to_ascii('5') && to_ascii('0') <= part[2] &&
+         part[2] <= to_ascii('5'))                                 );
       if (!valid) {
         return false;
       } 
@@ -304,10 +304,10 @@ bool isIPv6Address(iter begin, iter end) {
     if (nparts > 8) {
       return false;
     }
-    if (*begin == IRI_CHAR_PERIOD) {
+    if (*begin == to_ascii('.')) {
       return (found_double_colon || nparts == 6)
           && isIPv4Address(start, end);
-    } else if (*begin == IRI_CHAR_COLON) {
+    } else if (*begin == to_ascii(':')) {
       if (part.empty()) {
         if (found_double_colon) {
           return false;
@@ -316,7 +316,7 @@ bool isIPv6Address(iter begin, iter end) {
           if (++begin == end) {
             return false;
           }
-          if (*begin != IRI_CHAR_COLON) {
+          if (*begin != to_ascii(':')) {
             return false;
           }
         }
@@ -324,7 +324,7 @@ bool isIPv6Address(iter begin, iter end) {
       } else {
         vector<uint32_t>::iterator it;
         for (it = part.begin(); it != part.end(); ++it) {
-          if (!IRI_CHAR_IS_HEXDIG(*it)) {
+          if (!is_xdigit(*it)) {
             return false;
           }
         }
@@ -341,7 +341,7 @@ bool isIPv6Address(iter begin, iter end) {
       if (!part.empty()) {
         vector<uint32_t>::iterator it;
         for (it = part.begin(); it != part.end(); ++it) {
-          if (!IRI_CHAR_IS_HEXDIG(*it)) {
+          if (!is_xdigit(*it)) {
             return false;
           }
         }
@@ -359,17 +359,17 @@ bool isIPvFutureAddress(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (*begin != IRI_CHAR_LOWERCASE_V) {
+  if (*begin != to_ascii('v')) {
     return false;
   }
   ++begin;
-  if (begin == end || !IRI_CHAR_IS_HEXDIG(*begin)) {
+  if (begin == end || !is_xdigit(*begin)) {
     return false;
   }
-  for (++begin; begin != end && IRI_CHAR_IS_HEXDIG(*begin); ++begin) {
+  for (++begin; begin != end && is_xdigit(*begin); ++begin) {
     // loop finds the first non hexdig
   }
-  if (begin == end || *begin != IRI_CHAR_PERIOD) {
+  if (begin == end || *begin != to_ascii('.')) {
     return false;
   }
   ++begin;
@@ -377,7 +377,7 @@ bool isIPvFutureAddress(iter begin, iter end) {
     return false;
   }
   for (; begin != end; ++begin) {
-    if (*begin != IRI_CHAR_COLON &&
+    if (*begin != to_ascii(':') &&
         !IRIRef::isUnreserved(*begin) &&
         !IRIRef::isSubDelim(*begin)) {
       return false;
@@ -408,7 +408,7 @@ template<typename iter>
 bool isPort(iter begin, iter end) {
   debug("isPort", begin, end);
   for (; begin != end; ++begin) {
-    if (!IRI_CHAR_IS_DIGIT(*begin)) {
+    if (!is_digit(*begin)) {
       return false;
     }
   }
@@ -429,12 +429,12 @@ bool isIPathAbsEmpty(iter begin, iter end) {
   if (begin == end) {
     return true;
   }
-  if (*begin != IRI_CHAR_SLASH) {
+  if (*begin != to_ascii('/')) {
     return false;
   }
   vector<uint32_t> part;
   for (++begin; begin != end; ++begin) {
-    if (*begin == IRI_CHAR_SLASH) {
+    if (*begin == to_ascii('/')) {
       if (!isISegment(part.begin(), part.end())) {
         return false;
       }
@@ -449,7 +449,7 @@ bool isIPathAbsEmpty(iter begin, iter end) {
 template<typename iter>
 bool isIPathAbsolute(iter begin, iter end) {
   debug("isIPathAbsolute", begin, end);
-  if (begin == end || *begin != IRI_CHAR_SLASH) {
+  if (begin == end || *begin != to_ascii('/')) {
     return false;
   }
   ++begin;
@@ -461,7 +461,7 @@ bool isIPathNoScheme(iter begin, iter end) {
   debug("isIPathNoScheme", begin, end);
   // isegment-nz-nc *( "/" isegment )
   iter start = begin;
-  for (; begin != end && *begin != IRI_CHAR_SLASH; ++begin) {
+  for (; begin != end && *begin != to_ascii('/'); ++begin) {
     // loop does the work
   }
   return isISegmentNZNC(start, begin) && isIPathAbsEmpty(begin, end);
@@ -471,7 +471,7 @@ template<typename iter>
 bool isIPathRootless(iter begin, iter end) {
   debug("isIPathRootless", begin, end);
   iter start = begin;
-  for (; begin != end && *begin != IRI_CHAR_SLASH; ++begin) {
+  for (; begin != end && *begin != to_ascii('/'); ++begin) {
     // loop does the work
   }
   return isISegmentNZ(start, begin) && isIPathAbsEmpty(begin, end);
@@ -508,7 +508,7 @@ bool isISegmentNZNC(iter begin, iter end) {
       return false;
   }
   for (; begin != end; ++begin) {
-    if (*begin != IRI_CHAR_AT && !IRIRef::isIUnreserved(*begin) &&
+    if (*begin != to_ascii('@') && !IRIRef::isIUnreserved(*begin) &&
         !IRIRef::isSubDelim(*begin)) {
       iter start = begin;
       if (++begin == end) return false;
@@ -527,7 +527,7 @@ bool isIQuery(iter begin, iter end) {
   debug("isIQuery", begin, end);
   // *( ipchar / iprivate / "/" / "?" )
   for (; begin != end; ++begin) {
-    if (*begin != IRI_CHAR_SLASH && *begin != IRI_CHAR_QUESTION_MARK &&
+    if (*begin != to_ascii('/') && *begin != to_ascii('?') &&
         !IRIRef::isIPChar(*begin) && !IRIRef::isIPrivate(*begin)) {
       return false;
     }
@@ -540,7 +540,7 @@ bool isIFragment(iter begin, iter end) {
   debug("isIFragment", begin, end);
   // *( ipchar / "/" / "?" )
   for (; begin != end; ++begin) {
-    if (*begin != IRI_CHAR_SLASH && *begin != IRI_CHAR_QUESTION_MARK &&
+    if (*begin != to_ascii('/') && *begin != to_ascii('?') &&
         !IRIRef::isIPChar(*begin)) {
       return false;
     }
@@ -551,15 +551,15 @@ bool isIFragment(iter begin, iter end) {
 template<typename iter>
 bool isPctEncoded(iter begin, iter end) {
   debug("isPctEncoded", begin, end);
-  if (begin == end || *begin != IRI_CHAR_PERCENT) {
+  if (begin == end || *begin != to_ascii('%')) {
     return false;
   }
   ++begin;
-  if (begin == end || !IRI_CHAR_IS_HEXDIG(*begin)) {
+  if (begin == end || !is_xdigit(*begin)) {
     return false;
   }
   ++begin;
-  return begin != end && IRI_CHAR_IS_HEXDIG(*begin);
+  return begin != end && is_xdigit(*begin);
 }
 
 }

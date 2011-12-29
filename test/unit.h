@@ -21,7 +21,14 @@
   return true
 
 #define FAIL \
-  std::cerr << std::dec << __LINE__ << " FAILED!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; \
+  std::cerr << std::dec << __LINE__ << " FAILED!\n"; \
+  std::cerr << "+---------------------------+\n"; \
+  std::cerr << "| XXXXX  XXX  XXXXX X     X |\n"; \
+  std::cerr << "| X     X   X   X   X     X |\n"; \
+  std::cerr << "| XXX   XXXXX   X   X     X |\n"; \
+  std::cerr << "| X     X   X   X   X       |\n"; \
+  std::cerr << "| X     X   X XXXXX XXXXX X |\n"; \
+  std::cerr << "+---------------------------+\n"; \
   return false
 
 #define PROG(cond) \
@@ -33,12 +40,34 @@
 
 #ifndef PTR_MEMDEBUG
 #define FINAL \
-  if (__failures > 0) std::cerr << std::dec << __failures << " FAILURES OUT OF "; \
-  else std::cerr << "CLEARED ALL "; \
-  std::cerr << std::dec << __ntests << " TESTS\n"; \
-  exit(__failures)
+  std::cerr << std::dec; \
+  if (__failures > 0) { \
+    std::cerr << "FAILED " << __failures << " OUT OF " << __ntests << " TESTS!\n"; \
+    std::cerr << "+---------------------------+\n"; \
+    std::cerr << "| XXXXX  XXX  XXXXX X     X |\n"; \
+    std::cerr << "| X     X   X   X   X     X |\n"; \
+    std::cerr << "| XXX   XXXXX   X   X     X |\n"; \
+    std::cerr << "| X     X   X   X   X       |\n"; \
+    std::cerr << "| X     X   X XXXXX XXXXX X |\n"; \
+    std::cerr << "+---------------------------+\n"; \
+    exit(__failures); \
+  } \
+  std::cerr << "CLEARED ALL " << __ntests << " TESTS\n"; \
+  exit(0)
 #else
 #define FINAL \
+  std::cerr << std::dec; \
+  if (__failures > 0) { \
+    std::cerr << "FAILED " << __failures << " OUT OF " << __ntests << " TESTS!\n"; \
+    std::cerr << "+---------------------------+\n"; \
+    std::cerr << "| XXXXX  XXX  XXXXX X     X |\n"; \
+    std::cerr << "| X     X   X   X   X     X |\n"; \
+    std::cerr << "| XXX   XXXXX   X   X     X |\n"; \
+    std::cerr << "| X     X   X   X   X       |\n"; \
+    std::cerr << "| X     X   X XXXXX XXXXX X |\n"; \
+    std::cerr << "+---------------------------+\n"; \
+    exit(__failures); \
+  } \
   if (ptr::__PTRS.size() > 0) { \
     std::set<void*>::iterator __it; \
     for (__it = ptr::__PTRS.begin(); __it != ptr::__PTRS.end(); ++__it) { \
@@ -52,11 +81,10 @@
     std::cerr << "| X       X    X X        X     X     |\n"; \
     std::cerr << "| X     XXXXX X   X     XXXXX   X   X |\n"; \
     std::cerr << "+-------------------------------------+\n"; \
+    exit(ptr::__PTRS.size()); \
   } \
-  if (__failures > 0) std::cerr << std::dec << __failures << " FAILURES OUT OF "; \
-  else std::cerr << "CLEARED ALL "; \
-  std::cerr << std::dec << __ntests << " TESTS\n"; \
-  exit(__failures + ptr::__PTRS.size());
+  std::cerr << "CLEARED ALL " << __ntests << " TESTS\n"; \
+  exit(0)
 #endif
 
 #endif /* __TEST__UNIT_H__ */

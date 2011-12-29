@@ -21,7 +21,7 @@ bool alloc(ptr_type *&p, size_t num) throw() {
   if (p != NULL) {
     PTR_PRINTA(p);
     #ifdef PTR_MEMDEBUG
-      if (!ptr::__PTRS.insert((void*)p).second) {
+      if (!ptr::__persist_ptrs && !ptr::__PTRS.insert((void*)p).second) {
         cerr << "[PTR_MEMDEBUG] Unexpected allocation to " << p << ", which means whatever was previously allocated to that address was not deallocated using alloc.h.\n\talloc(" << p << ", " << num << "[ * " << sizeof(ptr_type) << "]);" << endl;
       }
     #endif
@@ -42,10 +42,10 @@ bool ralloc(ptr_type *&p, size_t num) throw() {
   PTR_PRINTD(p);
   PTR_PRINTA(q);
   #ifdef PTR_MEMDEBUG
-    if (ptr::__PTRS.erase((void*)p) != 1) {
+    if (ptr::__PTRS.erase((void*)p) != 1 && !ptr::__persist_ptrs) {
       cerr << "[PTR_MEMDEBUG] Reallocated away from " << p << ", but there is no record of allocation at that address.\n\tralloc(" << p << ", " << num << "[ * " << sizeof(ptr_type) << "]);" << endl;
     }
-    if (!ptr::__PTRS.insert((void*)q).second) {
+    if (!ptr::__persist_ptrs && !ptr::__PTRS.insert((void*)q).second) {
       cerr << "[PTR_MEMDEBUG] Unexpected allocation to " << q << ", which means whatever was previously allocated to that address was not deallocated using alloc.h.\n\tralloc(" << p << ", " << num << "[ * " << sizeof(ptr_type) << "]);" << endl;
     }
   #endif
@@ -58,7 +58,7 @@ void dalloc(ptr_type *&p) throw() {
   if (p != NULL) {
     PTR_PRINTD(p);
     #ifdef PTR_MEMDEBUG
-      if (ptr::__PTRS.erase((void*)p) != 1) {
+      if (ptr::__PTRS.erase((void*)p) != 1 && !ptr::__persist_ptrs) {
         cerr << "[PTR_MEMDEBUG] Deallocated " << p << ", but there is no record of allocation at that address.\n\tdalloc(" << p << ");" << endl;
       }
     #endif

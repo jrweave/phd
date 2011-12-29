@@ -11,7 +11,7 @@ using namespace std;
 
 LangRange::LangRange() THROWS(BadAllocException) {
   NEW(this->ascii, MPtr<uint8_t>, 1);
-  (*this->ascii)[0] = LANG_CHAR_ASTERISK;
+  (*this->ascii)[0] = to_ascii('*');
 }
 TRACE(BadAllocException, "(trace)")
 
@@ -41,7 +41,7 @@ bool LangRange::isBasic() const throw() {
   uint8_t *begin = this->ascii->dptr();
   uint8_t *end = begin + this->ascii->size();
   for (; begin != end; ++begin) {
-    if (*begin == LANG_CHAR_ASTERISK) {
+    if (*begin == to_ascii('*')) {
       return this->ascii->size() == 1;
     }
   }
@@ -53,7 +53,7 @@ bool LangRange::matches(LangTag *lang_tag) const throw() {
 }
 
 bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
-  if (this->ascii->size() == 1 && (*(this->ascii))[0] == LANG_CHAR_ASTERISK) {
+  if (this->ascii->size() == 1 && (*(this->ascii))[0] == to_ascii('*')) {
     return true;
   }
 
@@ -69,24 +69,12 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
     uint8_t *tbegin = tag->dptr();
     uint8_t *tend = tbegin + tag->size();
     for (; rbegin != rend; ++rbegin) {
-      if (*rbegin != *tbegin) {
-        uint8_t c[2];
-        c[0] = *rbegin;
-        c[1] = *tbegin;
-        if (c[0] >= LANG_CHAR_LOWERCASE_A) {
-          c[0] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
-        if (c[1] >= LANG_CHAR_LOWERCASE_A) {
-          c[1] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
-        if (c[0] != c[1]) {
-          tag->drop();
-          return false;
-        }
+      if (to_lower(*rbegin) != to_lower(*tbegin)) {
+        return false;
       }
       ++tbegin;
     }
-    bool ret = tbegin == tend || *tbegin == LANG_CHAR_HYPHEN;
+    bool ret = tbegin == tend || *tbegin == to_ascii('-');
     tag->drop();
     return ret;
   }
@@ -94,18 +82,18 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
   uint8_t *rbegin = this->ascii->dptr();
   uint8_t *rmark = rbegin;
   uint8_t *rend = rbegin + this->ascii->size();
-  for (; rmark != rend && *rmark != LANG_CHAR_HYPHEN; ++rmark) {
+  for (; rmark != rend && *rmark != to_ascii('-'); ++rmark) {
     // loop finds hyphen or end
   }
 
   uint8_t *tbegin = tag->dptr();
   uint8_t *tmark = tbegin;
   uint8_t *tend = tbegin + tag->size();
-  for (; tmark != tend && *tmark != LANG_CHAR_HYPHEN; ++tmark) {
+  for (; tmark != tend && *tmark != to_ascii('-'); ++tmark) {
     // loop finds hyphen or end
   }
 
-  if (*rbegin == LANG_CHAR_ASTERISK) {
+  if (*rbegin == to_ascii('*')) {
     rbegin = rmark;
     tbegin = tmark;
   } else {
@@ -115,43 +103,31 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
     }
 
     for (; rbegin != rmark; ++rbegin) {
-      if (*rbegin != *tbegin) {
-        uint8_t c[2];
-        c[0] = *rbegin;
-        c[1] = *tbegin;
-        if (c[0] >= LANG_CHAR_LOWERCASE_A) {
-          c[0] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
-        if (c[1] >= LANG_CHAR_LOWERCASE_A) {
-          c[1] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
-        if (c[0] != c[1]) {
-          tag->drop();
-          return false;
-        }
+      if (to_lower(*rbegin) != to_lower(*tbegin)) {
+        return false;
       }
       ++tbegin;
     }
   }
   if (rbegin != rend) {
     rbegin = ++rmark;
-    for (; rmark != rend && *rmark != LANG_CHAR_HYPHEN; ++rmark) {
+    for (; rmark != rend && *rmark != to_ascii('-'); ++rmark) {
       // loop finds hyphen or end
     }
   }
   if (tbegin != tend) {
     tbegin = ++tmark;
-    for (; tmark != tend && *tmark != LANG_CHAR_HYPHEN; ++tmark) {
+    for (; tmark != tend && *tmark != to_ascii('-'); ++tmark) {
       // loop finds hyphen or end
     }
   }
   while (rbegin != rend) {
-    if (*rbegin == LANG_CHAR_ASTERISK) {
+    if (*rbegin == to_ascii('*')) {
       if (rmark == rend) {
         rbegin = rend;
       } else {
         rbegin = ++rmark;
-        for (; rmark != rend && *rmark != LANG_CHAR_HYPHEN; ++rmark) {
+        for (; rmark != rend && *rmark != to_ascii('-'); ++rmark) {
           // loop finds hyphen or end
         }
       }
@@ -163,19 +139,8 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
     }
     if (rmark - rbegin == tmark - tbegin) {
       for (; rbegin != rmark; ++rbegin) {
-        if (*rbegin != *tbegin) {
-          uint8_t c[2];
-          c[0] = *rbegin;
-          c[1] = *tbegin;
-          if (c[0] >= LANG_CHAR_LOWERCASE_A) {
-            c[0] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-          }
-          if (c[1] >= LANG_CHAR_LOWERCASE_A) {
-            c[1] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-          }
-          if (c[0] != c[1]) {
-            break;
-          }
+        if (to_lower(*rbegin) != to_lower(*tbegin)) {
+          break;
         }
         ++tbegin;
       }
@@ -183,7 +148,7 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
         rbegin = rend;
       } else {
         rbegin = ++rmark;
-        for (; rmark != rend && *rmark != LANG_CHAR_HYPHEN; ++rmark) {
+        for (; rmark != rend && *rmark != to_ascii('-'); ++rmark) {
           // loop finds hyphen or end
         }
       }
@@ -191,7 +156,7 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
         tbegin = tend;
       } else {
         tbegin = ++tmark;
-        for (; tmark != tend && *tmark != LANG_CHAR_HYPHEN; ++tmark) {
+        for (; tmark != tend && *tmark != to_ascii('-'); ++tmark) {
           // loop finds hyphen or end
         }
       }
@@ -205,7 +170,7 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
       tbegin = tend;
     } else {
       tbegin = ++tmark;
-      for (; tmark != tend && *tmark != LANG_CHAR_HYPHEN; ++tmark) {
+      for (; tmark != tend && *tmark != to_ascii('-'); ++tmark) {
         // loop finds hyphen or end
       }
     }
@@ -227,19 +192,8 @@ bool LangRange::operator==(const LangRange &rhs) throw() {
   }
   size_t i;
   for (i = 0; i < this->ascii->size(); ++i) {
-    if ((*(this->ascii))[i] != (*(rhs.ascii))[i]) {
-      uint8_t c[2];
-      c[0] = (*(this->ascii))[i];
-      c[1] = (*(rhs.ascii))[i];
-      if (c[0] >= LANG_CHAR_LOWERCASE_A) {
-        c[0] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-      }
-      if (c[1] >= LANG_CHAR_LOWERCASE_A) {
-        c[1] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-      }
-      if (c[0] != c[1]) {
-        return false;
-      }
+    if (to_lower((*(this->ascii))[i]) != to_lower((*(rhs.ascii))[i])) {
+      return false;
     }
   }
   return true;

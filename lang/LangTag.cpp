@@ -8,6 +8,7 @@
 #include <vector>
 #include "ptr/MPtr.h"
 #include "ptr/SizeUnknownException.h"
+#include "sys/char.h"
 
 namespace lang {
 
@@ -21,15 +22,7 @@ LangTag::LangTag() throw(BadAllocException)
   try {
     NEW(this->ascii, MPtr<uint8_t>, 9);
   } RETHROW_BAD_ALLOC
-  (*(this->ascii))[0] = LANG_CHAR_LOWERCASE_I;
-  (*(this->ascii))[1] = LANG_CHAR_HYPHEN;
-  (*(this->ascii))[2] = LANG_CHAR_LOWERCASE_D;
-  (*(this->ascii))[3] = LANG_CHAR_LOWERCASE_E;
-  (*(this->ascii))[4] = LANG_CHAR_LOWERCASE_F;
-  (*(this->ascii))[5] = LANG_CHAR_LOWERCASE_A;
-  (*(this->ascii))[6] = LANG_CHAR_LOWERCASE_U;
-  (*(this->ascii))[7] = LANG_CHAR_LOWERCASE_L;
-  (*(this->ascii))[8] = LANG_CHAR_LOWERCASE_T;
+  ascii_strcpy(this->ascii->dptr(), "i-default");
 }
 
 LangTag::LangTag(DPtr<uint8_t> *ascii)
@@ -76,7 +69,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
 
   // LANGUAGE
   for (; mark < this->ascii->size()
-         && (*(this->ascii))[mark] != LANG_CHAR_HYPHEN; ++mark) {
+         && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
     // loop does the work
   }
   size_t next = mark;
@@ -89,7 +82,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
     }
     mark = next;
     for (++next; next < this->ascii->size()
-                 && (*(this->ascii))[next] != LANG_CHAR_HYPHEN; ++next) {
+                 && (*(this->ascii))[next] != to_ascii('-'); ++next) {
       // loop does the work
     }
   } while (isLanguage(this->ascii->dptr(),
@@ -111,7 +104,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
     }
     offset = ++mark;
     for (; mark < this->ascii->size()
-           && (*(this->ascii))[mark] != LANG_CHAR_HYPHEN; ++mark) {
+           && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
       // loop does the work
     }
   } else {
@@ -131,7 +124,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
     }
     offset = ++mark;
     for (; mark < this->ascii->size()
-           && (*(this->ascii))[mark] != LANG_CHAR_HYPHEN; ++mark) {
+           && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
       // loop does the work
     }
   } else {
@@ -153,7 +146,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
       }
       mark = next;
       for (++next; next < this->ascii->size()
-                   && (*(this->ascii))[next] != LANG_CHAR_HYPHEN; ++next) {
+                   && (*(this->ascii))[next] != to_ascii('-'); ++next) {
         // loop does the work
       }
     } while (isVariant(this->ascii->dptr() + mark + 1,
@@ -170,7 +163,7 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   }
 
   // EXTENSIONS
-  if (LANG_CHAR_IS_X((*(this->ascii))[offset])) {
+  if (to_lower((*(this->ascii))[offset]) == to_ascii('x')) {
     if (part == EXTENSIONS) {
       return NULL;
     }
@@ -185,11 +178,11 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
       }
       mark = next;
       for (++next; next < this->ascii->size()
-             && (*(this->ascii))[next] != LANG_CHAR_HYPHEN; ++next) {
+             && (*(this->ascii))[next] != to_ascii('-'); ++next) {
         // loop does the work
       }
     } while (next - mark > 2 ||
-             !LANG_CHAR_IS_X((*(this->ascii))[mark + 1]));
+             to_lower((*(this->ascii))[mark + 1]) != to_ascii('x'));
     if (part == EXTENSIONS) {
       return this->ascii->sub(offset, mark - offset);
     }
@@ -241,21 +234,19 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
     uint8_t *begin = this->ascii->dptr();
     uint8_t *end = begin + this->ascii->size();
     for (; begin != end; ++begin) {
-      if (*begin < LANG_CHAR_LOWERCASE_A && *begin != LANG_CHAR_HYPHEN) {
-        *begin += LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-      }
+      *begin = to_lower(*begin);
     }
     if (this->isIrregularGrandfathered()) {
       // check for regions and uppercase them
       begin = this->ascii->dptr();
-      if (LANG_CHAR_IS_E(*begin)) {
-        begin[3] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        begin[4] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-      } else if (LANG_CHAR_IS_S(*begin)) {
-        begin[4] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        begin[5] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        begin[7] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        begin[8] -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
+      if (to_lower(*begin) == to_ascii('e')) {
+        begin[3] = to_upper(begin[3]);
+        begin[4] = to_upper(begin[4]);
+      } else if (to_lower(*begin) == to_ascii('s')) {
+        begin[4] = to_upper(begin[4]);
+        begin[5] = to_upper(begin[5]);
+        begin[7] = to_upper(begin[7]);
+        begin[8] = to_upper(begin[8]);
       }
     }
   }
@@ -271,12 +262,12 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
     uint8_t *end = mark + part->size();
     extmarks.push_back(mark);
     while (mark != end) {
-      for (++mark; mark != end && *mark != LANG_CHAR_HYPHEN; ++mark) {
+      for (++mark; mark != end && *mark != to_ascii('-'); ++mark) {
         // loop does the work
       }
       if (mark != end) {
         ++mark;
-        if (mark[1] == LANG_CHAR_HYPHEN) {
+        if (mark[1] == to_ascii('-')) {
           extmarks.push_back(mark);
         }
       }
@@ -302,7 +293,7 @@ LangTag *LangTag::normalize() THROWS(BadAllocException) {
         memcpy(mark, *it, l * sizeof(uint8_t));
         mark += l;
         if (it + 1 != extmarks.end()) {
-          *mark = LANG_CHAR_HYPHEN;
+          *mark = to_ascii('-');
           ++mark;
         }
       }
@@ -354,7 +345,7 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
     DPtr<uint8_t> *s;
     NEW(s, MPtr<uint8_t>, preflen + 1 + this->ascii->size());
     memcpy(s->dptr(), prefix, preflen * sizeof(uint8_t));
-    (*s)[preflen] = LANG_CHAR_HYPHEN;
+    (*s)[preflen] = to_ascii('-');
     memcpy(s->dptr() + preflen + 1, this->ascii->dptr(),
         this->ascii->size() * sizeof(uint8_t));
     this->ascii->drop();
@@ -388,18 +379,8 @@ bool LangTag::operator==(const LangTag &rhs) throw() {
   uint8_t *end = begin + this->ascii->size();
   uint8_t *mark = rhs.ascii->dptr();
   for (; begin != end; ++begin) {
-    if (*begin != *mark) {
-      uint8_t b = *begin;
-      if (b >= LANG_CHAR_LOWERCASE_A) {
-        b -= (LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A);
-      }
-      uint8_t m = *mark;
-      if (m >= LANG_CHAR_LOWERCASE_A) {
-        m -= (LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A);
-      }
-      if (b != m) {
-        return false;
-      }
+    if (to_lower(*begin) != to_lower(*mark)) {
+      return false;
     }
     ++mark;
   }
@@ -465,12 +446,7 @@ const uint8_t *LangTag::lookup(const uint8_t *key,
 }
 
 bool LangTag::compare_first_only(const uint8_t *a, const uint8_t *b) {
-  return (*a < LANG_CHAR_LOWERCASE_A ?
-          *a + (LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A) :
-          *a)
-       < (*b < LANG_CHAR_LOWERCASE_A ?
-          *b + (LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A) :
-          *b);
+  return to_lower(*a) < to_lower(*b);
 }
 
 void LangTag::normalizePart(enum LangTagPart p)
@@ -485,9 +461,7 @@ void LangTag::normalizePart(enum LangTagPart p)
     uint8_t *begin = part->dptr();
     uint8_t *end = begin + part->size();
     for (; begin != end; ++begin) {
-      if (*begin != LANG_CHAR_HYPHEN && *begin < LANG_CHAR_LOWERCASE_A) {
-        *begin += (LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A);
-      }
+      *begin = to_lower(*begin);
     }
     part->drop();
     return;
@@ -498,7 +472,7 @@ void LangTag::normalizePart(enum LangTagPart p)
     uint8_t *end = begin + part->size();
     uint8_t *mark = begin;
     for (; mark != end; ++mark) {
-      if (*mark == LANG_CHAR_HYPHEN) {
+      if (*mark == to_ascii('-')) {
         begin = mark + 1;
       }
     }
@@ -542,23 +516,17 @@ void LangTag::normalizePart(enum LangTagPart p)
   switch (p) {
     case REGION:
       for (; begin != end; ++begin) {
-        if (*begin >= LANG_CHAR_LOWERCASE_A) {
-          *begin -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
+        *begin = to_upper(*begin);
       }
       break;
     case SCRIPT:
-      if (*begin >= LANG_CHAR_LOWERCASE_A) {
-        *begin -= LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-      }
+      *begin = to_upper(*begin);
       ++begin;
       // fall-through
     case LANGUAGE:
     case VARIANTS:
       for (; begin != end; ++begin) {
-        if (*begin != LANG_CHAR_HYPHEN && *begin < LANG_CHAR_LOWERCASE_A) {
-          *begin += LANG_CHAR_LOWERCASE_A - LANG_CHAR_UPPERCASE_A;
-        }
+        *begin = to_lower(*begin);
       }
       break;
   }

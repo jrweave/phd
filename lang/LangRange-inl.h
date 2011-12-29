@@ -9,12 +9,12 @@ bool isLanguageRange(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (*begin == LANG_CHAR_ASTERISK) {
+  if (*begin == to_ascii('*')) {
     return ++begin == end;
   }
   size_t i;
-  for (i = 0; i < 8 && begin != end && *begin != LANG_CHAR_HYPHEN; ++i) {
-    if (!LANG_CHAR_IS_ALPHA(*begin)) {
+  for (i = 0; i < 8 && begin != end && *begin != to_ascii('-'); ++i) {
+    if (!is_alpha(*begin)) {
       return false;
     }
     ++begin;
@@ -25,12 +25,12 @@ bool isLanguageRange(iter begin, iter end) {
   if (begin == end) {
     return true;
   }
-  if (*begin != LANG_CHAR_HYPHEN || ++begin == end) {
+  if (*begin != to_ascii('-') || ++begin == end) {
     return false;
   }
   for (;;) {
-    for (i = 0; i < 8 && begin != end && *begin != LANG_CHAR_HYPHEN; ++i) {
-      if (!LANG_CHAR_IS_ALPHANUM(*begin)) {
+    for (i = 0; i < 8 && begin != end && *begin != to_ascii('-'); ++i) {
+      if (!is_alnum(*begin)) {
         return false;
       }
     }
@@ -40,7 +40,7 @@ bool isLanguageRange(iter begin, iter end) {
     if (begin == end) {
       return true;
     }
-    if (*begin != LANG_CHAR_HYPHEN || ++begin == end) {
+    if (*begin != to_ascii('-') || ++begin == end) {
       return false;
     }
   }
@@ -51,12 +51,12 @@ bool isExtendedLanguageRange(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (*begin == LANG_CHAR_ASTERISK) {
+  if (*begin == to_ascii('*')) {
     ++begin;
   } else {
     size_t i = 0;
-    for (; i < 8 && begin != end && *begin != LANG_CHAR_HYPHEN; ++i) {
-      if (!LANG_CHAR_IS_ALPHA(*begin)) {
+    for (; i < 8 && begin != end && *begin != to_ascii('-'); ++i) {
+      if (!is_alpha(*begin)) {
         return false;
       }
       ++begin;
@@ -68,16 +68,16 @@ bool isExtendedLanguageRange(iter begin, iter end) {
   if (begin == end) {
     return true;
   }
-  if (*begin != LANG_CHAR_HYPHEN || ++begin == end) {
+  if (*begin != to_ascii('-') || ++begin == end) {
     return false;
   }
   for (;;) {
-    if (*begin == LANG_CHAR_ASTERISK) {
+    if (*begin == to_ascii('*')) {
       ++begin;
     } else {
       size_t i;
-      for (i = 0; i < 8 && begin != end && *begin != LANG_CHAR_HYPHEN; ++i) {
-        if (!LANG_CHAR_IS_ALPHANUM(*begin)) {
+      for (i = 0; i < 8 && begin != end && *begin != to_ascii('-'); ++i) {
+        if (!is_alnum(*begin)) {
           return false;
         }
         ++begin;
@@ -89,7 +89,7 @@ bool isExtendedLanguageRange(iter begin, iter end) {
     if (begin == end) {
       return true;
     }
-    if (*begin != LANG_CHAR_HYPHEN || ++begin == end) {
+    if (*begin != to_ascii('-') || ++begin == end) {
       return false;
     }
   }

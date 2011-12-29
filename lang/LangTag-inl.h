@@ -1,6 +1,8 @@
 #include "lang/LangTag.h"
 
+#include <cctype>
 #include <iostream>
+#include "sys/char.h"
 
 namespace lang {
 
@@ -30,7 +32,7 @@ template<typename iter>
 bool isLangTag(iter begin, iter end) {
 
   iter m1, m2;
-  for (m1 = begin; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+  for (m1 = begin; m1 != end && *m1 != to_ascii('-'); ++m1) {
     // loop does the work
   }
 
@@ -44,7 +46,7 @@ bool isLangTag(iter begin, iter end) {
       return true;
     }
     m1 = m2;
-    for (++m2; m2 != end && *m2 != LANG_CHAR_HYPHEN; ++m2) {
+    for (++m2; m2 != end && *m2 != to_ascii('-'); ++m2) {
       // loop does the work
     }
   } while (isLanguage(begin, m2));
@@ -52,7 +54,7 @@ bool isLangTag(iter begin, iter end) {
     return false;
   }
   begin = m1;
-  for (; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+  for (; m1 != end && *m1 != to_ascii('-'); ++m1) {
     // loop does the work
   }
   
@@ -65,7 +67,7 @@ bool isLangTag(iter begin, iter end) {
       return false;
     }
     begin = m1;
-    for (; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+    for (; m1 != end && *m1 != to_ascii('-'); ++m1) {
       // loop does the work
     }
   }
@@ -79,7 +81,7 @@ bool isLangTag(iter begin, iter end) {
       return false;
     }
     begin = m1;
-    for (; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+    for (; m1 != end && *m1 != to_ascii('-'); ++m1) {
       // loop does the work
     }
   }
@@ -93,7 +95,7 @@ bool isLangTag(iter begin, iter end) {
       return false;
     }
     begin = m1;
-    for (; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+    for (; m1 != end && *m1 != to_ascii('-'); ++m1) {
       // loop does the work
     }
   }
@@ -102,8 +104,8 @@ bool isLangTag(iter begin, iter end) {
   m2 = begin;
   ++m2;
   if (m1 == m2) {
-    while (!LANG_CHAR_IS_X(*begin)) {
-      for (++m1; m1 != end && *m1 != LANG_CHAR_HYPHEN; ++m1) {
+    while (to_lower(*begin) != to_ascii('x')) {
+      for (++m1; m1 != end && *m1 != to_ascii('-'); ++m1) {
         // loop does the work
       }
       if (!isExtension(begin, m1)) {
@@ -115,7 +117,7 @@ bool isLangTag(iter begin, iter end) {
           return true;
         }
         m1 = m2;
-        for (++m2; m2 != end && *m2 != LANG_CHAR_HYPHEN; ++m2) {
+        for (++m2; m2 != end && *m2 != to_ascii('-'); ++m2) {
           // loop does the work
         }
       } while (isExtension(begin, m2));
@@ -123,7 +125,7 @@ bool isLangTag(iter begin, iter end) {
         return false;
       }
       begin = m1;
-      if (++m1 == end || *m1 != LANG_CHAR_HYPHEN) {
+      if (++m1 == end || *m1 != to_ascii('-')) {
         return false;
       }
     }
@@ -137,11 +139,11 @@ template<typename iter>
 bool isLanguage(iter begin, iter end) {
   iter mark;
   size_t i = 0;
-  for (mark = begin; mark != end && *mark != LANG_CHAR_HYPHEN; ++mark) {
+  for (mark = begin; mark != end && *mark != to_ascii('-'); ++mark) {
     if (++i > 8) {
       return false;
     }
-    if (!LANG_CHAR_IS_ALPHA(*mark)) {
+    if (!is_alpha(*mark)) {
       return false;
     }
   }
@@ -155,11 +157,11 @@ template<typename iter>
 bool isExtLang(iter begin, iter end) {
   size_t n;
   for (n = 0; n < 3 && begin != end; ++n) {
-    if (!(LANG_CHAR_IS_ALPHA(*begin)
-          && ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
-          && ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
+    if (!(is_alpha(*begin)
+          && ++begin != end && is_alpha(*begin)
+          && ++begin != end && is_alpha(*begin)
           && (++begin == end
-              || (*begin == LANG_CHAR_HYPHEN && ++begin != end)))) {
+              || (*begin == to_ascii('-') && ++begin != end)))) {
       return false;
     }
   }
@@ -168,10 +170,10 @@ bool isExtLang(iter begin, iter end) {
 
 template<typename iter>
 bool isScript(iter begin, iter end) {
-  return begin != end && LANG_CHAR_IS_ALPHA(*begin)
-      && ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
-      && ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
-      && ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
+  return begin != end && is_alpha(*begin)
+      && ++begin != end && is_alpha(*begin)
+      && ++begin != end && is_alpha(*begin)
+      && ++begin != end && is_alpha(*begin)
       && ++begin == end;
 }
 
@@ -180,13 +182,13 @@ bool isRegion(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (LANG_CHAR_IS_ALPHA(*begin)) {
-    return ++begin != end && LANG_CHAR_IS_ALPHA(*begin)
+  if (is_alpha(*begin)) {
+    return ++begin != end && is_alpha(*begin)
         && ++begin == end;
   }
-  return LANG_CHAR_IS_DIGIT(*begin)
-      && ++begin != end && LANG_CHAR_IS_DIGIT(*begin)
-      && ++begin != end && LANG_CHAR_IS_DIGIT(*begin)
+  return is_digit(*begin)
+      && ++begin != end && is_digit(*begin)
+      && ++begin != end && is_digit(*begin)
       && ++begin == end;
 }
 
@@ -198,26 +200,26 @@ bool isVariant(iter begin, iter end) {
   iter mark = begin;
   size_t i;
   for (i = 0; i < 8 && mark != end; ++i) {
-    if (!LANG_CHAR_IS_ALPHANUM(*mark)) {
+    if (!is_alnum(*mark)) {
       return false;
     }
     ++mark;
   }
-  return (i == 4 && LANG_CHAR_IS_DIGIT(*begin))
+  return (i == 4 && is_digit(*begin))
       || (i >= 5 && mark == end);
 }
 
 template<typename iter>
 bool isExtension(iter begin, iter end) {
   if (!(begin != end && LANG_CHAR_IS_SINGLETON(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
+        && ++begin != end && *begin == to_ascii('-')
         && ++begin != end)) {
     return false;
   }
   while (begin != end) {
     size_t i = 0;
-    for (; begin != end && *begin != LANG_CHAR_HYPHEN; ++begin) {
-      if (!LANG_CHAR_IS_ALPHANUM(*begin)) {
+    for (; begin != end && *begin != to_ascii('-'); ++begin) {
+      if (!is_alnum(*begin)) {
         return false;
       }
       ++i;
@@ -231,15 +233,15 @@ bool isExtension(iter begin, iter end) {
 
 template<typename iter>
 bool isPrivateUse(iter begin, iter end) {
-  if (!(begin != end && LANG_CHAR_IS_X(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
+  if (!(begin != end && to_lower(*begin) == to_ascii('x')
+        && ++begin != end && *begin == to_ascii('-')
         && ++begin != end)) {
     return false;
   }
   while (begin != end) {
     size_t i = 0;
-    for (; begin != end && *begin != LANG_CHAR_HYPHEN; ++begin) {
-      if (!LANG_CHAR_IS_ALPHANUM(*begin)) {
+    for (; begin != end && *begin != to_ascii('-'); ++begin) {
+      if (!is_alnum(*begin)) {
         return false;
       }
       ++i;
@@ -261,140 +263,140 @@ bool isIrregular(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (LANG_CHAR_IS_E(*begin)) {
-    return ++begin != end && LANG_CHAR_IS_N(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
-        && ++begin != end && LANG_CHAR_IS_G(*begin)
-        && ++begin != end && LANG_CHAR_IS_B(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
-        && ++begin != end && LANG_CHAR_IS_O(*begin)
-        && ++begin != end && LANG_CHAR_IS_E(*begin)
-        && ++begin != end && LANG_CHAR_IS_D(*begin)
+  if (to_lower(*begin) == to_ascii('e')) {
+    return ++begin != end && to_lower(*begin) == to_ascii('n')
+        && ++begin != end && *begin == to_ascii('-')
+        && ++begin != end && to_lower(*begin) == to_ascii('g')
+        && ++begin != end && to_lower(*begin) == to_ascii('b')
+        && ++begin != end && *begin == to_ascii('-')
+        && ++begin != end && to_lower(*begin) == to_ascii('o')
+        && ++begin != end && to_lower(*begin) == to_ascii('e')
+        && ++begin != end && to_lower(*begin) == to_ascii('d')
         && ++begin == end;
   }
-  if (LANG_CHAR_IS_I(*begin)) {
-    if (++begin == end || *begin != LANG_CHAR_HYPHEN || ++begin == end) {
+  if (to_lower(*begin) == to_ascii('i')) {
+    if (++begin == end || *begin != to_ascii('-') || ++begin == end) {
       return false;
     }
-    if (LANG_CHAR_IS_A(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_M(*begin)
-          && ++begin != end && LANG_CHAR_IS_I(*begin)
+    if (to_lower(*begin) == to_ascii('a')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('m')
+          && ++begin != end && to_lower(*begin) == to_ascii('i')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_B(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+    if (to_lower(*begin) == to_ascii('b')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_D(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_E(*begin)
-          && ++begin != end && LANG_CHAR_IS_F(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_U(*begin)
-          && ++begin != end && LANG_CHAR_IS_L(*begin)
-          && ++begin != end && LANG_CHAR_IS_T(*begin)
+    if (to_lower(*begin) == to_ascii('d')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('e')
+          && ++begin != end && to_lower(*begin) == to_ascii('f')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('u')
+          && ++begin != end && to_lower(*begin) == to_ascii('l')
+          && ++begin != end && to_lower(*begin) == to_ascii('t')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_E(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_O(*begin)
-          && ++begin != end && LANG_CHAR_IS_C(*begin)
-          && ++begin != end && LANG_CHAR_IS_H(*begin)
-          && ++begin != end && LANG_CHAR_IS_I(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+    if (to_lower(*begin) == to_ascii('e')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('o')
+          && ++begin != end && to_lower(*begin) == to_ascii('c')
+          && ++begin != end && to_lower(*begin) == to_ascii('h')
+          && ++begin != end && to_lower(*begin) == to_ascii('i')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_H(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_K(*begin)
+    if (to_lower(*begin) == to_ascii('h')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('k')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_K(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_L(*begin)
-          && ++begin != end && LANG_CHAR_IS_I(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_G(*begin)
-          && ++begin != end && LANG_CHAR_IS_O(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+    if (to_lower(*begin) == to_ascii('k')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('l')
+          && ++begin != end && to_lower(*begin) == to_ascii('i')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('g')
+          && ++begin != end && to_lower(*begin) == to_ascii('o')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_L(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_U(*begin)
-          && ++begin != end && LANG_CHAR_IS_X(*begin)
+    if (to_lower(*begin) == to_ascii('l')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('u')
+          && ++begin != end && to_lower(*begin) == to_ascii('x')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_M(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_I(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_G(*begin)
-          && ++begin != end && LANG_CHAR_IS_O(*begin)
+    if (to_lower(*begin) == to_ascii('m')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('i')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('g')
+          && ++begin != end && to_lower(*begin) == to_ascii('o')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_N(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_V(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_J(*begin)
-          && ++begin != end && LANG_CHAR_IS_O(*begin)
+    if (to_lower(*begin) == to_ascii('n')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('v')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('j')
+          && ++begin != end && to_lower(*begin) == to_ascii('o')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_P(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_W(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+    if (to_lower(*begin) == to_ascii('p')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('w')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_T(*begin)) {
+    if (to_lower(*begin) == to_ascii('t')) {
       if (++begin == end) {
         return false;
       }
-      if (LANG_CHAR_IS_A(*begin)) {
+      if (to_lower(*begin) == to_ascii('a')) {
         if (++begin == end) {
           return false;
         }
-        if (LANG_CHAR_IS_O(*begin)) {
+        if (to_lower(*begin) == to_ascii('o')) {
           return ++begin == end;
         }
-        if (LANG_CHAR_IS_Y(*begin)) {
+        if (to_lower(*begin) == to_ascii('y')) {
           return ++begin == end;
         }
         return false;
       }
-      if (LANG_CHAR_IS_S(*begin)) {
-        return ++begin != end && LANG_CHAR_IS_U(*begin)
+      if (to_lower(*begin) == to_ascii('s')) {
+        return ++begin != end && to_lower(*begin) == to_ascii('u')
             && ++begin == end;
       }
       return false;
     }
   }
-  if (LANG_CHAR_IS_S(*begin)) {
-    if (++begin == end || !LANG_CHAR_IS_G(*begin)
-        || ++begin == end || !LANG_CHAR_IS_N(*begin)
-        || ++begin == end || *begin != LANG_CHAR_HYPHEN
+  if (to_lower(*begin) == to_ascii('s')) {
+    if (++begin == end || to_lower(*begin) != to_ascii('g')
+        || ++begin == end || to_lower(*begin) != to_ascii('n')
+        || ++begin == end || *begin != to_ascii('-')
         || ++begin == end) {
       return false;
     }
-    if (LANG_CHAR_IS_B(*begin)) {
-      if (++begin == end || !LANG_CHAR_IS_E(*begin)
-          || ++begin == end || *begin != LANG_CHAR_HYPHEN
+    if (to_lower(*begin) == to_ascii('b')) {
+      if (++begin == end || to_lower(*begin) != to_ascii('e')
+          || ++begin == end || *begin != to_ascii('-')
           || ++begin == end) {
         return false;
       }
-      if (LANG_CHAR_IS_F(*begin)) {
-        return ++begin != end && LANG_CHAR_IS_R(*begin)
+      if (to_lower(*begin) == to_ascii('f')) {
+        return ++begin != end && to_lower(*begin) == to_ascii('r')
             && ++begin == end;
       }
-      if (LANG_CHAR_IS_N(*begin)) {
-        return ++begin != end && LANG_CHAR_IS_L(*begin)
+      if (to_lower(*begin) == to_ascii('n')) {
+        return ++begin != end && to_lower(*begin) == to_ascii('l')
             && ++begin == end;
       }
       return false;
     }
-    if (LANG_CHAR_IS_C(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_H(*begin)
-          && ++begin != end && *begin == LANG_CHAR_HYPHEN
-          && ++begin != end && LANG_CHAR_IS_D(*begin)
-          && ++begin != end && LANG_CHAR_IS_E(*begin)
+    if (to_lower(*begin) == to_ascii('c')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('h')
+          && ++begin != end && *begin == to_ascii('-')
+          && ++begin != end && to_lower(*begin) == to_ascii('d')
+          && ++begin != end && to_lower(*begin) == to_ascii('e')
           && ++begin == end;
     }
     return false;
@@ -407,88 +409,88 @@ bool isRegular(iter begin, iter end) {
   if (begin == end) {
     return false;
   }
-  if (LANG_CHAR_IS_A(*begin)) {
-    return ++begin != end && LANG_CHAR_IS_R(*begin)
-        && ++begin != end && LANG_CHAR_IS_T(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
-        && ++begin != end && LANG_CHAR_IS_L(*begin)
-        && ++begin != end && LANG_CHAR_IS_O(*begin)
-        && ++begin != end && LANG_CHAR_IS_J(*begin)
-        && ++begin != end && LANG_CHAR_IS_B(*begin)
-        && ++begin != end && LANG_CHAR_IS_A(*begin)
-        && ++begin != end && LANG_CHAR_IS_N(*begin)
+  if (to_lower(*begin) == to_ascii('a')) {
+    return ++begin != end && to_lower(*begin) == to_ascii('r')
+        && ++begin != end && to_lower(*begin) == to_ascii('t')
+        && ++begin != end && *begin == to_ascii('-')
+        && ++begin != end && to_lower(*begin) == to_ascii('l')
+        && ++begin != end && to_lower(*begin) == to_ascii('o')
+        && ++begin != end && to_lower(*begin) == to_ascii('j')
+        && ++begin != end && to_lower(*begin) == to_ascii('b')
+        && ++begin != end && to_lower(*begin) == to_ascii('a')
+        && ++begin != end && to_lower(*begin) == to_ascii('n')
         && ++begin == end;
   }
-  if (LANG_CHAR_IS_C(*begin)) {
-    return ++begin != end && LANG_CHAR_IS_E(*begin)
-        && ++begin != end && LANG_CHAR_IS_L(*begin)
-        && ++begin != end && *begin == LANG_CHAR_HYPHEN
-        && ++begin != end && LANG_CHAR_IS_G(*begin)
-        && ++begin != end && LANG_CHAR_IS_A(*begin)
-        && ++begin != end && LANG_CHAR_IS_U(*begin)
-        && ++begin != end && LANG_CHAR_IS_L(*begin)
-        && ++begin != end && LANG_CHAR_IS_I(*begin)
-        && ++begin != end && LANG_CHAR_IS_S(*begin)
-        && ++begin != end && LANG_CHAR_IS_H(*begin)
+  if (to_lower(*begin) == to_ascii('c')) {
+    return ++begin != end && to_lower(*begin) == to_ascii('e')
+        && ++begin != end && to_lower(*begin) == to_ascii('l')
+        && ++begin != end && *begin == to_ascii('-')
+        && ++begin != end && to_lower(*begin) == to_ascii('g')
+        && ++begin != end && to_lower(*begin) == to_ascii('a')
+        && ++begin != end && to_lower(*begin) == to_ascii('u')
+        && ++begin != end && to_lower(*begin) == to_ascii('l')
+        && ++begin != end && to_lower(*begin) == to_ascii('i')
+        && ++begin != end && to_lower(*begin) == to_ascii('s')
+        && ++begin != end && to_lower(*begin) == to_ascii('h')
         && ++begin == end;
   }
-  if (LANG_CHAR_IS_N(*begin)) {
-    if (++begin == end || !LANG_CHAR_IS_O(*begin)
-        || ++begin == end || *begin != LANG_CHAR_HYPHEN
+  if (to_lower(*begin) == to_ascii('n')) {
+    if (++begin == end || to_lower(*begin) != to_ascii('o')
+        || ++begin == end || *begin != to_ascii('-')
         || ++begin == end) {
       return false;
     }
-    if (LANG_CHAR_IS_B(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_O(*begin)
-          && ++begin != end && LANG_CHAR_IS_K(*begin)
+    if (to_lower(*begin) == to_ascii('b')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('o')
+          && ++begin != end && to_lower(*begin) == to_ascii('k')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_N(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_Y(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+    if (to_lower(*begin) == to_ascii('n')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('y')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
     return false;
   }
-  if (LANG_CHAR_IS_Z(*begin)) {
-    if (++begin == end || !LANG_CHAR_IS_H(*begin)
-        || ++begin == end || *begin != LANG_CHAR_HYPHEN
+  if (to_lower(*begin) == to_ascii('z')) {
+    if (++begin == end || to_lower(*begin) != to_ascii('h')
+        || ++begin == end || *begin != to_ascii('-')
         || ++begin == end) {
       return false;
     }
-    if (LANG_CHAR_IS_G(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_U(*begin)
-          && ++begin != end && LANG_CHAR_IS_O(*begin)
-          && ++begin != end && LANG_CHAR_IS_Y(*begin)
-          && ++begin != end && LANG_CHAR_IS_U(*begin)
+    if (to_lower(*begin) == to_ascii('g')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('u')
+          && ++begin != end && to_lower(*begin) == to_ascii('o')
+          && ++begin != end && to_lower(*begin) == to_ascii('y')
+          && ++begin != end && to_lower(*begin) == to_ascii('u')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_H(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_K(*begin)
-          && ++begin != end && LANG_CHAR_IS_K(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
+    if (to_lower(*begin) == to_ascii('h')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('k')
+          && ++begin != end && to_lower(*begin) == to_ascii('k')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_M(*begin)) {
-      if (++begin == end || !LANG_CHAR_IS_I(*begin)
-          || ++begin == end || !LANG_CHAR_IS_N(*begin)) {
+    if (to_lower(*begin) == to_ascii('m')) {
+      if (++begin == end || to_lower(*begin) != to_ascii('i')
+          || ++begin == end || to_lower(*begin) != to_ascii('n')) {
         return false;
       }
       if (++begin == end) {
         return true;
       }
-      return *begin == LANG_CHAR_HYPHEN
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
+      return *begin == to_ascii('-')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
           && ++begin == end;
     }
-    if (LANG_CHAR_IS_X(*begin)) {
-      return ++begin != end && LANG_CHAR_IS_I(*begin)
-          && ++begin != end && LANG_CHAR_IS_A(*begin)
-          && ++begin != end && LANG_CHAR_IS_N(*begin)
-          && ++begin != end && LANG_CHAR_IS_G(*begin)
+    if (to_lower(*begin) == to_ascii('x')) {
+      return ++begin != end && to_lower(*begin) == to_ascii('i')
+          && ++begin != end && to_lower(*begin) == to_ascii('a')
+          && ++begin != end && to_lower(*begin) == to_ascii('n')
+          && ++begin != end && to_lower(*begin) == to_ascii('g')
           && ++begin == end;
     }
     return false;

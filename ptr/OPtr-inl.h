@@ -52,16 +52,16 @@ OPtr<obj_type>::~OPtr() throw() {
 template<typename obj_type>
 void OPtr<obj_type>::destroy() throw() {
   if (this->p != NULL) {
-    DELETE((obj_type *)this->p);
+    DELETE((obj_type*) this->p);
   }
 }
 
-template<>
-void OPtr<Ptr>::destroy() throw() {
-  if (this->p != NULL) {
-    ((Ptr *)this->p)->drop();
-  }
-}
+//template<>
+//void OPtr<Ptr>::destroy() throw() {
+//  if (this->p != NULL) {
+//    ((Ptr *)this->p)->drop();
+//  }
+//}
 
 template<typename obj_type>
 DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset) throw() {

@@ -1,5 +1,6 @@
 #include <sstream>
 
+#include <cstring>
 #include "ex/TraceableException.h"
 
 namespace ex {
@@ -8,23 +9,33 @@ using namespace std;
 
 TraceableException::TraceableException(const char *file,
     const unsigned int line) throw(const char *)
-    : file(file), line(line), message(NULL) {
+    : file(file), line(line) {
   if (file == NULL) {
     throw file;
   }
+  memset(this->message, 0, 128);
 }
 
 TraceableException::TraceableException(const char *file,
     const unsigned int line, const char *message) throw(const char *) 
-    : file(file), line(line), message(message) {
+    : file(file), line(line) {
   if (file == NULL) {
     throw file;
+  }
+  memset(this->message, 0, 128);
+  if (message != NULL) {
+    strncpy(this->message, message, 127);
   }
 }
 
 TraceableException::TraceableException(const TraceableException *ex) throw ()
-    : file(ex->file), line(ex->line), message(ex->message) {
-  // do nothing
+    : file(ex->file), line(ex->line) {
+  memset(this->message, 0, 128);
+  if (ex->message != NULL) {
+    strncpy(this->message, ex->message, 127);
+  }
+  this->stack_trace.insert(this->stack_trace.begin(),
+      ex->stack_trace.begin(), ex->stack_trace.end());
 }
 
 TraceableException::~TraceableException() throw() {
