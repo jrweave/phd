@@ -513,9 +513,24 @@ LangTag::~LangTag() throw() {
 }
 
 inline
+bool LangTag::cmplt0(const LangTag &tag1, const LangTag &tag2) throw() {
+  return LangTag::cmp(tag1, tag2) < 0;
+}
+
+inline
+bool LangTag::cmpeq0(const LangTag &tag1, const LangTag &tag2) throw() {
+  return LangTag::cmp(tag1, tag2) == 0;
+}
+
+inline
 DPtr<uint8_t> *LangTag::getASCIIString() throw() {
   this->ascii->hold();
   return this->ascii;
+}
+
+inline
+bool LangTag::equals(const LangTag &tag) const throw() {
+  return LangTag::cmp(*this, tag) == 0;
 }
 
 inline

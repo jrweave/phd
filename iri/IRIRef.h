@@ -118,6 +118,9 @@ public:
   virtual ~IRIRef() throw();
 
   // Static Methods
+  static int cmp(const IRIRef &ref1, const IRIRef &ref2) throw();
+  static bool cmplt0(const IRIRef &ref1, const IRIRef &ref2) throw();
+  static bool cmpeq0(const IRIRef &ref1, const IRIRef &ref2) throw();
   static bool isIPChar(const uint32_t codepoint) throw();
   static bool isReserved(const uint32_t codepoint) throw();
   static bool isUnreserved(const uint32_t codepoint) throw();
@@ -129,6 +132,7 @@ public:
 
   // Final Methods
   DPtr<uint8_t> *getUTF8String() const throw();
+  bool equals(const IRIRef &ref) const throw();
 
   bool isRelativeRef() const throw();
   bool isIRI() const throw();
@@ -142,12 +146,8 @@ public:
 
   // Operators
   IRIRef &operator=(const IRIRef &rhs) throw();
-  bool operator==(const IRIRef &rhs) throw();
-  bool operator!=(const IRIRef &rhs) throw();
-  bool operator<(const IRIRef &rhs) throw();
-  bool operator<=(const IRIRef &rhs) throw();
-  bool operator>(const IRIRef &rhs) throw();
-  bool operator>=(const IRIRef &rhs) throw();
+//  bool operator==(const IRIRef &rhs) throw();
+//  bool operator!=(const IRIRef &rhs) throw();
 };
 
 }

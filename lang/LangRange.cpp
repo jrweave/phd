@@ -23,6 +23,24 @@ LangRange::LangRange(DPtr<uint8_t> *ascii) throw(MalformedLangRangeException) {
   this->ascii->hold();
 }
 
+int LangRange::cmp(const LangRange &rng1, const LangRange &rng2) throw() {
+  if (&rng1 == &rng2) {
+    return 0;
+  }
+  size_t minlen = min(rng1.ascii->size(), rng2.ascii->size());
+  uint8_t *begin = rng1.ascii->dptr();
+  uint8_t *end = begin + minlen;
+  uint8_t *mark = rng2.ascii->dptr();
+  for (; begin != end; ++begin) {
+    if (to_lower(*begin) != to_lower(*mark)) {
+      return to_lower(*begin) < to_lower(*mark) ? -1 : 1;
+    }
+    ++mark;
+  }
+  return rng1.ascii->size() < rng2.ascii->size() ? -1 :
+        (rng1.ascii->size() > rng2.ascii->size() ?  1 : 0);
+}
+
 bool LangRange::isBasic() const throw() {
   uint8_t *begin = this->ascii->dptr();
   uint8_t *end = begin + this->ascii->size();
@@ -158,19 +176,6 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
     }
   }
   tag->drop();
-  return true;
-}
-
-bool LangRange::operator==(const LangRange &rhs) throw() {
-  if (this->ascii->size() != rhs.ascii->size()) {
-    return false;
-  }
-  size_t i;
-  for (i = 0; i < this->ascii->size(); ++i) {
-    if (to_lower((*(this->ascii))[i]) != to_lower((*(rhs.ascii))[i])) {
-      return false;
-    }
-  }
   return true;
 }
 

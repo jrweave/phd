@@ -590,6 +590,16 @@ IRIRef::~IRIRef() throw() {
 }
 
 inline
+bool IRIRef::cmplt0(const IRIRef &ref1, const IRIRef &ref2) throw() {
+  return IRIRef::cmp(ref1, ref2) < 0;
+}
+
+inline
+bool IRIRef::cmpeq0(const IRIRef &ref1, const IRIRef &ref2) throw() {
+  return IRIRef::cmp(ref1, ref2) == 0;
+}
+
+inline
 bool IRIRef::isIPChar(const uint32_t codepoint) throw() {
   return codepoint == to_ascii(':')
     || codepoint == to_ascii('@')
@@ -681,6 +691,11 @@ DPtr<uint8_t> *IRIRef::getUTF8String() const throw() {
 }
 
 inline
+bool IRIRef::equals(const IRIRef &ref) const throw() {
+  return IRIRef::cmp(*this, ref) == 0;
+}
+
+inline
 bool IRIRef::isIRI() const throw() {
   return !this->isRelativeRef();
 }
@@ -691,22 +706,6 @@ IRIRef &IRIRef::operator=(const IRIRef &rhs) throw() {
   this->utf8str = rhs.utf8str;
   this->utf8str->hold();
   this->normalized = rhs.normalized;
-}
-
-inline
-bool IRIRef::operator==(const IRIRef &rhs) throw() {
-  return this == &rhs ||
-      (this->utf8str->size() == rhs.utf8str->size()
-       && memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-                 this->utf8str->size() * sizeof(uint8_t)) == 0);
-}
-
-inline
-bool IRIRef::operator!=(const IRIRef &rhs) throw() {
-  return this != &rhs && 
-      (this->utf8str->size() != rhs.utf8str->size()
-       || memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-                 this->utf8str->size() * sizeof(uint8_t)) != 0);
 }
 
 }

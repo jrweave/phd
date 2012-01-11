@@ -107,9 +107,24 @@ LangRange::~LangRange() throw() {
 }
 
 inline
+bool LangRange::cmplt0(const LangRange &rng1, const LangRange &rng2) throw() {
+  return LangRange::cmp(rng1, rng2) < 0;
+}
+
+inline
+bool LangRange::cmpeq0(const LangRange &rng1, const LangRange &rng2) throw() {
+  return LangRange::cmp(rng1, rng2) == 0;
+}
+
+inline
 DPtr<uint8_t> *LangRange::getASCIIString() throw() {
   this->ascii->hold();
   return this->ascii;
+}
+
+inline
+bool LangRange::equals(const LangRange &rng) const throw() {
+  return LangRange::cmp(*this, rng) == 0;
 }
 
 inline
@@ -123,11 +138,6 @@ LangRange &LangRange::operator=(const LangRange &rhs) throw() {
   this->ascii = rhs.ascii;
   this->ascii->hold();
   return *this;
-}
-
-inline
-bool LangRange::operator!=(const LangRange &rhs) throw() {
-  return !(*this == rhs);
 }
 
 }

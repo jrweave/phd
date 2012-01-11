@@ -41,6 +41,20 @@ IRIRef::IRIRef(DPtr<uint8_t> *utf8str)
   this->utf8str->hold();
 }
 
+int IRIRef::cmp(const IRIRef &ref1, const IRIRef &ref2) throw() {
+  if (&ref1 == &ref2) {
+    return 0;
+  }
+  size_t len = min(ref1.utf8str->size(), ref2.utf8str->size());
+  int cmp = memcmp(ref1.utf8str->dptr(), ref2.utf8str->dptr(),
+      len * sizeof(uint8_t));
+  if (cmp != 0) {
+    return cmp;
+  }
+  return ref1.utf8str->size() < ref2.utf8str->size() ? -1 :
+        (ref1.utf8str->size() > ref2.utf8str->size() ?  1 : 0);
+}
+
 bool IRIRef::isRelativeRef() const throw() {
   DPtr<uint8_t> *scheme = this->getPart(SCHEME);
   if (scheme == NULL) {
@@ -536,57 +550,5 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
   return this->resolve(NULL);
 }
 TRACE(BadAllocException, "(trace)")
-
-bool IRIRef::operator<(const IRIRef &rhs) throw() {
-  if (this == &rhs) {
-    return false;
-  }
-  size_t len = min(this->utf8str->size(), rhs.utf8str->size());
-  int cmp = memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-      len * sizeof(uint8_t));
-  if (cmp != 0) {
-    return cmp < 0;
-  }
-  return this->utf8str->size() < rhs.utf8str->size();
-}
-
-bool IRIRef::operator<=(const IRIRef &rhs) throw() {
-  if (this == &rhs) {
-    return true;
-  }
-  size_t len = min(this->utf8str->size(), rhs.utf8str->size());
-  int cmp = memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-      len * sizeof(uint8_t));
-  if (cmp != 0) {
-    return cmp < 0;
-  }
-  return this->utf8str->size() <= rhs.utf8str->size();
-}
-
-bool IRIRef::operator>(const IRIRef &rhs) throw() {
-  if (this == &rhs) {
-    return false;
-  }
-  size_t len = min(this->utf8str->size(), rhs.utf8str->size());
-  int cmp = memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-      len * sizeof(uint8_t));
-  if (cmp != 0) {
-    return cmp > 0;
-  }
-  return this->utf8str->size() > rhs.utf8str->size();
-}
-
-bool IRIRef::operator>=(const IRIRef &rhs) throw() {
-  if (this == &rhs) {
-    return true;
-  }
-  size_t len = min(this->utf8str->size(), rhs.utf8str->size());
-  int cmp = memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
-      len * sizeof(uint8_t));
-  if (cmp != 0) {
-    return cmp > 0;
-  }
-  return this->utf8str->size() >= rhs.utf8str->size();
-}
 
 }

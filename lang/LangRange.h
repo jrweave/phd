@@ -30,16 +30,20 @@ public:
   LangRange(const LangRange &copy) throw();
   virtual ~LangRange() throw();
 
+  // Static Methods
+  static int cmp(const LangRange &rng1, const LangRange &rng2) throw();
+  static bool cmplt0(const LangRange &rng1, const LangRange &rng2) throw();
+  static bool cmpeq0(const LangRange &rng1, const LangRange &rng2) throw();
+
   // Final Methods
   DPtr<uint8_t> *getASCIIString() throw();
+  bool equals(const LangRange &rng) const throw();
   bool isBasic() const throw();
   bool matches(LangTag *lang_tag) const throw();
   bool matches(LangTag *lang_tag, bool basic) const throw();
 
   // Operators
   LangRange &operator=(const LangRange &rhs) throw();
-  bool operator==(const LangRange &rhs) throw();
-  bool operator!=(const LangRange &rhs) throw();
 };
 
 }

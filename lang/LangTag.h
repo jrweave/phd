@@ -77,8 +77,14 @@ public:
   LangTag(const LangTag &copy) throw();
   virtual ~LangTag() throw();
 
+  // Static Methods
+  static int cmp(const LangTag &tag1, const LangTag &tag2) throw();
+  static bool cmplt0(const LangTag &tag1, const LangTag &tag2) throw();
+  static bool cmpeq0(const LangTag &tag1, const LangTag &tag2) throw();
+
   // Final Methods
   DPtr<uint8_t> *getASCIIString() throw();
+  bool equals(const LangTag &tag) const throw();
   DPtr<uint8_t> *getPart(const enum LangTagPart part) const throw();
   bool isPrivateUse() const throw();
   bool isGrandfathered() const throw();
@@ -91,8 +97,6 @@ public:
 
   // Operators
   LangTag &operator=(const LangTag &rhs) throw();
-  bool operator==(const LangTag &rhs) throw();
-  bool operator!=(const LangTag &rhs) throw();
 };
 
 }

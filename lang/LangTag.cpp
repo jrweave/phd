@@ -38,6 +38,33 @@ LangTag::LangTag(DPtr<uint8_t> *ascii)
   this->ascii->hold();
 }
 
+int LangTag::cmp(const LangTag &tag1, const LangTag &tag2) throw() {
+  if (&tag1 == &tag2) {
+    return 0;
+  }
+  size_t minlen = min(tag1.ascii->size(), tag2.ascii->size());
+  if ((tag1.canonical || tag1.extlang_form) &&
+      (tag2.canonical || tag2.extlang_form)) {
+    int cmp = memcmp(tag1.ascii->dptr(), tag2.ascii->dptr(),
+                     minlen * sizeof(uint8_t));
+    if (cmp != 0) {
+      return cmp;
+    }
+  } else {
+    uint8_t *begin = tag1.ascii->dptr();
+    uint8_t *end = begin + minlen;
+    uint8_t *mark = tag2.ascii->dptr();
+    for (; begin != end; ++begin) {
+      if (to_lower(*begin) != to_lower(*mark)) {
+        return to_lower(*begin) < to_lower(*mark) ? -1 : 1;
+      }
+      ++mark;
+    }
+  }
+  return tag1.ascii->size() < tag2.ascii->size() ? -1 :
+        (tag1.ascii->size() > tag2.ascii->size() ?  1 : 0);
+}
+
 DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   if (this->isGrandfathered()) {
     return NULL;
@@ -329,34 +356,6 @@ LangTag &LangTag::operator=(const LangTag &rhs) throw() {
   this->canonical = rhs.canonical;
   this->extlang_form = rhs.extlang_form;
   return *this;
-}
-
-bool LangTag::operator==(const LangTag &rhs) throw() {
-  if (this == &rhs) {
-    return true;
-  }
-  if (this->ascii->size() != rhs.ascii->size()) {
-    return false;
-  }
-  if ((this->canonical || this->extlang_form) &&
-      (rhs.canonical || rhs.extlang_form)) {
-    return memcmp(this->ascii->dptr(), rhs.ascii->dptr(), rhs.ascii->size())
-           == 0;
-  }
-  uint8_t *begin = this->ascii->dptr();
-  uint8_t *end = begin + this->ascii->size();
-  uint8_t *mark = rhs.ascii->dptr();
-  for (; begin != end; ++begin) {
-    if (to_lower(*begin) != to_lower(*mark)) {
-      return false;
-    }
-    ++mark;
-  }
-  return true;
-}
-
-bool LangTag::operator!=(const LangTag &rhs) throw() {
-  return !(*this == rhs);
 }
 
 const uint8_t *LangTag::lookup(const uint8_t *key,

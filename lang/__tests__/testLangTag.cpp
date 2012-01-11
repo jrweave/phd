@@ -135,14 +135,14 @@ bool malformed(DPtr<uint8_t> *mal) {
 }
 
 bool equal(LangTag *l, LangTag *r) {
-  PROG(*l == *r);
+  PROG(l->equals(*r));
   DELETE(l);
   DELETE(r);
   PASS;
 }
 
 bool unequal(LangTag *l, LangTag *r) {
-  PROG(*l != *r);
+  PROG(!l->equals(*r));
   DELETE(l);
   DELETE(r);
   PASS;
