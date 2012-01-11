@@ -1,7 +1,7 @@
 include Makefile.inc
 
 # When adding a new subdirectory, make sure to modify DIRS
-DIRS      = test sys util ex ptr ucs iri lang rdf
+DIRS      = test sys util ex ptr ucs iri lang
 EXE       = main
 OBJS      =
 OBJLIBS		=
@@ -71,7 +71,3 @@ iri : ucs force_look
 lang : ptr force_look
 	$(ECHO) looking into lang : $(MAKE) $(MFLAGS)
 	cd lang; $(MAKE) $(MFLAGS)
-
-rdf : iri lang force_look
-	$(ECHO) looking into rdf : $(MAKE) $(MFLAGS)
-	cd rdf; $(MAKE) $(MFLAGS)

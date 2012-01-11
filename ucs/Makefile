@@ -35,7 +35,7 @@ ucs_arrays.h : ucs_arrays.cpp
 
 ucs_arrays.cpp : scripts/index.pl scripts/UnicodeData.txt scripts/DerivedNormalizationProps.txt scripts/HangulSyllableType.txt scripts/NormalizationTest.txt
 	$(ECHO) generating ucs_arrays.h and ucs_arrays.cpp
-	cd scripts; perl index.pl 2> ../ucs_arrays.cpp | tee ../ucs_arrays.h
+	cd scripts; perl index.pl 2> ../ucs_arrays.cpp > ../ucs_arrays.h
 
 InvalidCodepointException.o : InvalidCodepointException.h InvalidCodepointException.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o InvalidCodepointException.o InvalidCodepointException.cpp

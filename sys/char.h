@@ -1,6 +1,7 @@
 #ifndef __SYS__CHAR_H__
 #define __SYS__CHAR_H__
 
+#include <cctype>
 #include "sys/ints.h"
 
 uint8_t to_ascii(char c);

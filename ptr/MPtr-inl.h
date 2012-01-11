@@ -94,6 +94,7 @@ size_t MPtr<ptr_type>::sizeInBytes() const throw() {
 template<typename ptr_type>
 DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
   if (this->alone()) {
+    // TODO change to also ralloc underlying memory
     return this;
   }
   if (!this->sizeKnown()) {

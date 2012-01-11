@@ -6,6 +6,9 @@ namespace sys {
 
 using namespace std;
 
+// TODO check for common __BYTE_ORDER__ macro
+// TODO move to inline functions in endian-inl.h
+
 bool is_big_endian() {
   static const union {
     uint32_t i;
