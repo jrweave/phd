@@ -95,4 +95,39 @@ bool isExtendedLanguageRange(iter begin, iter end) {
   }
 }
 
+inline
+LangRange::LangRange(const LangRange &copy) throw() {
+  this->ascii = copy.ascii;
+  this->ascii->hold();
+}
+
+inline
+LangRange::~LangRange() throw() {
+  this->ascii->drop();
+}
+
+inline
+DPtr<uint8_t> *LangRange::getASCIIString() throw() {
+  this->ascii->hold();
+  return this->ascii;
+}
+
+inline
+bool LangRange::matches(LangTag *lang_tag) const throw() {
+  return this->matches(lang_tag, this->isBasic());
+}
+
+inline
+LangRange &LangRange::operator=(const LangRange &rhs) throw() {
+  this->ascii->drop();
+  this->ascii = rhs.ascii;
+  this->ascii->hold();
+  return *this;
+}
+
+inline
+bool LangRange::operator!=(const LangRange &rhs) throw() {
+  return !(*this == rhs);
+}
+
 }

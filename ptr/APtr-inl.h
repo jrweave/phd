@@ -9,18 +9,21 @@ namespace ptr {
 using namespace std;
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr() throw(BadAllocException)
     : DPtr<arr_type>() {
   // do nothing
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(arr_type *p) throw(BadAllocException)
     : DPtr<arr_type>(p, 0) {
   this->size_known = false;
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(arr_type *p, size_t num) throw()
     : DPtr<arr_type>(p, num) {
   // do nothing
@@ -39,24 +42,28 @@ APtr<arr_type>::APtr(size_t num) throw(BadAllocException)
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(const APtr<arr_type> &aptr) throw()
     : DPtr<arr_type>(&aptr) {
   // do nothing
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr) throw()
     : DPtr<arr_type>(aptr) {
   // do nothing
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset) throw()
     : DPtr<arr_type>(aptr, offset) {
   // do nothing
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset, size_t len)
     throw()
     : DPtr<arr_type>(aptr, offset, len) {
@@ -64,11 +71,13 @@ APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset, size_t len)
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type>::~APtr() throw() {
   this->destruct();
 }
 
 template<typename arr_type>
+inline
 void APtr<arr_type>::destroy() throw() {
   if (this->p != NULL) {
     DELETE_ARRAY((arr_type *)this->p);
@@ -76,6 +85,7 @@ void APtr<arr_type>::destroy() throw() {
 }
 
 template<typename arr_type>
+inline
 DPtr<arr_type> *APtr<arr_type>::sub(size_t offset) throw() {
   DPtr<arr_type> *d;
   NEW(d, APtr<arr_type>, this, this->offset + offset);
@@ -83,6 +93,7 @@ DPtr<arr_type> *APtr<arr_type>::sub(size_t offset) throw() {
 }
 
 template<typename arr_type>
+inline
 DPtr<arr_type> *APtr<arr_type>::sub(size_t offset, size_t len) throw() {
   DPtr<arr_type> *d;
   NEW(d, APtr<arr_type>, this, this->offset + offset, len);
@@ -113,6 +124,7 @@ DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
 }
 
 template<typename arr_type>
+inline
 bool APtr<arr_type>::standable() const throw() {
   return this->alone() || this->sizeKnown();
 }
@@ -134,6 +146,7 @@ APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> *rhs) throw() {
 }
 
 template<typename arr_type>
+inline
 APtr<arr_type> &APtr<arr_type>::operator=(arr_type *p)
     throw(BadAllocException) {
   DPtr<arr_type>::operator=(p);

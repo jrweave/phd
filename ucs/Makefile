@@ -57,14 +57,14 @@ UCSIter.o : UCSIter.h UCSIter.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
 	$(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
 
-UTF8Iter.o : UTF8Iter.h UTF8Iter.cpp
+UTF8Iter.o : UTF8Iter.h UTF8Iter-inl.h UTF8Iter.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o UTF8Iter.o UTF8Iter.cpp
 	$(CC) $(CFLAGS) -c -o UTF8Iter.o UTF8Iter.cpp
 
-UTF16Iter.o : UTF16Iter.h UTF16Iter.cpp
+UTF16Iter.o : UTF16Iter.h UTF16Iter-inl.h UTF16Iter.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o UTF16Iter.o UTF16Iter.cpp
 	$(CC) $(CFLAGS) -c -o UTF16Iter.o UTF16Iter.cpp
 
-UTF32Iter.o : UTF32Iter.h UTF32Iter.cpp
+UTF32Iter.o : UTF32Iter.h UTF32Iter-inl.h UTF32Iter.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o UTF32Iter.o UTF32Iter.cpp
 	$(CC) $(CFLAGS) -c -o UTF32Iter.o UTF32Iter.cpp

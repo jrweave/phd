@@ -562,4 +562,151 @@ bool isPctEncoded(iter begin, iter end) {
   return begin != end && is_xdigit(*begin);
 }
 
+inline
+IRIRef::IRIRef() throw(BadAllocException)
+    : normalized(false) {
+  try {
+    NEW(this->utf8str, MPtr<uint8_t>);
+  } JUST_RETHROW(BadAllocException, "(rethrow)")
+}
+
+inline
+IRIRef::IRIRef(const IRIRef &iri) throw()
+    : normalized(iri.normalized), utf8str(iri.utf8str) {
+  this->utf8str->hold();
+}
+
+inline
+IRIRef::IRIRef(const IRIRef *iri) throw()
+    : normalized(iri->normalized), utf8str(iri->utf8str) {
+  this->utf8str->hold();
+}
+
+inline
+IRIRef::~IRIRef() throw() {
+  if (this->utf8str != NULL) {
+    this->utf8str->drop();
+  }
+}
+
+inline
+bool IRIRef::isIPChar(const uint32_t codepoint) throw() {
+  return codepoint == to_ascii(':')
+    || codepoint == to_ascii('@')
+    || codepoint == to_ascii('%') // for pct-encoded
+    || IRIRef::isUnreserved(codepoint)
+    || IRIRef::isSubDelim(codepoint);
+}
+
+inline
+bool IRIRef::isReserved(const uint32_t codepoint) throw() {
+  return IRIRef::isGenDelim(codepoint)
+    || IRIRef::isSubDelim(codepoint);
+}
+
+inline
+bool IRIRef::isUnreserved(const uint32_t codepoint) throw() {
+  return is_alpha(codepoint)
+    || is_digit(codepoint)
+    || codepoint == to_ascii('-')
+    || codepoint == to_ascii('.')
+    || codepoint == to_ascii('_')
+    || codepoint == to_ascii('~');
+}
+
+inline
+bool IRIRef::isIUnreserved(const uint32_t codepoint) throw() {
+  return IRIRef::isUnreserved(codepoint)
+    || IRIRef::isUCSChar(codepoint);
+}
+
+inline
+bool IRIRef::isUCSChar(const uint32_t codepoint) throw() {
+  return (UINT32_C(0xA0) <= codepoint && codepoint <= UINT32_C(0xD7FF))
+    || (UINT32_C(0xF900) <= codepoint && codepoint <= UINT32_C(0xFDCF))
+    || (UINT32_C(0xFDF0) <= codepoint && codepoint <= UINT32_C(0xFFEF))
+    || (UINT32_C(0x10000) <= codepoint && codepoint <= UINT32_C(0x1FFFD))
+    || (UINT32_C(0x20000) <= codepoint && codepoint <= UINT32_C(0x2FFFD))
+    || (UINT32_C(0x30000) <= codepoint && codepoint <= UINT32_C(0x3FFFD))
+    || (UINT32_C(0x40000) <= codepoint && codepoint <= UINT32_C(0x4FFFD))
+    || (UINT32_C(0x50000) <= codepoint && codepoint <= UINT32_C(0x5FFFD))
+    || (UINT32_C(0x60000) <= codepoint && codepoint <= UINT32_C(0x6FFFD))
+    || (UINT32_C(0x70000) <= codepoint && codepoint <= UINT32_C(0x7FFFD))
+    || (UINT32_C(0x80000) <= codepoint && codepoint <= UINT32_C(0x8FFFD))
+    || (UINT32_C(0x90000) <= codepoint && codepoint <= UINT32_C(0x9FFFD))
+    || (UINT32_C(0xA0000) <= codepoint && codepoint <= UINT32_C(0xAFFFD))
+    || (UINT32_C(0xB0000) <= codepoint && codepoint <= UINT32_C(0xBFFFD))
+    || (UINT32_C(0xC0000) <= codepoint && codepoint <= UINT32_C(0xCFFFD))
+    || (UINT32_C(0xD0000) <= codepoint && codepoint <= UINT32_C(0xDFFFD))
+    || (UINT32_C(0xE1000) <= codepoint && codepoint <= UINT32_C(0xEFFFD));
+}
+
+inline
+bool IRIRef::isSubDelim(const uint32_t codepoint) throw() {
+  return codepoint == to_ascii('!')
+    || codepoint == to_ascii('$')
+    || codepoint == to_ascii('&')
+    || codepoint == to_ascii('\'')
+    || codepoint == to_ascii('(')
+    || codepoint == to_ascii(')')
+    || codepoint == to_ascii('*')
+    || codepoint == to_ascii('+')
+    || codepoint == to_ascii(',')
+    || codepoint == to_ascii(';')
+    || codepoint == to_ascii('=');
+}
+
+inline
+bool IRIRef::isGenDelim(const uint32_t codepoint) throw() {
+  return codepoint == to_ascii(':')
+    || codepoint == to_ascii('/')
+    || codepoint == to_ascii('?')
+    || codepoint == to_ascii('#')
+    || codepoint == to_ascii('[')
+    || codepoint == to_ascii(']')
+    || codepoint == to_ascii('@');
+}
+
+inline
+bool IRIRef::isIPrivate(const uint32_t codepoint) throw() {
+  return (UINT32_C(0xE000) <= codepoint && codepoint <= UINT32_C(0xF8FF))
+    || (UINT32_C(0xF0000) <= codepoint && codepoint <= UINT32_C(0xFFFFD))
+    || (UINT32_C(0x100000) <= codepoint && codepoint <= UINT32_C(0x10FFFD));
+}
+
+inline
+DPtr<uint8_t> *IRIRef::getUTF8String() const throw() {
+  this->utf8str->hold();
+  return this->utf8str;
+}
+
+inline
+bool IRIRef::isIRI() const throw() {
+  return !this->isRelativeRef();
+}
+
+inline
+IRIRef &IRIRef::operator=(const IRIRef &rhs) throw() {
+  this->utf8str->drop();
+  this->utf8str = rhs.utf8str;
+  this->utf8str->hold();
+  this->normalized = rhs.normalized;
+}
+
+inline
+bool IRIRef::operator==(const IRIRef &rhs) throw() {
+  return this == &rhs ||
+      (this->utf8str->size() == rhs.utf8str->size()
+       && memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
+                 this->utf8str->size() * sizeof(uint8_t)) == 0);
+}
+
+inline
+bool IRIRef::operator!=(const IRIRef &rhs) throw() {
+  return this != &rhs && 
+      (this->utf8str->size() != rhs.utf8str->size()
+       || memcmp(this->utf8str->dptr(), rhs.utf8str->dptr(),
+                 this->utf8str->size() * sizeof(uint8_t)) != 0);
+}
+
 }

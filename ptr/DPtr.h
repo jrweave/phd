@@ -25,11 +25,13 @@ public:
   DPtr(const DPtr<ptr_type> *dptr) throw();
   virtual ~DPtr() throw();
 
+  // Final Methods
+  ptr_type *dptr() const throw();
+  bool sizeKnown() const throw();
+  size_t size() const throw();
+
   // Virtual Methods
   virtual void *ptr() const throw();
-  virtual ptr_type *dptr() const throw();
-  virtual bool sizeKnown() const throw();
-  virtual size_t size() const throw();
   virtual DPtr<ptr_type> *sub(size_t offset) throw();
   virtual DPtr<ptr_type> *sub(size_t offset, size_t len) throw();
   virtual DPtr<ptr_type> *stand() throw(BadAllocException);
@@ -39,9 +41,9 @@ public:
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> &rhs) throw();
   DPtr<ptr_type> &operator=(const DPtr<ptr_type> *rhs) throw();
   DPtr<ptr_type> &operator=(ptr_type *p) throw(BadAllocException);
-  virtual ptr_type &operator*() const throw();
-  virtual ptr_type &operator[](const size_t i) const throw();
-  virtual ptr_type *operator->() const throw();
+  ptr_type &operator*() const throw();
+  ptr_type &operator[](const size_t i) const throw();
+  ptr_type *operator->() const throw();
 };
 
 }

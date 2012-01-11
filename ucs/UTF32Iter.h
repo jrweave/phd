@@ -30,13 +30,13 @@ public:
   static UTF32Iter *end(DPtr<uint32_t> *utf32str);
 
   // Implemented Abstract Methods
-  virtual UCSIter *start();
-  virtual UCSIter *finish();
-  virtual uint32_t current();
-  virtual UCSIter *advance();
-  virtual bool more();
-  virtual void mark();
-  virtual void reset();
+  UCSIter *start();
+  UCSIter *finish();
+  uint32_t current();
+  UCSIter *advance();
+  bool more();
+  void mark();
+  void reset();
 
   // Operators
   UTF32Iter &operator=(UTF32Iter &rhs);
@@ -48,5 +48,7 @@ public:
 };
 
 }
+
+#include "ucs/UTF32Iter-inl.h"
 
 #endif /* __UCS__UTF32ITER_H__ */

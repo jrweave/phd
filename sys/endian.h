@@ -11,4 +11,6 @@ bool is_little_endian();
 
 }
 
+#include "sys/endian-inl.h"
+
 #endif /* __SYS__ENDIAN_H__ */

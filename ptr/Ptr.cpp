@@ -24,20 +24,6 @@ Ptr::Ptr(void *p) throw(BadAllocException)
   *(this->global_refs) = 1;
 }
 
-Ptr::Ptr(const Ptr &ptr) throw()
-    : p(ptr.p), local_refs(1), global_refs(ptr.global_refs) {
-  (*(this->global_refs))++;
-}
-
-Ptr::Ptr(const Ptr *ptr) throw()
-    : p(ptr->p), local_refs(1), global_refs(ptr->global_refs) {
-  (*(this->global_refs))++;
-}
-
-Ptr::~Ptr() throw() {
-  this->destruct();
-}
-
 void Ptr::destruct() throw() {
   if (this->global_refs != NULL) {
     (*(this->global_refs)) -= this->local_refs;
@@ -63,23 +49,6 @@ void Ptr::reset(void *p) throw(BadAllocException) {
   this->local_refs = *global;
 }
 
-uint32_t Ptr::localRefs() const throw() {
-  return this->local_refs;
-}
-
-uint32_t Ptr::globalRefs() const throw() {
-  return *(this->global_refs);
-}
-
-void *Ptr::ptr() const throw() {
-  return this->p;
-}
-
-void Ptr::hold() throw() {
-  this->local_refs++;
-  (*(this->global_refs))++;
-}
-
 void Ptr::drop() throw() {
   this->local_refs--;
   (*(this->global_refs))--;
@@ -93,19 +62,6 @@ void Ptr::drop() throw() {
     void *x = this;
     DELETE(this);
   }
-}
-
-bool Ptr::alone() const throw() {
-  return *(this->global_refs) == 1;
-}
-
-void Ptr::destroy() throw() {
-  // This class doesn't actually destroy anything.
-  // Subclasses should override this method with something meaningful.
-}
-
-Ptr &Ptr::operator=(const Ptr &rhs) throw() {
-  return *this = &rhs;
 }
 
 Ptr &Ptr::operator=(const Ptr *rhs) throw() {
@@ -139,10 +95,6 @@ Ptr &Ptr::operator=(void *p) throw(BadAllocException) {
   this->p = p;
   (*(this->global_refs)) = this->local_refs;
   return *this;
-}
-
-Ptr *Ptr::thisAddr() throw() {
-  return this;
 }
 
 }

@@ -22,6 +22,7 @@ void debug(const char *label, iter begin, iter end) {
 #endif
 
 template<typename iter>
+inline
 bool isLanguageTag(iter begin, iter end) {
   return isLangTag(begin, end)
       || isPrivateUse(begin, end)
@@ -254,6 +255,7 @@ bool isPrivateUse(iter begin, iter end) {
 }
 
 template<typename iter>
+inline
 bool isGrandfathered(iter begin, iter end) {
   return isIrregular(begin, end) || isRegular(begin, end);
 }
@@ -496,6 +498,53 @@ bool isRegular(iter begin, iter end) {
     return false;
   }
   return false;
+}
+
+inline
+LangTag::LangTag(const LangTag &copy) throw()
+    : ascii(copy.ascii), canonical(copy.canonical),
+      extlang_form(copy.extlang_form) {
+  this->ascii->hold();
+}
+
+inline
+LangTag::~LangTag() throw() {
+  this->ascii->drop();
+}
+
+inline
+DPtr<uint8_t> *LangTag::getASCIIString() throw() {
+  this->ascii->hold();
+  return this->ascii;
+}
+
+inline
+bool LangTag::isPrivateUse() const throw() {
+  return lang::isPrivateUse(this->ascii->dptr(),
+      this->ascii->dptr() + this->ascii->size());
+}
+
+inline
+bool LangTag::isGrandfathered() const throw() {
+  return lang::isGrandfathered(this->ascii->dptr(),
+      this->ascii->dptr() + this->ascii->size());
+}
+
+inline
+bool LangTag::isRegularGrandfathered() const throw() {
+  return isRegular(this->ascii->dptr(),
+      this->ascii->dptr() + this->ascii->size());
+}
+
+inline
+bool LangTag::isIrregularGrandfathered() const throw() {
+  return isIrregular(this->ascii->dptr(),
+      this->ascii->dptr() + this->ascii->size());
+}
+
+inline
+bool LangTag::compare_first_only(const uint8_t *a, const uint8_t *b) {
+  return to_lower(*a) < to_lower(*b);
 }
 
 }

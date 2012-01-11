@@ -42,7 +42,6 @@ class Ptr {
 private:
   uint32_t *global_refs;
   uint32_t local_refs;
-  Ptr *thisAddr() throw();
 protected:
   void *p; // subclasses, be careful
   virtual void destroy() throw();
@@ -61,6 +60,7 @@ public:
   virtual void *ptr() const throw();
 
   // Final Methods
+  // TODO make inline
   void hold() throw();
   void drop() throw();
   bool alone() const throw();
@@ -72,5 +72,7 @@ public:
 };
 
 }
+
+#include "ptr/Ptr-inl.h"
 
 #endif /* __PTR__PTR_H__ */

@@ -38,21 +38,6 @@ LangTag::LangTag(DPtr<uint8_t> *ascii)
   this->ascii->hold();
 }
 
-LangTag::LangTag(const LangTag &copy) throw()
-    : ascii(copy.ascii), canonical(copy.canonical),
-      extlang_form(copy.extlang_form) {
-  this->ascii->hold();
-}
-
-LangTag::~LangTag() throw() {
-  this->ascii->drop();
-}
-
-DPtr<uint8_t> *LangTag::getASCIIString() throw() {
-  this->ascii->hold();
-  return this->ascii;
-}
-
 DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   if (this->isGrandfathered()) {
     return NULL;
@@ -191,26 +176,6 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
 
   // PRIVATE_USE
   return this->ascii->sub(offset, this->ascii->size() - offset);
-}
-
-bool LangTag::isPrivateUse() const throw() {
-  return lang::isPrivateUse(this->ascii->dptr(),
-      this->ascii->dptr() + this->ascii->size());
-}
-
-bool LangTag::isGrandfathered() const throw() {
-  return lang::isGrandfathered(this->ascii->dptr(),
-      this->ascii->dptr() + this->ascii->size());
-}
-
-bool LangTag::isRegularGrandfathered() const throw() {
-  return isRegular(this->ascii->dptr(),
-      this->ascii->dptr() + this->ascii->size());
-}
-
-bool LangTag::isIrregularGrandfathered() const throw() {
-  return isIrregular(this->ascii->dptr(),
-      this->ascii->dptr() + this->ascii->size());
 }
 
 LangTag *LangTag::normalize() THROWS(BadAllocException) {
@@ -367,6 +332,9 @@ LangTag &LangTag::operator=(const LangTag &rhs) throw() {
 }
 
 bool LangTag::operator==(const LangTag &rhs) throw() {
+  if (this == &rhs) {
+    return true;
+  }
   if (this->ascii->size() != rhs.ascii->size()) {
     return false;
   }
@@ -443,10 +411,6 @@ const uint8_t *LangTag::lookup(const uint8_t *key,
     ++keys;
   }
   return NULL;
-}
-
-bool LangTag::compare_first_only(const uint8_t *a, const uint8_t *b) {
-  return to_lower(*a) < to_lower(*b);
 }
 
 void LangTag::normalizePart(enum LangTagPart p)

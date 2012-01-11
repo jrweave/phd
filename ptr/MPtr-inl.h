@@ -8,18 +8,21 @@ namespace ptr {
 using namespace std;
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr() throw(BadAllocException)
     : DPtr<ptr_type>() {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(ptr_type *p) throw(BadAllocException)
     : DPtr<ptr_type>(p) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(ptr_type *p, size_t num) throw(BadAllocException)
     : DPtr<ptr_type>(p, num) {
   // do nothing
@@ -36,24 +39,28 @@ MPtr<ptr_type>::MPtr(size_t num) throw(BadAllocException)
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(const MPtr<ptr_type> &mptr) throw()
     : DPtr<ptr_type>(&mptr) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr) throw()
     : DPtr<ptr_type>(mptr) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr, size_t offset) throw()
     : DPtr<ptr_type>(mptr, offset) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr, size_t offset, size_t len)
     throw()
     : DPtr<ptr_type>(mptr, offset, len) {
@@ -61,11 +68,13 @@ MPtr<ptr_type>::MPtr(const MPtr<ptr_type> *mptr, size_t offset, size_t len)
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type>::~MPtr() throw() {
   this->destruct();
 }
 
 template<typename ptr_type>
+inline
 void MPtr<ptr_type>::destroy() throw() {
   if (this->p != NULL) {
     dalloc(this->p);
@@ -73,6 +82,7 @@ void MPtr<ptr_type>::destroy() throw() {
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset) throw() {
   DPtr<ptr_type> *d;
   NEW(d, MPtr<ptr_type>, this, this->offset + offset);
@@ -80,6 +90,7 @@ DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset) throw() {
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
   DPtr<ptr_type> *d;
   NEW(d, MPtr<ptr_type>, this, this->offset + offset, len);
@@ -87,6 +98,7 @@ DPtr<ptr_type> *MPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
 }
 
 template<typename ptr_type>
+inline
 size_t MPtr<ptr_type>::sizeInBytes() const throw() {
   return this->size() * sizeof(ptr_type);
 }
@@ -116,6 +128,7 @@ DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
 }
 
 template<typename ptr_type>
+inline
 bool MPtr<ptr_type>::standable() const throw() {
   return this->alone() || this->sizeKnown();
 }
@@ -137,6 +150,7 @@ MPtr<ptr_type> &MPtr<ptr_type>::operator=(const MPtr<ptr_type> *rhs) throw() {
 }
 
 template<typename ptr_type>
+inline
 MPtr<ptr_type> &MPtr<ptr_type>::operator=(ptr_type *p)
     throw(BadAllocException) {
   DPtr<ptr_type>::operator=(p);

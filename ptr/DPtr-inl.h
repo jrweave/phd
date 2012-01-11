@@ -7,36 +7,42 @@ namespace ptr {
 using namespace std;
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr() throw(BadAllocException)
     : Ptr(), num(0), offset(0), size_known(true) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(ptr_type *p) throw(BadAllocException)
     : Ptr((void*)p), num(0), offset(0), size_known(false) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(ptr_type *p, size_t size) throw(BadAllocException)
     : Ptr((void*)p), num(size), offset(0), size_known(true) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> &dptr) throw()
     : Ptr(&dptr), num(dptr.size()), offset(0), size_known(dptr.sizeKnown()) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr) throw()
     : Ptr(dptr), num(dptr->size()), offset(0), size_known(dptr->sizeKnown()) {
   // do nothing
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset)
     throw()
     : Ptr(dptr), num(dptr->sizeKnown() ? dptr->size() - offset : 0),
@@ -45,6 +51,7 @@ DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset)
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset, size_t len)
     throw()
     : Ptr(dptr), num(len), offset(offset), size_known(true) {
@@ -52,6 +59,7 @@ DPtr<ptr_type>::DPtr(const DPtr<ptr_type> *dptr, size_t offset, size_t len)
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type>::~DPtr() throw() {
   this->destruct();
 }
@@ -72,21 +80,25 @@ void *DPtr<ptr_type>::ptr() const throw() {
 }
 
 template<typename ptr_type>
+inline
 ptr_type *DPtr<ptr_type>::dptr() const throw() {
   return ((ptr_type *)this->p) + offset;
 }
 
 template<typename ptr_type>
+inline
 bool DPtr<ptr_type>::sizeKnown() const throw() {
   return this->size_known;
 }
 
 template<typename ptr_type>
+inline
 size_t DPtr<ptr_type>::size() const throw() {
   return this->num;
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset) throw() {
   DPtr<ptr_type> *d;
   NEW(d, DPtr<ptr_type>, this, this->offset + offset);
@@ -94,6 +106,7 @@ DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset) throw() {
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
   DPtr<ptr_type> *d;
   NEW(d, DPtr<ptr_type>, this, this->offset + offset, len);
@@ -101,11 +114,13 @@ DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *DPtr<ptr_type>::stand() throw(BadAllocException) {
   return this->alone() ? this : NULL;
 }
 
 template<typename ptr_type>
+inline
 bool DPtr<ptr_type>::standable() const throw() {
   return this->alone();
 }
@@ -143,16 +158,19 @@ DPtr<ptr_type> &DPtr<ptr_type>::operator=(ptr_type *p)
 }
 
 template<typename ptr_type>
+inline
 ptr_type &DPtr<ptr_type>::operator*() const throw() {
   return *(this->dptr());
 }
 
 template<typename ptr_type>
+inline
 ptr_type &DPtr<ptr_type>::operator[](const size_t i) const throw() {
   return (this->dptr())[i];
 }
 
 template<typename ptr_type>
+inline
 ptr_type *DPtr<ptr_type>::operator->() const throw() {
   return this->dptr();
 }

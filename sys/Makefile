@@ -30,7 +30,7 @@ clean :
 force_look :
 	true
 
-endian.o : endian.cpp endian.h ints.h
+endian.o : endian.cpp endian-inl.h endian.h ints.h
 	$(ECHO) $(CC) $(CFLAGS) -c -o endian.o endian.cpp
 	$(CC) $(CFLAGS) -c -o endian.o endian.cpp
 

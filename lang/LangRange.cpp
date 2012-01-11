@@ -23,20 +23,6 @@ LangRange::LangRange(DPtr<uint8_t> *ascii) throw(MalformedLangRangeException) {
   this->ascii->hold();
 }
 
-LangRange::LangRange(const LangRange &copy) throw() {
-  this->ascii = copy.ascii;
-  this->ascii->hold();
-}
-
-LangRange::~LangRange() throw() {
-  this->ascii->drop();
-}
-
-DPtr<uint8_t> *LangRange::getASCIIString() throw() {
-  this->ascii->hold();
-  return this->ascii;
-}
-
 bool LangRange::isBasic() const throw() {
   uint8_t *begin = this->ascii->dptr();
   uint8_t *end = begin + this->ascii->size();
@@ -46,10 +32,6 @@ bool LangRange::isBasic() const throw() {
     }
   }
   return true;
-}
-
-bool LangRange::matches(LangTag *lang_tag) const throw() {
-  return this->matches(lang_tag, this->isBasic());
 }
 
 bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
@@ -179,13 +161,6 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
   return true;
 }
 
-LangRange &LangRange::operator=(const LangRange &rhs) throw() {
-  this->ascii->drop();
-  this->ascii = rhs.ascii;
-  this->ascii->hold();
-  return *this;
-}
-
 bool LangRange::operator==(const LangRange &rhs) throw() {
   if (this->ascii->size() != rhs.ascii->size()) {
     return false;
@@ -197,10 +172,6 @@ bool LangRange::operator==(const LangRange &rhs) throw() {
     }
   }
   return true;
-}
-
-bool LangRange::operator!=(const LangRange &rhs) throw() {
-  return !(*this == rhs);
 }
 
 }
