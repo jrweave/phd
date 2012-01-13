@@ -117,7 +117,7 @@ bool LangRange::cmpeq0(const LangRange &rng1, const LangRange &rng2) throw() {
 }
 
 inline
-DPtr<uint8_t> *LangRange::getASCIIString() throw() {
+DPtr<uint8_t> *LangRange::getASCIIString() const throw() {
   this->ascii->hold();
   return this->ascii;
 }
@@ -134,9 +134,11 @@ bool LangRange::matches(LangTag *lang_tag) const throw() {
 
 inline
 LangRange &LangRange::operator=(const LangRange &rhs) throw() {
-  this->ascii->drop();
-  this->ascii = rhs.ascii;
-  this->ascii->hold();
+  if (this != &rhs) {
+    this->ascii->drop();
+    this->ascii = rhs.ascii;
+    this->ascii->hold();
+  }
   return *this;
 }
 

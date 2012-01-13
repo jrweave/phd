@@ -1,6 +1,7 @@
 #ifndef __LANG__LANGTAG_H__
 #define __LANG__LANGTAG_H__
 
+#include <iostream>
 #include "lang/MalformedLangTagException.h"
 #include "ptr/DPtr.h"
 #include "sys/char.h"
@@ -83,7 +84,7 @@ public:
   static bool cmpeq0(const LangTag &tag1, const LangTag &tag2) throw();
 
   // Final Methods
-  DPtr<uint8_t> *getASCIIString() throw();
+  DPtr<uint8_t> *getASCIIString() const throw();
   bool equals(const LangTag &tag) const throw();
   DPtr<uint8_t> *getPart(const enum LangTagPart part) const throw();
   bool isPrivateUse() const throw();
@@ -99,7 +100,10 @@ public:
   LangTag &operator=(const LangTag &rhs) throw();
 };
 
-}
+} // end namespace lang
+
+std::istream& operator>>(std::istream& stream, lang::LangTag &tag);
+std::ostream& operator<<(std::ostream& stream, const lang::LangTag &tag);
 
 #include "lang/LangTag-inl.h"
 

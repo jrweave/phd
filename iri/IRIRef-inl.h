@@ -1,5 +1,6 @@
 #include "iri/IRIRef.h"
 
+#include <string>
 #include <vector>
 #include "ptr/MPtr.h"
 #include "sys/ints.h"

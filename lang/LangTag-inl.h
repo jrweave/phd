@@ -523,7 +523,7 @@ bool LangTag::cmpeq0(const LangTag &tag1, const LangTag &tag2) throw() {
 }
 
 inline
-DPtr<uint8_t> *LangTag::getASCIIString() throw() {
+DPtr<uint8_t> *LangTag::getASCIIString() const throw() {
   this->ascii->hold();
   return this->ascii;
 }

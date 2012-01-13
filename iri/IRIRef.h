@@ -1,6 +1,7 @@
 #ifndef __IRI__IRIREF_H__
 #define __IRI__IRIREF_H__
 
+#include <iostream>
 #include <vector>
 #include "iri/MalformedIRIRefException.h"
 #include "ptr/BadAllocException.h"
@@ -146,11 +147,12 @@ public:
 
   // Operators
   IRIRef &operator=(const IRIRef &rhs) throw();
-//  bool operator==(const IRIRef &rhs) throw();
-//  bool operator!=(const IRIRef &rhs) throw();
 };
 
 }
+
+std::istream& operator>>(std::istream& stream, iri::IRIRef &ref);
+std::ostream& operator<<(std::ostream& stream, const iri::IRIRef &ref);
 
 #include "iri/IRIRef-inl.h"
 

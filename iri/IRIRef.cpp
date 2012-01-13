@@ -551,4 +551,34 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
 }
 TRACE(BadAllocException, "(trace)")
 
+} // end namespace iri
+
+std::istream& operator>>(std::istream& stream, iri::IRIRef &ref) {
+  std::string str;
+  stream >> str;
+  ptr::DPtr<uint8_t> *p;
+  try {
+    NEW(p, ptr::MPtr<uint8_t>, str.size());
+  } RETHROW_BAD_ALLOC
+  ascii_strcpy(p->dptr(), str.c_str());
+  try {
+    iri::IRIRef newref(p);
+    p->drop();
+    ref = newref;
+    return stream;
+  } catch(iri::MalformedIRIRefException &e) {
+    p->drop();
+    RETHROW(e, "Invalid std::istream >> iri::IRIRef operation.");
+  }
+}
+
+std::ostream& operator<<(std::ostream& stream, const iri::IRIRef &ref) {
+  ptr::DPtr<uint8_t> *utf8str = ref.getUTF8String();
+  const uint8_t *begin = utf8str->dptr();
+  const uint8_t *end = begin + utf8str->size();
+  for (; begin != end; ++begin) {
+    stream << to_lchar(*begin);
+  }
+  utf8str->drop();
+  return stream;
 }

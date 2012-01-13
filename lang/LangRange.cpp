@@ -70,6 +70,7 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
     uint8_t *tend = tbegin + tag->size();
     for (; rbegin != rend; ++rbegin) {
       if (to_lower(*rbegin) != to_lower(*tbegin)) {
+        tag->drop();
         return false;
       }
       ++tbegin;
@@ -179,4 +180,34 @@ bool LangRange::matches(LangTag *lang_tag, bool basic) const throw() {
   return true;
 }
 
+} // end namespace lang
+
+std::istream& operator>>(std::istream& stream, lang::LangRange &rng) {
+  std::string str;
+  stream >> str;
+  ptr::DPtr<uint8_t> *p;
+  try {
+    NEW(p, ptr::MPtr<uint8_t>, str.size());
+  } RETHROW_BAD_ALLOC
+  ascii_strcpy(p->dptr(), str.c_str());
+  try {
+    lang::LangRange newrng(p);
+    p->drop();
+    rng = newrng;
+    return stream;
+  } catch(lang::MalformedLangRangeException &e) {
+    p->drop();
+    RETHROW(e, "Invalid std::istream >> lang::LangRange operation.");
+  }
+}
+
+std::ostream& operator<<(std::ostream& stream, const lang::LangRange &rng) {
+  ptr::DPtr<uint8_t> *asciistr = rng.getASCIIString();
+  const uint8_t *begin = asciistr->dptr();
+  const uint8_t *end = begin + asciistr->size();
+  for (; begin != end; ++begin) {
+    stream << to_lchar(*begin);
+  }
+  asciistr->drop();
+  return stream;
 }

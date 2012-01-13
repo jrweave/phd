@@ -533,4 +533,34 @@ bool LangTag::replaceSection(DPtr<uint8_t> *part, const void **lookup_array)
 }
 TRACE(BadAllocException, "(trace)")
 
+} // end namespace lang
+
+std::istream& operator>>(std::istream& stream, lang::LangTag &tag) {
+  std::string str;
+  stream >> str;
+  ptr::DPtr<uint8_t> *p;
+  try {
+    NEW(p, ptr::MPtr<uint8_t>, str.size());
+  } RETHROW_BAD_ALLOC
+  ascii_strcpy(p->dptr(), str.c_str());
+  try {
+    lang::LangTag newtag(p);
+    p->drop();
+    tag = newtag;
+    return stream;
+  } catch(lang::MalformedLangTagException &e) {
+    p->drop();
+    RETHROW(e, "Invalid std::istream >> lang::LangTag operation.");
+  }
+}
+
+std::ostream& operator<<(std::ostream& stream, const lang::LangTag &tag) {
+  ptr::DPtr<uint8_t> *asciistr = tag.getASCIIString();
+  const uint8_t *begin = asciistr->dptr();
+  const uint8_t *end = begin + asciistr->size();
+  for (; begin != end; ++begin) {
+    stream << to_lchar(*begin);
+  }
+  asciistr->drop();
+  return stream;
 }

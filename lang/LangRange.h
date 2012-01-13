@@ -1,6 +1,7 @@
 #ifndef __LANG__LANGRANGE_H__
 #define __LANG__LANGRANGE_H__
 
+#include <iostream>
 #include "lang/LangTag.h"
 #include "lang/MalformedLangRangeException.h"
 #include "ptr/BadAllocException.h"
@@ -36,7 +37,7 @@ public:
   static bool cmpeq0(const LangRange &rng1, const LangRange &rng2) throw();
 
   // Final Methods
-  DPtr<uint8_t> *getASCIIString() throw();
+  DPtr<uint8_t> *getASCIIString() const throw();
   bool equals(const LangRange &rng) const throw();
   bool isBasic() const throw();
   bool matches(LangTag *lang_tag) const throw();
@@ -46,7 +47,10 @@ public:
   LangRange &operator=(const LangRange &rhs) throw();
 };
 
-}
+} // end namespace lang
+
+std::istream& operator>>(std::istream& stream, lang::LangRange &rng);
+std::ostream& operator<<(std::ostream& stream, const lang::LangRange &rng);
 
 #include "lang/LangRange-inl.h"
 
