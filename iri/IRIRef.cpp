@@ -25,7 +25,7 @@ using namespace ucs;
 
 IRIRef::IRIRef(DPtr<uint8_t> *utf8str)
     throw(SizeUnknownException, MalformedIRIRefException)
-    : normalized(false), utf8str(NULL) {
+    : normalized(false), urified(false), utf8str(NULL) {
   if (!utf8str->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
@@ -235,7 +235,7 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 }
 
 IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
-  if (this->normalized) {
+  if (this->normalized && !this->urified) {
     return this;
   }
 
@@ -252,6 +252,7 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
   normed = normal->dptr();
 
   // Percent encoding; decode if IUnreserved
+  uint8_t bits = UINT8_C(0);
   size_t i, j, k;
   j = 0;
   k = 0;
@@ -268,9 +269,17 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
     // decode percent-encoding
     uint8_t n = (((uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+1])) << 4)
         | (uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+2]);
-    if (IRIRef::isIUnreserved(n)) {
+    if (bits > UINT8_C(0x7F) || IRIRef::isIUnreserved(n)) {
+      if (n > UINT8_C(0x7F)) {
+        bits = n << 1;
+      } else {
+        bits <<= 1;
+      }
       normed[k++] = n;
       j += 3;
+      if (this->urified && IRIRef::isUCSChar(n)) {
+        this->urified = false;
+      }
     } else {
       normed[k++] = (*(this->utf8str))[j++];
       uint8_t c = (*(this->utf8str))[j++];
@@ -283,6 +292,12 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
     DPtr<uint8_t> *temp = normal->sub(0, k);
     normal->drop();
     normal = temp;
+  }
+
+  if (this->normalized) {
+    this->utf8str->drop();
+    this->utf8str = normal;
+    return this;
   }
 
   // Character normalization; NFC
@@ -319,12 +334,65 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
 }
 TRACE(BadAllocException, "(trace)")
 
-IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
+IRIRef *IRIRef::urify() throw(BadAllocException) {
+  if (this->urified) {
+    return this;
+  }
+  const uint8_t *begin = this->utf8str->dptr();
+  const uint8_t *end = begin + this->utf8str->size();
+  const uint8_t *mark = begin;
+  const uint8_t *next = NULL;
+  uint32_t codepoint;
+  while (mark != end) {
+    codepoint = utf8char(mark, &next);
+    if (IRIRef::isIPrivate(codepoint) || IRIRef::isUCSChar(codepoint)) {
+      break;
+    }
+    mark = next;
+  }
+  if (mark == end) {
+    this->urified = true;
+    return this;
+  }
+  vector<uint8_t> urivec;
+  urivec.reserve(this->utf8str->size() + 2);
+  do {
+    urivec.insert(urivec.end(), begin, mark);
+    for (; mark != next; ++mark) {
+      urivec.push_back(to_ascii('%'));
+      uint8_t hi4 = (*mark) >> 4;
+      uint8_t lo4 = (*mark) & UINT8_C(0x0F);
+      urivec.push_back(hi4 <= UINT8_C(9) ? to_ascii('0') + hi4
+                                         : to_ascii('A') + (hi4 - 10));
+      urivec.push_back(lo4 <= UINT8_C(9) ? to_ascii('0') + lo4
+                                         : to_ascii('A') + (lo4 - 10));
+    }
+    begin = mark;
+    while (mark != end) {
+      codepoint = utf8char(mark, &next);
+      if (IRIRef::isIPrivate(codepoint) || IRIRef::isUCSChar(codepoint)) {
+        break;
+      }
+      mark = next;
+    }
+  } while(mark != end);
+  urivec.insert(urivec.end(), begin, mark);
+  MPtr<uint8_t> *uristr;
+  try {
+    NEW(uristr, MPtr<uint8_t>, urivec.size());
+  } RETHROW_BAD_ALLOC
+  copy(urivec.begin(), urivec.end(), uristr->dptr());
+  this->utf8str->drop();
+  this->utf8str = uristr;
+  this->urified = true;
+  return this; 
+}
 
+IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
   // Equivalent to remove_dot_segments
   if (base == NULL || base == this) {
 
-    if (this->normalized) {
+    if (this->normalized || this->urified) {
       return this;
     }
 

@@ -109,6 +109,7 @@ class IRIRef {
 protected:
   DPtr<uint8_t> *utf8str;
   bool normalized;
+  bool urified;
 public:
   IRIRef() throw(BadAllocException);
       // <> relative IRI reference with empty path
@@ -143,6 +144,7 @@ public:
 
   // Virtual Methods
   virtual IRIRef *normalize() throw(BadAllocException);
+  virtual IRIRef *urify() throw(BadAllocException);
   virtual IRIRef *resolve(IRIRef *base) throw(BadAllocException);
 
   // Operators

@@ -565,7 +565,7 @@ bool isPctEncoded(iter begin, iter end) {
 
 inline
 IRIRef::IRIRef() throw(BadAllocException)
-    : normalized(false) {
+    : normalized(false), urified(false) {
   try {
     NEW(this->utf8str, MPtr<uint8_t>);
   } JUST_RETHROW(BadAllocException, "(rethrow)")
@@ -573,13 +573,14 @@ IRIRef::IRIRef() throw(BadAllocException)
 
 inline
 IRIRef::IRIRef(const IRIRef &iri) throw()
-    : normalized(iri.normalized), utf8str(iri.utf8str) {
+    : normalized(iri.normalized), urified(iri.urified), utf8str(iri.utf8str) {
   this->utf8str->hold();
 }
 
 inline
 IRIRef::IRIRef(const IRIRef *iri) throw()
-    : normalized(iri->normalized), utf8str(iri->utf8str) {
+    : normalized(iri->normalized), urified(iri->urified),
+      utf8str(iri->utf8str) {
   this->utf8str->hold();
 }
 
@@ -605,7 +606,7 @@ bool IRIRef::isIPChar(const uint32_t codepoint) throw() {
   return codepoint == to_ascii(':')
     || codepoint == to_ascii('@')
     || codepoint == to_ascii('%') // for pct-encoded
-    || IRIRef::isUnreserved(codepoint)
+    || IRIRef::isIUnreserved(codepoint)
     || IRIRef::isSubDelim(codepoint);
 }
 
@@ -707,6 +708,7 @@ IRIRef &IRIRef::operator=(const IRIRef &rhs) throw() {
   this->utf8str = rhs.utf8str;
   this->utf8str->hold();
   this->normalized = rhs.normalized;
+  this->urified = rhs.urified;
 }
 
 }

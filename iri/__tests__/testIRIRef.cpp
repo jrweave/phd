@@ -156,6 +156,18 @@ bool malformed(DPtr<uint8_t> *mal) {
   }
 }
 
+bool testUrify(IRIRef *iri1, IRIRef *iri2, bool test_norm_diff) {
+  iri1->urify();
+  PROG(iri1->equals(*iri2));
+  if (test_norm_diff) {
+    iri1->normalize();
+    PROG(!iri1->equals(*iri2));
+  }
+  DELETE(iri1);
+  DELETE(iri2);
+  PASS;
+}
+
 int main (int argc, char **argv) {
   INIT;
   IRIRef *i;
@@ -219,5 +231,9 @@ int main (int argc, char **argv) {
     str2ptr("http"), NULL,
     str2ptr("[::ffff:192.0.2.128]"), NULL, str2ptr(""),
     NULL, NULL);
+
+  TEST(testUrify, str2iri("tag:jrweave@gmail.com,2012:\xE6\x9D\xB0\xE8\xA5\xBF"),
+                  str2iri("tag:jrweave@gmail.com,2012:%E6%9D%B0%E8%A5%BF"), true);
+
   FINAL;
 }
