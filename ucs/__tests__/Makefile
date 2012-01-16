@@ -23,8 +23,8 @@ force_look :
 
 testutf : testutf.cpp ../utf.h ../utf.o ../UTF8Iter.o ../UTF16Iter.o ../UTF32Iter.o ../UCSIter.o
 	$(ECHO) running test $(SUBDIR)/testutf
-	$(ECHO) $(CC) $(CFLAGS) -o testutf testutf.cpp ../utf.o ../../sys/endian.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../UTF8Iter.o ../UTF16Iter.o ../UTF32Iter.o ../UCSIter.o ../../ptr/alloc.o
-	$(CC) $(CFLAGS) -o testutf testutf.cpp ../utf.o ../../sys/endian.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../UTF8Iter.o ../UTF16Iter.o ../UTF32Iter.o ../UCSIter.o ../../ptr/alloc.o
+	$(ECHO) $(CC) $(CFLAGS) -o testutf testutf.cpp ../utf.o ../../sys/endian.o ../../ptr/SizeUnknownException.o. ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../UTF8Iter.o ../UTF16Iter.o ../UTF32Iter.o ../UCSIter.o ../../ptr/alloc.o ../nf.o
+	$(CC) $(CFLAGS) -o testutf testutf.cpp ../utf.o ../../sys/endian.o ../../ptr/SizeUnknownException.o ../../ptr/Ptr.o ../../ex/TraceableException.o ../../ptr/BadAllocException.o ../InvalidEncodingException.o ../InvalidCodepointException.o ../UTF8Iter.o ../UTF16Iter.o ../UTF32Iter.o ../UCSIter.o ../../ptr/alloc.o ../nf.o
 	$(ECHO) [TEST] ./testutf
 	./testutf
 

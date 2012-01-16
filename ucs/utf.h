@@ -6,6 +6,7 @@
 #include "ptr/DPtr.h"
 #include "ptr/SizeUnknownException.h"
 #include "sys/ints.h"
+#include "ucs/InvalidCodepointException.h"
 #include "ucs/InvalidEncodingException.h"
 
 namespace ucs {
@@ -44,6 +45,10 @@ uint32_t utf8char(const uint8_t *utf8str) throw(InvalidEncodingException);
 uint32_t utf8char(const uint8_t *utf8str, const uint8_t **next)
     throw(InvalidEncodingException);
 
+void utf8valid(DPtr<uint8_t> *utf8str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException);
+
 // Returns number of uint16_t
 size_t utf16len(const uint32_t codepoint, const enum BOM bom)
     throw(InvalidEncodingException);
@@ -78,6 +83,10 @@ uint32_t utf16char(const uint16_t *utf16str, const bool flip)
 uint32_t utf16char(const uint16_t *utf16str, const bool flip,
     const uint16_t **next) throw(InvalidEncodingException);
 
+void utf16valid(DPtr<uint16_t> *utf16str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException);
+
 // Returns number of uint32_t
 size_t utf32len(const uint32_t codepoint, const enum BOM bom)
     throw(InvalidEncodingException);
@@ -111,6 +120,10 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip)
 
 uint32_t utf32char(const uint32_t *utf32str, const bool flip,
     const uint32_t **next) throw(InvalidEncodingException);
+
+void utf32valid(DPtr<uint32_t> *utf32str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException);
 
 }
 

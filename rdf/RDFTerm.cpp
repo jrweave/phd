@@ -2,6 +2,8 @@
 
 #include <vector>
 #include "sys/char.h"
+#include "ucs/nf.h"
+#include "ucs/utf.h"
 
 namespace rdf {
 
@@ -10,6 +12,7 @@ using namespace iri;
 using namespace lang;
 using namespace ptr;
 using namespace std;
+using namespace ucs;
 
 RDFTerm::RDFTerm(DPtr<uint8_t> *label) throw(SizeUnknownException)
     : type(BNODE), iri(NULL), lang(NULL) {
@@ -321,7 +324,8 @@ DPtr<uint8_t> *RDFTerm::unescape(DPtr<uint8_t> *str, bool as_iri)
 }
 
 RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
-    throw(SizeUnknownException, BaseException<void*>, TraceableException) {
+    throw(SizeUnknownException, BaseException<void*>, TraceableException,
+          InvalidEncodingException, InvalidCodepointException) {
   if (utf8str == NULL) {
     THROW(BaseException<void*>, NULL, "utf8str must not be NULL.");
   }
@@ -521,7 +525,8 @@ DPtr<uint8_t> *RDFTerm::toUTF8String() const throw(BadAllocException) {
   }
 }
 
-DPtr<uint8_t> *RDFTerm::getLabel() throw(BaseException<enum RDFTermType>) {
+DPtr<uint8_t> *RDFTerm::getLabel() const
+    throw(BaseException<enum RDFTermType>) {
   if (this->type != BNODE) {
     THROW(BaseException<enum RDFTermType>, this->type,
         "Invalid call to getLabel() for this RDFTermType.");
@@ -540,7 +545,8 @@ IRIRef RDFTerm::getIRIRef() const throw(BaseException<enum RDFTermType>) {
   return *(this->iri);
 }
 
-DPtr<uint8_t> *RDFTerm::getLexForm() throw(BaseException<enum RDFTermType>) {
+DPtr<uint8_t> *RDFTerm::getLexForm() const
+    throw(BaseException<enum RDFTermType>) {
   if (!this->isLiteral()) {
     THROW(BaseException<enum RDFTermType>, this->type,
         "Invalid call to getLexForm() for this RDFTermType.");

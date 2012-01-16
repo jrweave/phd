@@ -8,6 +8,8 @@
 #include "ptr/DPtr.h"
 #include "ptr/SizeUnknownException.h"
 #include "sys/ints.h"
+#include "ucs/InvalidCodepointException.h"
+#include "ucs/InvalidEncodingException.h"
 
 namespace rdf {
 
@@ -16,6 +18,7 @@ using namespace iri;
 using namespace lang;
 using namespace ptr;
 using namespace std;
+using namespace ucs;
 
 enum RDFTermType {
   BNODE = 1,
@@ -55,7 +58,8 @@ public:
       throw(SizeUnknownException, BadAllocException, BaseException<void*>,
             TraceableException);
   static RDFTerm parse(DPtr<uint8_t> *utf8str)
-      throw(SizeUnknownException, BaseException<void*>, TraceableException);
+      throw(SizeUnknownException, BaseException<void*>, TraceableException,
+            InvalidEncodingException, InvalidCodepointException);
 
   // Final Methods
   enum RDFTermType getType() const throw();
@@ -66,13 +70,13 @@ public:
   bool equals(const RDFTerm &term) const throw();
 
   // BNODE
-  DPtr<uint8_t> *getLabel() throw(BaseException<enum RDFTermType>);
+  DPtr<uint8_t> *getLabel() const throw(BaseException<enum RDFTermType>);
 
   // IRI
   IRIRef getIRIRef() const throw(BaseException<enum RDFTermType>);
 
   // SIMPLE_LITERAL, LANG_LITERAL, and TYPED_LITERAL
-  DPtr<uint8_t> *getLexForm() throw(BaseException<enum RDFTermType>);
+  DPtr<uint8_t> *getLexForm() const throw(BaseException<enum RDFTermType>);
 
   // LANG_LITERAL
   LangTag getLangTag() const throw(BaseException<enum RDFTermType>);

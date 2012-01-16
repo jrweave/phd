@@ -5,6 +5,7 @@
 #include <sstream>
 #include "ptr/MPtr.h"
 #include "sys/endian.h"
+#include "ucs/nf.h"
 #include "util/funcs.h"
 
 namespace ucs {
@@ -14,11 +15,6 @@ using namespace ptr;
 using namespace std;
 using namespace sys;
 using namespace util;
-
-size_t utf8len(const uint32_t codepoint) THROWS(InvalidEncodingException) {
-  return utf8len(codepoint, NULL);
-}
-TRACE(InvalidEncodingException, "(trace)")
 
 // utf8val is assumed to be long enough for encoded value
 // (if not NULL); length >= 4 is always safe.  It is always
@@ -158,11 +154,6 @@ size_t utf8nchars(const DPtr<uint8_t> *utf8str)
   return len;
 }
 
-uint32_t utf8char(const uint8_t *utf8str) THROWS(InvalidEncodingException) {
-  return utf8char(utf8str, NULL);
-}
-TRACE(InvalidEncodingException, "(trace)")
-
 uint32_t utf8char(const uint8_t *utf8str, const uint8_t **next)
     throw(InvalidEncodingException) {
   const uint8_t head = *utf8str;
@@ -238,11 +229,24 @@ uint32_t utf8char(const uint8_t *utf8str, const uint8_t **next)
       (uint32_t) head);
 }
 
-size_t utf16len(const uint32_t codepoint, const enum BOM bom)
-    THROWS(InvalidEncodingException) {
-  return utf16len(codepoint, bom, NULL);
+void utf8valid(DPtr<uint8_t> *utf8str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException) {
+  if (utf8str == NULL || !utf8str->sizeKnown()) {
+    THROWX(SizeUnknownException);
+  }
+  uint8_t *begin = utf8str->dptr();
+  uint8_t *end = begin + utf8str->size();
+  while (begin != end) {
+    uint32_t codepoint;
+    try {
+      codepoint = utf8char(begin, (const uint8_t **)&begin);
+    } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    if (!nfvalid(codepoint)) {
+      THROW(InvalidCodepointException, codepoint);
+    }
+  }
 }
-TRACE(InvalidEncodingException, "(trace)")
 
 size_t utf16len(const uint32_t codepoint, const enum BOM bom,
     uint16_t *utf16val) throw(InvalidEncodingException) {
@@ -384,11 +388,6 @@ size_t utf16nchars(const DPtr<uint16_t> *utf16str) throw(SizeUnknownException,
   return len;
 }
 
-bool utf16flip(const DPtr<uint16_t> *utf16str) THROWS(SizeUnknownException) {
-  return utf16flip(utf16str, NULL);
-}
-TRACE(SizeUnknownException, "(trace)")
-
 bool utf16flip(const DPtr<uint16_t> *utf16str, const uint16_t **start)
     throw(SizeUnknownException) {
   if (!utf16str->sizeKnown()) {
@@ -400,7 +399,7 @@ bool utf16flip(const DPtr<uint16_t> *utf16str, const uint16_t **start)
     }
     return is_little_endian();
   }
-  const uint16_t first = (*utf16str)[0];
+  const uint16_t first = *(utf16str->dptr());
   if (first == UINT16_C(0xFEFF)) {
     if (start != NULL) {
       *start = utf16str->dptr() + 1;
@@ -418,12 +417,6 @@ bool utf16flip(const DPtr<uint16_t> *utf16str, const uint16_t **start)
   }
   return is_little_endian();
 }
-
-uint32_t utf16char(const uint16_t *utf16str, const bool flip)
-    THROWS(InvalidEncodingException) {
-  return utf16char(utf16str, flip, NULL);
-}
-TRACE(InvalidEncodingException, "(trace)")
 
 uint32_t utf16char(const uint16_t *utf16str, const bool flip,
     const uint16_t **next) throw(InvalidEncodingException) {
@@ -452,11 +445,25 @@ uint32_t utf16char(const uint16_t *utf16str, const bool flip,
   return (uint32_t) head;
 }
 
-size_t utf32len(const uint32_t codepoint, const enum BOM bom)
-    THROWS(InvalidEncodingException) {
-  return utf32len(codepoint, bom, NULL);
+void utf16valid(DPtr<uint16_t> *utf16str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException) {
+  uint16_t *begin;
+  bool flip;
+  try {
+    flip = utf16flip(utf16str, (const uint16_t **)&begin);
+  } JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  uint16_t *end = utf16str->dptr() + utf16str->size();
+  while (begin != end) {
+    uint32_t codepoint;
+    try {
+      codepoint = utf16char(begin, flip, (const uint16_t **)&begin);
+    } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    if (!nfvalid(codepoint)) {
+      THROW(InvalidCodepointException, codepoint);
+    }
+  }
 }
-TRACE(InvalidEncodingException, "(trace)")
 
 size_t utf32len(const uint32_t codepoint, const enum BOM bom,
     uint32_t *utf32val) throw(InvalidEncodingException) {
@@ -515,10 +522,11 @@ DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints,
     return codepoints;
   }
   if ((bom == NONE || bom == ANY) && is_big_endian()) {
-    size_t i;
-    for (i = 0; i < codepoints->size(); i++) {
+    const uint32_t *begin = codepoints->dptr();
+    const uint32_t *end = begin + codepoints->size();
+    for (; begin != end; ++begin) {
       // Just for simple validation.
-      utf32len((*codepoints)[i], bom, NULL);
+      utf32len(*begin, bom, NULL);
     }
     codepoints->hold();
     return codepoints;
@@ -594,11 +602,6 @@ size_t utf32nchars(const DPtr<uint32_t> *utf32str) throw(SizeUnknownException,
   return len;
 }
 
-bool utf32flip(const DPtr<uint32_t> *utf32str) THROWS(SizeUnknownException) {
-  return utf32flip(utf32str, NULL);
-}
-TRACE(SizeUnknownException, "(trace)")
-
 bool utf32flip(const DPtr<uint32_t> *utf32str, const uint32_t **start)
     throw(SizeUnknownException) {
   if (!utf32str->sizeKnown()) {
@@ -610,7 +613,7 @@ bool utf32flip(const DPtr<uint32_t> *utf32str, const uint32_t **start)
     }
     return is_little_endian();
   }
-  const uint32_t first = (*utf32str)[0];
+  const uint32_t first = *(utf32str->dptr());
   if (first == UINT32_C(0x0000FEFF)) {
     if (start != NULL) {
       *start = utf32str->dptr() + 1;
@@ -629,12 +632,6 @@ bool utf32flip(const DPtr<uint32_t> *utf32str, const uint32_t **start)
   return is_little_endian();
 }
 
-uint32_t utf32char(const uint32_t *utf32str, const bool flip)
-    THROWS(InvalidEncodingException) {
-  return utf32char(utf32str, flip, NULL);
-}
-TRACE(InvalidEncodingException, "(trace)")
-
 uint32_t utf32char(const uint32_t *utf32str, const bool flip,
     const uint32_t **next) THROWS(InvalidEncodingException) {
   uint32_t c = *utf32str;
@@ -647,5 +644,25 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip,
   return c;
 }
 TRACE(InvalidEncodingException, "(trace)")
+
+void utf32valid(DPtr<uint32_t> *utf32str)
+    throw(InvalidCodepointException, InvalidEncodingException,
+          SizeUnknownException) {
+  uint32_t *begin;
+  bool flip;
+  try {
+    flip = utf32flip(utf32str, (const uint32_t **)&begin);
+  } JUST_RETHROW(SizeUnknownException, "(rethrow)")
+  uint32_t *end = utf32str->dptr() + utf32str->size();
+  while (begin != end) {
+    uint32_t codepoint;
+    try {
+      codepoint = utf32char(begin, flip, (const uint32_t **)&begin);
+    } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    if (!nfvalid(codepoint)) {
+      THROW(InvalidCodepointException, codepoint);
+    }
+  }
+}
 
 }

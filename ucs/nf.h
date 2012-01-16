@@ -13,6 +13,7 @@ using namespace ptr;
 using namespace std;
 
 #include "ucs_arrays.h"
+// but if defined(UCS_PLAY_DUMB), do no refer to arrays
 
 bool nfvalid(const uint32_t codepoint) throw();
 
@@ -29,7 +30,7 @@ DPtr<uint32_t> *nfd_opt(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
-#ifndef UCS_NO_K
+#if !defined(UCS_NO_K)
 uint8_t nfkd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw (InvalidCodepointException, SizeUnknownException);
 
@@ -42,8 +43,7 @@ DPtr<uint32_t> *nfkd_opt(DPtr<uint32_t> *codepoints)
     BadAllocException);
 #endif
 
-#ifndef UCS_NO_C
-
+#if !defined(UCS_NO_C)
 uint8_t nfc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw (InvalidCodepointException, SizeUnknownException);
 
@@ -55,7 +55,7 @@ DPtr<uint32_t> *nfc_opt(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 
-#ifndef UCS_NO_K
+#if !defined(UCS_NO_K)
 uint8_t nfkc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw (InvalidCodepointException, SizeUnknownException);
 
@@ -67,8 +67,9 @@ DPtr<uint32_t> *nfkc_opt(DPtr<uint32_t> *codepoints)
     throw (InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif
-
 #endif /* !defined(UCS_NO_C) */
 }
+
+#include "ucs/nf-inl.h"
 
 #endif /* __UCS__NF_H__ */

@@ -21,9 +21,8 @@ using namespace ex;
 using namespace ptr;
 using namespace std;
 
+#if !defined(UCS_PLAY_DUMB)
 #include "ucs_arrays.cpp"
-
-#ifndef UCS_PLAY_DUMB
 const uint32_t *nflookupd(const uint32_t codepoint)
     throw(InvalidCodepointException) {
   const uint32_t *ub = upper_bound(UCS_DECOMPOSITION_RANGES,
@@ -45,32 +44,9 @@ const uint32_t *nflookupd(const uint32_t codepoint)
   offset = UCS_DECOMPOSITION_OFFSETS[offset >> 1] + (codepoint - *ub);
   return UCS_DECOMPOSITIONS[offset];
 }
-#endif /* UCS_PLAY_DUMB */
+#endif
 
-#ifndef UCS_PLAY_DUMB
-bool nfcmpccc(const uint32_t a, const uint32_t b) throw() {
-  return UCS_UNPACK_CCC(a) < UCS_UNPACK_CCC(b);
-}
-#endif /* UCS_PLAY_DUMB */
-
-#if defined(UCS_TRUST_CODEPOINTS) || defined(UCS_PLAY_DUMB)
-bool nfvalid(const uint32_t codepoint) throw() {
-  return true;
-}
-
-bool nfvalid(DPtr<uint32_t> *codepoints) throw(SizeUnknownException) {
-  if (!codepoints->sizeKnown()) {
-    THROWX(SizeUnknownException);
-  }
-  size_t i;
-  for (i = 0; i < codepoints->size(); i++) {
-    if (!nfvalid((*codepoints)[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-#else
+#if !defined(UCS_TRUST_CODEPOINTS) && !defined(UCS_PLAY_DUMB)
 bool nfvalid(const uint32_t codepoint) throw() {
   const uint32_t *ub = upper_bound(UCS_CODEPOINT_RANGES,
       UCS_CODEPOINT_RANGES + UCS_CODEPOINT_RANGES_LEN, codepoint);
@@ -81,19 +57,36 @@ bool nfvalid(const uint32_t codepoint) throw() {
   uint32_t offset = ub - UCS_CODEPOINT_RANGES;
   return (offset & UINT32_C(1)) == UINT32_C(0);
 }
-#endif /* UCS_TRUST_CODEPOINTS */
+#endif
 
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_TRUST_CODEPOINTS) && !defined(UCS_PLAY_DUMB)
+bool nfvalid(DPtr<uint32_t> *codepoints) throw(SizeUnknownException) {
+  if (!codepoints->sizeKnown()) {
+    THROWX(SizeUnknownException);
+  }
+  const uint32_t *begin = codepoints->dptr();
+  const uint32_t *end = begin + codepoints->size();
+  for (; begin != end; ++begin) {
+    if (!nfvalid(*begin)) {
+      return false;
+    }
+  }
+  return true;
+}
+#endif
+
+#if !defined(UCS_PLAY_DUMB)
 DPtr<uint32_t> *nfreturn(DPtr<uint32_t> *p) throw() {
-  size_t i;
-  for (i = 0; i < p->size(); i++) {
-    (*p)[i] = UCS_UNPACK_CODEPOINT((*p)[i]);
+  uint32_t *begin = p->dptr();
+  uint32_t *end = begin + p->size();
+  for (; begin != end; ++begin) {
+    *begin = UCS_UNPACK_CODEPOINT(*begin);
   }
   return p;
 }
-#endif /* UCS_PLAY_DUMB */
+#endif
 
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_PLAY_DUMB)
 template<typename iter_type>
 void nforder(iter_type it, iter_type end) throw() {
   for (; it != end; it++) {
@@ -111,7 +104,7 @@ void nforder(iter_type it, iter_type end) throw() {
 }
 #endif
 
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_PLAY_DUMB)
 DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
     const bool use_compat)
     THROWS (InvalidCodepointException, SizeUnknownException,
@@ -119,15 +112,14 @@ DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
   if (!codepoints->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
-  size_t i;
-  size_t max = codepoints->size();
-  const DPtr<uint32_t> &cps = *codepoints;
+  const uint32_t *begin = codepoints->dptr();
+  const uint32_t *end = begin + codepoints->size();
   vector<uint32_t> decomp;
   decomp.reserve(codepoints->size());
-  for (i = 0; i < max; i++) {
-    const uint32_t *d = nflookupd(cps[i]);
+  for (; begin != end; ++begin) {
+    const uint32_t *d = nflookupd(*begin);
     if (d == NULL) {
-      decomp.push_back(cps[i]);
+      decomp.push_back(*begin);
       continue;
     }
     if (use_compat) {
@@ -149,7 +141,7 @@ DPtr<uint32_t> *nfdecompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS decomposition.")
 #endif
 
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_PLAY_DUMB)
 uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k)
     throw (InvalidCodepointException, SizeUnknownException) {
   if (!codepoints->sizeKnown()) {
@@ -157,14 +149,14 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
   }
   uint8_t lastccc = 0;
   uint8_t result = UCS_QC_YES;
-  size_t i;
-  for (i = 0; i < codepoints->size(); i++) {
-    const uint32_t codepoint = (*codepoints)[i];
-    const uint32_t *d = nflookupd(codepoint);
+  const uint32_t *begin = codepoints->dptr();
+  const uint32_t *end = begin + codepoints->size();
+  for (; begin != end; ++begin) {
+    const uint32_t *d = nflookupd(*begin);
     uint8_t ccc;
     if (d == NULL) {
-      if (!nfvalid(codepoint)) {
-        THROW(InvalidCodepointException, codepoint);
+      if (!nfvalid(*begin)) {
+        THROW(InvalidCodepointException, *begin);
       }
       ccc = 0;
     } else {
@@ -172,7 +164,7 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
     }
     if (lastccc > ccc && ccc != UINT8_C(0)) {
       if (pos != NULL && result == UCS_QC_YES) {
-        *pos = i;
+        *pos = begin - codepoints->dptr();
       }
       return UCS_QC_NO;
     }
@@ -196,13 +188,13 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
     }
     if (check == UCS_QC_NO) {
       if (pos != NULL && result == UCS_QC_YES) {
-        *pos = i;
+        *pos = begin - codepoints->dptr();
       }
       return UCS_QC_NO;
     }
     if (check == UCS_QC_MAYBE) {
       if (pos != NULL && result == UCS_QC_YES) {
-        *pos = i;
+        *pos = begin - codepoints->dptr();
       }
       result = UCS_QC_MAYBE;
     }
@@ -210,76 +202,72 @@ uint8_t nfqc(const DPtr<uint32_t> *codepoints, size_t *pos, bool do_c, bool do_k
   }
   return result;
 }
-#endif /* UCS_PLAY_DUMB */
+#endif
 
+#if !defined(UCS_PLAY_DUMB)
 uint8_t nfd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
-  #ifdef UCS_PLAY_DUMB
-  return UCS_QC_YES;
-  #else
   try {
     return nfqc(codepoints, pos, false, false);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB)
 DPtr<uint32_t> *nfd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfdecompose(codepoints, false));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
-#ifndef UCS_PLAY_DUMB
-#ifndef UCS_NO_C
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C)
 DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints, const bool compat)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException);
 #endif
 
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_PLAY_DUMB)
 DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
   try {
     uint8_t qc = UCS_QC_YES;
     vector<size_t> bounds;
-    size_t i;
     bool reorder = false;
-    for (i = 0; i < codepoints->size(); i++) {
-      const uint32_t *d = nflookupd((*codepoints)[i]);
-      if (d == NULL && !nfvalid((*codepoints)[i])) {
-        THROW(InvalidCodepointException, (*codepoints)[i]);
+    uint32_t *begin = codepoints->dptr();
+    uint32_t *end = begin + codepoints->size();
+    uint32_t *mark = begin;
+    for (; mark != end; ++mark) {
+      const uint32_t *d = nflookupd(*mark);
+      if (d == NULL && !nfvalid(*mark)) {
+        THROW(InvalidCodepointException, *mark);
       }
       uint32_t ccc = d == NULL ? 0 : UCS_DECOMP_CCC(d);
       reorder = reorder ||
-          (i > 0 && UCS_UNPACK_CCC((*codepoints)[i-1]) > ccc && ccc > 0);
-      (*codepoints)[i] = UCS_PACK(ccc, (*codepoints)[i]);
+          (mark != begin && UCS_UNPACK_CCC(*(mark - 1)) > ccc && ccc > 0);
+      *mark = UCS_PACK(ccc, *mark);
       uint8_t q = d == NULL ? UCS_QC_YES :
           (use_c ? (use_k ? UCS_DECOMP_NFKC_QC(d) : UCS_DECOMP_NFC_QC(d))
                  : (use_k ? UCS_DECOMP_NFKD_QC(d) : UCS_DECOMP_NFD_QC(d)));
       if (q != UCS_QC_YES) {
-        #ifndef UCS_NO_C
+        #if !defined(UCS_NO_C)
         if (use_c) {
           return nfcompose(nfreturn(codepoints), use_k);
         }
         #endif
         if (qc == UCS_QC_YES) {
-          bounds.push_back(i == 0 ? i : i - 1);
+          bounds.push_back(mark == begin ? mark - begin : mark - begin - 1);
           qc = q;
         }
       } else {
         if (qc != UCS_QC_YES) {
-          bounds.push_back(i);
+          bounds.push_back(mark - begin);
           qc = q;
         }
       }
@@ -299,11 +287,12 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
       return reordered;
     }
     if (qc != UCS_QC_YES) {
-      bounds.push_back(i);
+      bounds.push_back(mark - begin);
     }
     vector<DPtr<uint32_t> *> norms;
     norms.reserve(bounds.size() >> 1);
     size_t total_len = 0;
+    size_t i;
     for (i = 0; i < bounds.size(); i += 2) {
       if (i == 0) {
         total_len = bounds[i];
@@ -354,70 +343,54 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
     JUST_RETHROW(BadAllocException, "(rethrow)")
 }
 #endif
-#endif
 
+#if !defined(UCS_PLAY_DUMB)
 DPtr<uint32_t> *nfd_opt(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfopt(codepoints, false, false));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
-#ifndef UCS_NO_K
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_K)
 uint8_t nfkd_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
-  #ifdef UCS_PLAY_DUMB
-  return UCS_QC_YES;
-  #else
   try {
     return nfqc(codepoints, pos, false, true);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_K)
 DPtr<uint32_t> *nfkd(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfdecompose(codepoints, true));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_K)
 DPtr<uint32_t> *nfkd_opt(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfopt(codepoints, false, true));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
 #endif
 
-#ifndef UCS_NO_C
-
-#ifndef UCS_PLAY_DUMB
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C)
 DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
     const bool use_compat)
     THROWS(InvalidCodepointException, SizeUnknownException,
@@ -429,8 +402,9 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
   try {
     size_t i;
     size_t newsize = 1;
+    uint32_t *cpp = comp->dptr();
     for (i = 1; i < comp->size(); i++) {
-      uint32_t cp = (*comp)[i];
+      uint32_t cp = cpp[i];
       uint8_t ccc = UCS_UNPACK_CCC(cp);
       cp = UCS_UNPACK_CODEPOINT(cp);
       bool starter_found = false;
@@ -438,7 +412,7 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
       size_t starti = 0;
       signed long j;
       for (j = newsize - 1; j >= 0; j--) {
-        uint32_t cp2 = (*comp)[j];
+        uint32_t cp2 = cpp[j];
         uint8_t ccc2 = UCS_UNPACK_CCC(cp2);
         cp2 = UCS_UNPACK_CODEPOINT(cp2);
         if (ccc2 == 0) {
@@ -452,7 +426,7 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
         }
       }
       if (!starter_found) {
-        (*comp)[newsize] = (*comp)[i];
+        cpp[newsize] = cpp[i];
         newsize++;
         continue;
       }
@@ -460,12 +434,12 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
       const uint64_t *lb = lower_bound(UCS_COMPOSITION_INDEX,
           UCS_COMPOSITION_INDEX + UCS_COMPOSITION_INDEX_LEN, pair);
       if (lb == UCS_COMPOSITION_INDEX + UCS_COMPOSITION_INDEX_LEN || *lb != pair) {
-        (*comp)[newsize] = (*comp)[i];
+        cpp[newsize] = cpp[i];
         newsize++;
         continue;
       }
       uint32_t offset = lb - UCS_COMPOSITION_INDEX;
-      (*comp)[starti] = UCS_COMPOSITIONS[offset];
+      cpp[starti] = UCS_COMPOSITIONS[offset];
     }
     DPtr<uint32_t> *ret = comp->sub(0, newsize);
     comp->drop();
@@ -478,92 +452,72 @@ DPtr<uint32_t> *nfcompose(const DPtr<uint32_t> *codepoints,
 TRACE(BadAllocException, "Couldn't allocate memory for UCS composition.")
 #endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C)
 uint8_t nfc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
-  #ifdef UCS_PLAY_DUMB
-  return UCS_QC_YES;
-  #else
   try {
     return nfqc(codepoints, pos, true, false);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C)
 DPtr<uint32_t> *nfc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfcompose(codepoints, false));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C)
 DPtr<uint32_t> *nfc_opt(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfopt(codepoints, true, false));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
-#ifndef UCS_NO_K
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C) && !defined(UCS_NO_K)
 uint8_t nfkc_qc(const DPtr<uint32_t> *codepoints, size_t *pos)
     throw(InvalidCodepointException, SizeUnknownException) {
-  #ifdef UCS_PLAY_DUMB
-  return UCS_QC_YES;
-  #else
   try {
     return nfqc(codepoints, pos, true, true);
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C) && !defined(UCS_NO_K)
 DPtr<uint32_t> *nfkc(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfcompose(codepoints, true));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
+#endif
 
+#if !defined(UCS_PLAY_DUMB) && !defined(UCS_NO_C) && !defined(UCS_NO_K)
 DPtr<uint32_t> *nfkc_opt(DPtr<uint32_t> *codepoints)
     throw(InvalidCodepointException, SizeUnknownException,
     BadAllocException) {
-  #ifdef UCS_PLAY_DUMB
-  codepoints->hold();
-  return codepoints;
-  #else
   try {
     return nfreturn(nfopt(codepoints, true, true));
   } JUST_RETHROW(InvalidCodepointException, "(rethrow)")
     JUST_RETHROW(SizeUnknownException, "(rethrow)")
     JUST_RETHROW(BadAllocException, "(rethrow)")
-  #endif
 }
 #endif
-
-#endif /* UCS_NO_C */
 
 }

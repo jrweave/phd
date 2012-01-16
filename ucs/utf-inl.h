@@ -9,6 +9,18 @@ using namespace ptr;
 using namespace std;
 using namespace sys;
 
+inline
+size_t utf8len(const uint32_t codepoint) THROWS(InvalidEncodingException) {
+  return utf8len(codepoint, NULL);
+}
+TRACE(InvalidEncodingException, "(trace)")
+
+inline
+uint32_t utf8char(const uint8_t *utf8str) THROWS(InvalidEncodingException) {
+  return utf8char(utf8str, NULL);
+}
+TRACE(InvalidEncodingException, "(trace)")
+
 template<class input_iter, class output_iter>
 size_t utf8enc(input_iter begin, input_iter end, output_iter out)
     THROWS(InvalidEncodingException) {
@@ -21,6 +33,26 @@ size_t utf8enc(input_iter begin, input_iter end, output_iter out)
     total_len += len;
   }
   return total_len;
+}
+TRACE(InvalidEncodingException, "(trace)")
+
+inline
+size_t utf16len(const uint32_t codepoint, const enum BOM bom)
+    THROWS(InvalidEncodingException) {
+  return utf16len(codepoint, bom, NULL);
+}
+TRACE(InvalidEncodingException, "(trace)")
+
+inline
+bool utf16flip(const DPtr<uint16_t> *utf16str) THROWS(SizeUnknownException) {
+  return utf16flip(utf16str, NULL);
+}
+TRACE(SizeUnknownException, "(trace)")
+
+inline
+uint32_t utf16char(const uint16_t *utf16str, const bool flip)
+    THROWS(InvalidEncodingException) {
+  return utf16char(utf16str, flip, NULL);
 }
 TRACE(InvalidEncodingException, "(trace)")
 
@@ -49,6 +81,26 @@ size_t utf16enc(input_iter begin, input_iter end, const enum BOM bom,
     total_len += len;
   }
   return total_len;
+}
+TRACE(InvalidEncodingException, "(trace)")
+
+inline
+size_t utf32len(const uint32_t codepoint, const enum BOM bom)
+    THROWS(InvalidEncodingException) {
+  return utf32len(codepoint, bom, NULL);
+}
+TRACE(InvalidEncodingException, "(trace)")
+
+inline
+bool utf32flip(const DPtr<uint32_t> *utf32str) THROWS(SizeUnknownException) {
+  return utf32flip(utf32str, NULL);
+}
+TRACE(SizeUnknownException, "(trace)")
+
+inline
+uint32_t utf32char(const uint32_t *utf32str, const bool flip)
+    THROWS(InvalidEncodingException) {
+  return utf32char(utf32str, flip, NULL);
 }
 TRACE(InvalidEncodingException, "(trace)")
 

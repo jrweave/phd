@@ -45,7 +45,7 @@ InvalidEncodingException.o : InvalidEncodingException.h InvalidEncodingException
 	$(ECHO) $(CC) $(CFLAGS) -c -o InvalidEncodingException.o InvalidEncodingException.cpp
 	$(CC) $(CFLAGS) -c -o InvalidEncodingException.o InvalidEncodingException.cpp
 
-nf.o : nf.h nf.cpp ucs_arrays.h ucs_arrays.cpp
+nf.o : nf.h nf-inl.h nf.cpp ucs_arrays.h ucs_arrays.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o nf.o nf.cpp
 	$(CC) $(CFLAGS) -c -o nf.o nf.cpp
 
