@@ -24,11 +24,16 @@ using namespace std;
 using namespace ucs;
 
 IRIRef::IRIRef(DPtr<uint8_t> *utf8str)
-    throw(SizeUnknownException, MalformedIRIRefException)
+    throw(SizeUnknownException, MalformedIRIRefException,
+          InvalidEncodingException, InvalidCodepointException)
     : normalized(false), urified(false), utf8str(NULL) {
   if (!utf8str->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
+  try {
+    utf8validate(utf8str);
+  } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    JUST_RETHROW(InvalidCodepointException, "(rethrow)")
   UTF8Iter begin (utf8str);
   UTF8Iter end (utf8str);
   end.finish();

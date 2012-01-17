@@ -1,6 +1,8 @@
 #include "ucs/UTF16Iter.h"
 
 #include "ptr/MPtr.h"
+#include "ucs/InvalidCodepointException.h"
+#include "ucs/nf.h"
 #include "ucs/utf.h"
 
 namespace ucs {
@@ -34,6 +36,9 @@ UCSIter *UTF16Iter::start() {
     if (this->marker == this->utf16str->dptr() + this->utf16str->size()) {
       this->marker = NULL;
     }
+    if (this->validate_codepoints && !nfvalid(this->value)) {
+      THROW(InvalidCodepointException, this->value);
+    }
   }
   return this;
 }
@@ -46,6 +51,9 @@ UCSIter *UTF16Iter::advance() {
     this->marker = NULL;
   } else {
     this->value = utf16char(this->marker, this->flip, &(this->marker));
+    if (this->validate_codepoints && !nfvalid(this->value)) {
+      THROW(InvalidCodepointException, this->value);
+    }
   }
   return this;
 }
@@ -60,6 +68,7 @@ UTF16Iter &UTF16Iter::operator=(UTF16Iter &rhs) {
     this->value = rhs.value;
     this->reset_mark = rhs.reset_mark;
     this->reset_value = rhs.reset_value;
+    this->validate_codepoints = rhs.validate_codepoints;
   }
   return *this;
 }

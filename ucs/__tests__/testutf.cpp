@@ -62,6 +62,7 @@ bool testRoundTripUTF8(DPtr<uint32_t> *codepoints) {
   PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
   begin->start();
+  begin->validate(true);
   PROG(true);
   PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
              *begin));
@@ -99,6 +100,7 @@ bool testRoundTripUTF16(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
   PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
   begin->start();
+  begin->validate(true);
   PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
              *begin));
   DELETE(begin);
@@ -135,6 +137,7 @@ bool testRoundTripUTF32(DPtr<uint32_t> *codepoints, enum ucs::BOM bom) {
   PROG(*begin == *end || codepoints->size() > 0);
   PROG(equal(*begin, *end, codepoints->dptr()));
   begin->start();
+  begin->validate(true);
   PROG(equal(codepoints->dptr(), codepoints->dptr() + codepoints->size(),
              *begin));
   DELETE(begin);
@@ -214,7 +217,8 @@ int main(int argc, char **argv) {
 
   DPtr<uint32_t> *codepoints;
 
-  codepoints = parse(string("26480 35199"));
+  //codepoints = parse(string("26480 35199"));
+  codepoints = parse(string("6770 897F"));
   TEST(testRoundTrips, codepoints);
   codepoints->drop();
 

@@ -37,7 +37,8 @@ RDFTerm::RDFTerm(const IRIRef &iriref)
 }
 
 RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
-    throw(SizeUnknownException, BaseException<void*>, BadAllocException)
+    throw(SizeUnknownException, BaseException<void*>, BadAllocException,
+          InvalidEncodingException, InvalidCodepointException)
     : type(lang == NULL ? SIMPLE_LITERAL : LANG_LITERAL), iri(NULL),
       lang(NULL) {
   if (utf8lex == NULL) {
@@ -46,6 +47,10 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
   if (!utf8lex->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
+  try {
+    utf8validate(utf8lex);
+  } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    JUST_RETHROW(InvalidCodepointException, "(rethrow)")
   if (lang != NULL) {
     try {
       NEW(this->lang, LangTag, *lang);
@@ -56,7 +61,8 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
 }
 
 RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const IRIRef &datatype)
-    throw(SizeUnknownException, BaseException<void*>, BadAllocException)
+    throw(SizeUnknownException, BaseException<void*>, BadAllocException,
+          InvalidEncodingException, InvalidCodepointException)
     : type(TYPED_LITERAL), lang(NULL) {
   if (utf8lex == NULL) {
     THROW(BaseException<void*>, (void*) NULL, "utf8lex must not be NULL.");
@@ -64,6 +70,10 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const IRIRef &datatype)
   if (!utf8lex->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
+  try {
+    utf8validate(utf8lex);
+  } JUST_RETHROW(InvalidEncodingException, "(rethrow)")
+    JUST_RETHROW(InvalidCodepointException, "(rethrow)")
   try {
     NEW(this->iri, IRIRef, datatype);
   } RETHROW_BAD_ALLOC
@@ -395,9 +405,17 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     DPtr<uint8_t> *unesc_lex = RDFTerm::unescape(lexp, false);
     lexp->drop();
     if (*(end - 1) == to_ascii('"')) {
-      RDFTerm term(unesc_lex, NULL);
-      unesc_lex->drop();
-      return term;
+      try {
+        RDFTerm term(unesc_lex, NULL);
+        unesc_lex->drop();
+        return term;
+      } catch (InvalidEncodingException &e) {
+        unesc_lex->drop();
+        RETHROW(e, "(rethrow)");
+      } catch (InvalidCodepointException &e) {
+        unesc_lex->drop();
+        RETHROW(e, "(rethrow)");
+      }
     }
     if (*(end - 1) == to_ascii('>')) {
       if (end - mark < 5 || mark[1] != to_ascii('^') ||
@@ -411,9 +429,17 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
       try {
         IRIRef iriref(unesc_dt);
         unesc_dt->drop();
-        RDFTerm term(unesc_lex, iriref);
-        unesc_lex->drop();
-        return term;
+        try {
+          RDFTerm term(unesc_lex, iriref);
+          unesc_lex->drop();
+          return term;
+        } catch (InvalidEncodingException &e) {
+          unesc_lex->drop();
+          RETHROW(e, "(rethrow)");
+        } catch (InvalidCodepointException &e) {
+          unesc_lex->drop();
+          RETHROW(e, "(rethrow)");
+        }
       } catch (MalformedIRIRefException &e) {
         unesc_dt->drop();
         unesc_lex->drop();
@@ -429,9 +455,17 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     try {
       LangTag lang(langp);
       langp->drop();
-      RDFTerm term(unesc_lex, &lang);
-      unesc_lex->drop();
-      return term;
+      try {
+        RDFTerm term(unesc_lex, &lang);
+        unesc_lex->drop();
+        return term;
+      } catch (InvalidEncodingException &e) {
+        unesc_lex->drop();
+        RETHROW(e, "(rethrow)");
+      } catch (InvalidCodepointException &e) {
+        unesc_lex->drop();
+        RETHROW(e, "(rethrow)");
+      }
     } catch (MalformedLangTagException &e) {
       unesc_lex->drop();
       RETHROW_AS(TraceableException, e);

@@ -21,6 +21,7 @@ UTF8Iter::UTF8Iter(const UTF8Iter &copy)
       value(copy.value), reset_mark(copy.reset_mark),
       reset_value(copy.reset_value) {
   this->utf8str->hold();
+  this->validate_codepoints = copy.validate_codepoints;
 }
 
 inline
@@ -40,15 +41,6 @@ UTF8Iter *UTF8Iter::end(DPtr<uint8_t> *utf8str) {
   UTF8Iter *iter;
   NEW(iter, UTF8Iter, utf8str);
   return (UTF8Iter *)iter->finish();
-}
-
-inline
-UCSIter *UTF8Iter::start() {
-  if (this->utf8str->size() > 0) {
-    this->marker = this->utf8str->dptr();
-    this->value = utf8char(this->marker, &(this->marker));
-  }
-  return this;
 }
 
 inline

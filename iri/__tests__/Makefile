@@ -21,7 +21,7 @@ force_look :
 
 testIRIRef : testIRIRef.cpp ../IRIRef.o
 	$(ECHO) running test $(SUBDIR)/testIRIRef
-	$(ECHO) $(CC) $(CFLAGS) -o testIRIRef testIRIRef.cpp ../IRIRef.o ../../ptr/SizeUnknownException.o ../MalformedIRIRefException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../ucs/utf.o ../../ucs/UCSIter.o ../../ucs/InvalidCodepointException.o ../../ucs/InvalidEncodingException.o ../../sys/endian.o ../../ptr/alloc.o ../../sys/char.o
-	$(CC) $(CFLAGS) -o testIRIRef testIRIRef.cpp ../IRIRef.o ../../ptr/SizeUnknownException.o ../MalformedIRIRefException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../ucs/utf.o ../../ucs/UCSIter.o ../../ucs/InvalidCodepointException.o ../../ucs/InvalidEncodingException.o ../../sys/endian.o ../../ptr/alloc.o ../../sys/char.o
+	$(ECHO) $(CC) $(CFLAGS) -o testIRIRef testIRIRef.cpp ../IRIRef.o ../../ptr/SizeUnknownException.o ../MalformedIRIRefException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../ucs/utf.o ../../ucs/InvalidCodepointException.o ../../ucs/InvalidEncodingException.o ../../sys/endian.o ../../ptr/alloc.o ../../sys/char.o
+	$(CC) $(CFLAGS) -o testIRIRef testIRIRef.cpp ../IRIRef.o ../../ptr/SizeUnknownException.o ../MalformedIRIRefException.o ../../ex/TraceableException.o ../../ptr/Ptr.o ../../ptr/BadAllocException.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../ucs/utf.o ../../ucs/InvalidCodepointException.o ../../ucs/InvalidEncodingException.o ../../sys/endian.o ../../ptr/alloc.o ../../sys/char.o
 	$(ECHO) [TEST] ./testIRIRef
 	./testIRIRef

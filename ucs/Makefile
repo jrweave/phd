@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= ucs
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o UCSIter.o UTF8Iter.o UTF16Iter.o UTF32Iter.o
+OBJS		= InvalidCodepointException.o InvalidEncodingException.o nf.o utf.o UTF8Iter.o UTF16Iter.o UTF32Iter.o
 
 all : build __tests__
 
@@ -52,10 +52,6 @@ nf.o : nf.h nf-inl.h nf.cpp ucs_arrays.h ucs_arrays.cpp
 utf.o : utf.h utf-inl.h utf.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o utf.o utf.cpp
 	$(CC) $(CFLAGS) -c -o utf.o utf.cpp
-
-UCSIter.o : UCSIter.h UCSIter.cpp
-	$(ECHO) $(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
-	$(CC) $(CFLAGS) -c -o UCSIter.o UCSIter.cpp
 
 UTF8Iter.o : UTF8Iter.h UTF8Iter-inl.h UTF8Iter.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o UTF8Iter.o UTF8Iter.cpp

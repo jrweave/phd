@@ -9,6 +9,8 @@
 #include "sys/char.h"
 #include "sys/ints.h"
 #include "ucs/UCSIter.h"
+#include "ucs/InvalidCodepointException.h"
+#include "ucs/InvalidEncodingException.h"
 
 #define IRI_HEX_VALUE(c) (is_digit(c) ? (c) - to_ascii('0') : (is_alpha(c) ? to_upper(c) - to_ascii('A') + 10 : UINT32_C(16)))
 
@@ -114,7 +116,8 @@ public:
   IRIRef() throw(BadAllocException);
       // <> relative IRI reference with empty path
   IRIRef(DPtr<uint8_t> *utf8str)
-      throw(SizeUnknownException, MalformedIRIRefException);
+      throw(SizeUnknownException, MalformedIRIRefException,
+            InvalidEncodingException, InvalidCodepointException);
   IRIRef(const IRIRef &iri) throw();
   IRIRef(const IRIRef *iri) throw();
   virtual ~IRIRef() throw();

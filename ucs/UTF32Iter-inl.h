@@ -21,6 +21,7 @@ UTF32Iter::UTF32Iter(const UTF32Iter &copy)
       flip(copy.flip), value(copy.value), reset_mark(copy.reset_mark),
       reset_value(copy.reset_value) {
   this->utf32str->hold();
+  this->validate_codepoints = copy.validate_codepoints;
 }
 
 inline

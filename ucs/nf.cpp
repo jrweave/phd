@@ -48,6 +48,10 @@ const uint32_t *nflookupd(const uint32_t codepoint)
 
 #if !defined(UCS_TRUST_CODEPOINTS) && !defined(UCS_PLAY_DUMB)
 bool nfvalid(const uint32_t codepoint) throw() {
+  if (codepoint < UCS_CODEPOINT_RANGES[1]) {
+    // most common case, includes ASCII
+    return true;
+  }
   const uint32_t *ub = upper_bound(UCS_CODEPOINT_RANGES,
       UCS_CODEPOINT_RANGES + UCS_CODEPOINT_RANGES_LEN, codepoint);
   if (ub == UCS_CODEPOINT_RANGES) {

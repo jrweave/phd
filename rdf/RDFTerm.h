@@ -42,9 +42,11 @@ public:
   RDFTerm(const IRIRef &iriref)
       throw(BaseException<IRIRef>, BadAllocException);
   RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
-      throw(SizeUnknownException, BaseException<void*>, BadAllocException);
+      throw(SizeUnknownException, BaseException<void*>, BadAllocException,
+            InvalidEncodingException, InvalidCodepointException);
   RDFTerm(DPtr<uint8_t> *utf8lex, const IRIRef &datatype)
-      throw(SizeUnknownException, BaseException<void*>, BadAllocException);
+      throw(SizeUnknownException, BaseException<void*>, BadAllocException,
+            InvalidEncodingException, InvalidCodepointException);
   RDFTerm(const RDFTerm &copy) throw(BadAllocException);
   ~RDFTerm() throw();
 

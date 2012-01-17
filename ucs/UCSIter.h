@@ -11,8 +11,10 @@ using namespace std;
 class UCSIter {
 protected:
   UCSIter();
+  bool validate_codepoints;
 public:
   virtual ~UCSIter();
+  virtual void validate(const bool v);
   virtual UCSIter *start() = 0;
   virtual UCSIter *finish() = 0;
   virtual uint32_t current() = 0;
@@ -30,5 +32,7 @@ public:
 };
 
 }
+
+#include "ucs/UCSIter-inl.h"
 
 #endif /* __UCS_UCSITER_H__ */
