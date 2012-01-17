@@ -229,7 +229,7 @@ uint32_t utf8char(const uint8_t *utf8str, const uint8_t **next)
       (uint32_t) head);
 }
 
-void utf8valid(DPtr<uint8_t> *utf8str)
+void utf8validate(DPtr<uint8_t> *utf8str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException) {
   if (utf8str == NULL || !utf8str->sizeKnown()) {
@@ -445,7 +445,7 @@ uint32_t utf16char(const uint16_t *utf16str, const bool flip,
   return (uint32_t) head;
 }
 
-void utf16valid(DPtr<uint16_t> *utf16str)
+void utf16validate(DPtr<uint16_t> *utf16str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException) {
   uint16_t *begin;
@@ -645,7 +645,7 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip,
 }
 TRACE(InvalidEncodingException, "(trace)")
 
-void utf32valid(DPtr<uint32_t> *utf32str)
+void utf32validate(DPtr<uint32_t> *utf32str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException) {
   uint32_t *begin;

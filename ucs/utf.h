@@ -45,7 +45,7 @@ uint32_t utf8char(const uint8_t *utf8str) throw(InvalidEncodingException);
 uint32_t utf8char(const uint8_t *utf8str, const uint8_t **next)
     throw(InvalidEncodingException);
 
-void utf8valid(DPtr<uint8_t> *utf8str)
+void utf8validate(DPtr<uint8_t> *utf8str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException);
 
@@ -83,7 +83,7 @@ uint32_t utf16char(const uint16_t *utf16str, const bool flip)
 uint32_t utf16char(const uint16_t *utf16str, const bool flip,
     const uint16_t **next) throw(InvalidEncodingException);
 
-void utf16valid(DPtr<uint16_t> *utf16str)
+void utf16validate(DPtr<uint16_t> *utf16str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException);
 
@@ -121,7 +121,7 @@ uint32_t utf32char(const uint32_t *utf32str, const bool flip)
 uint32_t utf32char(const uint32_t *utf32str, const bool flip,
     const uint32_t **next) throw(InvalidEncodingException);
 
-void utf32valid(DPtr<uint32_t> *utf32str)
+void utf32validate(DPtr<uint32_t> *utf32str)
     throw(InvalidCodepointException, InvalidEncodingException,
           SizeUnknownException);
 
