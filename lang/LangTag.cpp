@@ -76,47 +76,45 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
     }
     return NULL;
   }
-  size_t offset = 0;
-  size_t mark = 0;
+
+  const uint8_t *begin = this->ascii->dptr();
+  const uint8_t *end = begin + this->ascii->size();
+  const uint8_t *offset = begin;
+  const uint8_t *mark = begin;
 
   // LANGUAGE
-  for (; mark < this->ascii->size()
-         && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
+  for (; mark != end && *mark != to_ascii('-'); ++mark) {
     // loop does the work
   }
-  size_t next = mark;
+  const uint8_t *next = mark;
   do {
-    if (next == this->ascii->size()) {
+    if (next == end) {
       if (part == LANGUAGE) {
-        return this->ascii->sub(offset, next);
+        return this->ascii->sub(0, next - begin);
       }
       return NULL;
     }
     mark = next;
-    for (++next; next < this->ascii->size()
-                 && (*(this->ascii))[next] != to_ascii('-'); ++next) {
+    for (++next; next != end && *next != to_ascii('-'); ++next) {
       // loop does the work
     }
-  } while (isLanguage(this->ascii->dptr(),
-                      this->ascii->dptr() + next));
+  } while (isLanguage(begin, next));
   if (part == LANGUAGE) {
-    return this->ascii->sub(offset, mark - offset);
+    return this->ascii->sub(0, mark - offset);
   }
   offset = mark + 1;
   mark = next;
 
   // SCRIPT
-  if (isScript(this->ascii->dptr() + offset,
-               this->ascii->dptr() + mark)) {
+  if (isScript(offset, mark)) {
     if (part == SCRIPT) {
-      return this->ascii->sub(offset, mark - offset);
+      return this->ascii->sub(offset - begin, mark - offset);
     }
-    if (mark == this->ascii->size()) {
+    if (mark == end) {
       return NULL;
     }
     offset = ++mark;
-    for (; mark < this->ascii->size()
-           && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
+    for (; mark != end && *mark != to_ascii('-'); ++mark) {
       // loop does the work
     }
   } else {
@@ -126,17 +124,15 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   }
 
   // REGION
-  if (isRegion(this->ascii->dptr() + offset,
-               this->ascii->dptr() + mark)) {
+  if (isRegion(offset, mark)) {
     if (part == REGION) {
-      return this->ascii->sub(offset, mark - offset);
+      return this->ascii->sub(offset - begin, mark - offset);
     }
-    if (mark == this->ascii->size()) {
+    if (mark == end) {
       return NULL;
     }
     offset = ++mark;
-    for (; mark < this->ascii->size()
-           && (*(this->ascii))[mark] != to_ascii('-'); ++mark) {
+    for (; mark != end && *mark != to_ascii('-'); ++mark) {
       // loop does the work
     }
   } else {
@@ -146,25 +142,22 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   }
 
   // VARIANTS
-  if (isVariant(this->ascii->dptr() + offset,
-                this->ascii->dptr() + mark)) {
+  if (isVariant(offset, mark)) {
     next = mark;
     do {
-      if (next == this->ascii->size()) {
+      if (next == end) {
         if (part == VARIANTS) {
-          return this->ascii->sub(offset, next - offset);
+          return this->ascii->sub(offset - begin, next - offset);
         }
         return NULL;
       }
       mark = next;
-      for (++next; next < this->ascii->size()
-                   && (*(this->ascii))[next] != to_ascii('-'); ++next) {
+      for (++next; next != end && *next != to_ascii('-'); ++next) {
         // loop does the work
       }
-    } while (isVariant(this->ascii->dptr() + mark + 1,
-                       this->ascii->dptr() + next));
+    } while (isVariant(mark + 1, next));
     if (part == VARIANTS) {
-      return this->ascii->sub(offset, mark - offset);
+      return this->ascii->sub(offset - begin, mark - offset);
     }
     offset = mark + 1;
     mark = next;
@@ -175,34 +168,32 @@ DPtr<uint8_t> *LangTag::getPart(const enum LangTagPart part) const throw() {
   }
 
   // EXTENSIONS
-  if (to_lower((*(this->ascii))[offset]) == to_ascii('x')) {
+  if (to_lower(*offset) == to_ascii('x')) {
     if (part == EXTENSIONS) {
       return NULL;
     }
   } else {
     next = mark;
     do {
-      if (next == this->ascii->size()) {
+      if (next == end) {
         if (part == EXTENSIONS) {
-          return this->ascii->sub(offset, next - offset);
+          return this->ascii->sub(offset - begin, next - offset);
         }
         return NULL;
       }
       mark = next;
-      for (++next; next < this->ascii->size()
-             && (*(this->ascii))[next] != to_ascii('-'); ++next) {
+      for (++next; next != end && *next != to_ascii('-'); ++next) {
         // loop does the work
       }
-    } while (next - mark > 2 ||
-             to_lower((*(this->ascii))[mark + 1]) != to_ascii('x'));
+    } while (next - mark > 2 || to_lower(mark[1]) != to_ascii('x'));
     if (part == EXTENSIONS) {
-      return this->ascii->sub(offset, mark - offset);
+      return this->ascii->sub(offset - begin, mark - offset);
     }
     offset = ++mark;
   }
 
   // PRIVATE_USE
-  return this->ascii->sub(offset, this->ascii->size() - offset);
+  return this->ascii->sub(offset - begin, end - offset);
 }
 
 LangTag *LangTag::normalize() THROWS(BadAllocException) {
@@ -336,9 +327,10 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
   if (prefix != NULL) {
     DPtr<uint8_t> *s;
     NEW(s, MPtr<uint8_t>, preflen + 1 + this->ascii->size());
-    memcpy(s->dptr(), prefix, preflen * sizeof(uint8_t));
-    (*s)[preflen] = to_ascii('-');
-    memcpy(s->dptr() + preflen + 1, this->ascii->dptr(),
+    uint8_t *sp = s->dptr();
+    memcpy(sp, prefix, preflen * sizeof(uint8_t));
+    sp[preflen] = to_ascii('-');
+    memcpy(sp + preflen + 1, this->ascii->dptr(),
         this->ascii->size() * sizeof(uint8_t));
     this->ascii->drop();
     this->ascii = s;
