@@ -105,6 +105,9 @@ size_t MPtr<ptr_type>::sizeInBytes() const throw() {
 
 template<typename ptr_type>
 DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
+  if (!this->sizeKnown()) {
+    return NULL;
+  }
   if (this->alone()) {
     if (this->offset > 0) {
       memmove(this->p, this->dptr(), this->num * sizeof(ptr_type));
@@ -115,9 +118,6 @@ DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
       this->p = (void *)pt;
     }
     return this;
-  }
-  if (!this->sizeKnown()) {
-    return NULL;
   }
   ptr_type *p;
   if (!alloc(p, this->size())) {

@@ -30,7 +30,7 @@ bool testStand() THROWS(BadAllocException) {
   int *x = p3->dptr();
   p3->drop();
   p2 = p2->stand();
-  PROG(x + 1 == p2->dptr());
+  PROG(x + 1 != p2->dptr());
   p2->drop();
   PASS;
 }

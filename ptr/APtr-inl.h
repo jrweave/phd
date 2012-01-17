@@ -11,27 +11,27 @@ using namespace std;
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr() throw(BadAllocException)
-    : DPtr<arr_type>() {
+    : DPtr<arr_type>(), actual_num(0) {
   // do nothing
 }
 
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr(arr_type *p) throw(BadAllocException)
-    : DPtr<arr_type>(p, 0) {
+    : DPtr<arr_type>(p, 0), actual_num(0) {
   this->size_known = false;
 }
 
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr(arr_type *p, size_t num) throw()
-    : DPtr<arr_type>(p, num) {
+    : DPtr<arr_type>(p, num), actual_num(num) {
   // do nothing
 }
 
 template<typename arr_type>
 APtr<arr_type>::APtr(size_t num) throw(BadAllocException)
-    : DPtr<arr_type>((arr_type*)NULL, num) {
+    : DPtr<arr_type>((arr_type*)NULL, num), actual_num(num) {
   try {
     NEW_ARRAY(this->p, arr_type, num);
   } catch (bad_alloc &ba) {
@@ -44,21 +44,21 @@ APtr<arr_type>::APtr(size_t num) throw(BadAllocException)
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr(const APtr<arr_type> &aptr) throw()
-    : DPtr<arr_type>(&aptr) {
+    : DPtr<arr_type>(&aptr), actual_num(aptr.actual_num) {
   // do nothing
 }
 
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr) throw()
-    : DPtr<arr_type>(aptr) {
+    : DPtr<arr_type>(aptr), actual_num(aptr->actual_num) {
   // do nothing
 }
 
 template<typename arr_type>
 inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset) throw()
-    : DPtr<arr_type>(aptr, offset) {
+    : DPtr<arr_type>(aptr, offset), actual_num(aptr->actual_num) {
   // do nothing
 }
 
@@ -66,7 +66,7 @@ template<typename arr_type>
 inline
 APtr<arr_type>::APtr(const APtr<arr_type> *aptr, size_t offset, size_t len)
     throw()
-    : DPtr<arr_type>(aptr, offset, len) {
+    : DPtr<arr_type>(aptr, offset, len), actual_num(aptr->actual_num) {
   // do nothing
 }
 
@@ -102,11 +102,11 @@ DPtr<arr_type> *APtr<arr_type>::sub(size_t offset, size_t len) throw() {
 
 template<typename arr_type>
 DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
-  if (this->alone()) {
-    return this;
-  }
   if (!this->sizeKnown()) {
     return NULL;
+  }
+  if (this->alone() && this->offset == 0 && this->num == this->actual_num) {
+    return this;
   }
   arr_type *arr = NULL;
   try {
@@ -134,6 +134,7 @@ APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> &rhs) throw() {
   DPtr<arr_type> *l = this;
   const DPtr<arr_type> *r = &rhs;
   *l = *r;
+  this->actual_num = rhs.actual_num;
   return *this;
 }
 
@@ -142,6 +143,7 @@ APtr<arr_type> &APtr<arr_type>::operator=(const APtr<arr_type> *rhs) throw() {
   DPtr<arr_type> *l = this;
   const DPtr<arr_type> *r = rhs;
   *l = r;
+  this->actual_num = rhs->actual_num;
   return *this;
 }
 
@@ -150,6 +152,7 @@ inline
 APtr<arr_type> &APtr<arr_type>::operator=(arr_type *p)
     throw(BadAllocException) {
   DPtr<arr_type>::operator=(p);
+  this->actual_num = 0;
   return *this;
 }
 

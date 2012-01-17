@@ -11,6 +11,7 @@ using namespace std;
 template<typename arr_type>
 class APtr : public DPtr<arr_type> {
 protected:
+  size_t actual_num;
   virtual void destroy() throw();
   APtr(const APtr<arr_type> *aptr, size_t offset) throw();
   APtr(const APtr<arr_type> *aptr, size_t offset, size_t len) throw();
