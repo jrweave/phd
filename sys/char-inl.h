@@ -13,8 +13,13 @@ inline char to_lchar(uint8_t c) {
   return (char) c;
 }
 
-inline uint8_t *ascii_strcpy(uint8_t *ascii, const char *str) {
-  return (uint8_t *)memcpy(ascii, str, strlen(str));
+inline uint8_t *ascii_strcpy(uint8_t *ascii, const char *cstr) {
+  return (uint8_t *)memcpy(ascii, cstr, strlen(cstr));
+}
+
+inline int ascii_strncmp(const uint8_t *ascii, const char *cstr,
+    const size_t n) {
+  return strncmp((const char *)ascii, cstr, n);
 }
 #else
 #error Lacking definition of some char.h functions for specified system.

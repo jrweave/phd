@@ -6,7 +6,8 @@
 
 uint8_t to_ascii(char c);
 char to_lchar(uint8_t c);
-uint8_t *ascii_strcpy(uint8_t *ascii, const char *str);
+uint8_t *ascii_strcpy(uint8_t *ascii, const char *cstr);
+int ascii_strncmp(const uint8_t *ascii, const char *cstr, const size_t n);
 bool is_alnum(uint32_t c);
 bool is_alpha(uint32_t c);
 bool is_cntrl(uint32_t c);

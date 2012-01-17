@@ -78,22 +78,23 @@ bool IRIRef::isAbsoluteIRI() const throw() {
 
 DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 
-  size_t offset = 0;
-  size_t mark;
+  const uint8_t *begin = this->utf8str->dptr();
+  const uint8_t *end = begin + this->utf8str->size();
+  const uint8_t *offset = begin;
+  const uint8_t *mark = begin;
   DPtr<uint8_t> *iripart = NULL;
 
   // SCHEME
-  for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) to_ascii(':'); mark++) {
+  for (; mark != end && *mark != to_ascii(':'); ++mark) {
     // loop does the work
   }
-  if (mark == this->utf8str->size()) {
+  if (mark == end) {
     if (part == SCHEME) {
       return NULL;
     }
     // offset unchanged
   } else {
-    iripart = this->utf8str->sub(offset, mark - offset);
+    iripart = this->utf8str->sub(0, mark - offset);
     UTF8Iter begin (iripart);
     UTF8Iter end (iripart);
     end.finish();
@@ -114,54 +115,47 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
 
   // These parts exist only if hierarchy starts with //.
   if (part == USER_INFO || part == HOST || part == PORT) {
-    if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) to_ascii('/')) {
+    if (offset == end || *offset != to_ascii('/') ||
+        ++offset == end || *offset != to_ascii('/')) {
       return NULL;
     }
-    offset++;
-    if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) to_ascii('/')) {
-      return NULL;
-    }
-    offset++;
+    ++offset;
 
     // USER_INFO
-    for (mark = offset; mark < this->utf8str->size()
-        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('@')
-        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); ++mark) {
+    for (mark = offset;
+         mark != end && *mark != to_ascii('@') && *mark != to_ascii('/');
+         ++mark) {
       // loop does the work
     }
-    if (mark >= this->utf8str->size()
-        || (*(this->utf8str))[mark] == (uint8_t) to_ascii('/')) {
+    if (mark == end || *mark == to_ascii('/')) {
       if (part == USER_INFO) {
         return NULL;
       }
       // offset unchanged
     } else {
       if (part == USER_INFO) {
-        return this->utf8str->sub(offset, mark - offset);
+        return this->utf8str->sub(offset - begin, mark - offset);
       }
       offset = mark + 1;
     }
 
     // HOST
-    if (offset < this->utf8str->size() &&
-        (*(this->utf8str))[offset] == (uint8_t) to_ascii('[')) {
-      for (mark = offset; mark < this->utf8str->size() &&
-          (*(this->utf8str))[mark] != (uint8_t) to_ascii(']');
-          ++mark) {
+    if (offset != end && *offset == to_ascii('[')) {
+      for (mark = offset;
+           mark != end && *mark != to_ascii(']');
+           ++mark) {
         // loop does the work
       }
       ++mark;
     } else {
-      for (mark = offset; mark < this->utf8str->size()
-          && (*(this->utf8str))[mark] != (uint8_t) to_ascii(':')
-          && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); ++mark) {
+      for (mark = offset;
+           mark != end && *mark != to_ascii(':') && *mark != to_ascii('/');
+           ++mark) {
         // loop does the work
       }
     }
     if (part == HOST) {
-      return this->utf8str->sub(offset, mark - offset);
+      return this->utf8str->sub(offset - begin, mark - offset);
     }
     offset = mark;
     // if a colon was found, include it to help distinguish
@@ -170,52 +164,47 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
     // PORT
     // No need to check part == PORT.  It is definitely PORT
     // by process of elimination.
-    if (offset >= this->utf8str->size()
-        || (*(this->utf8str))[offset] != (uint8_t) to_ascii(':')) {
+    if (offset == end || *offset != to_ascii(':')) {
       return NULL;
     }
     offset++;
-    for (mark = offset; mark < this->utf8str->size()
-        && (*(this->utf8str))[mark] != (uint8_t) to_ascii('/'); mark++) {
+    for (mark = offset; mark != end && *mark != to_ascii('/'); ++mark) {
       // loop does the work
     }
-    return this->utf8str->sub(offset, mark - offset);
+    return this->utf8str->sub(offset - begin, mark - offset);
   }
   
   // Skip over //authority if necessary.
-  if (this->utf8str->size() - offset >= 2
-      && (*(this->utf8str))[offset] == (uint8_t) to_ascii('/')
-      && (*(this->utf8str))[offset + 1] == (uint8_t) to_ascii('/')) {
-    for (offset += 2; offset < this->utf8str->size()
-        && (*(this->utf8str))[offset] != (uint8_t) to_ascii('/'); offset++) {
+  if (end - offset >= 2 && *offset == to_ascii('/')
+      && *(offset + 1) == to_ascii('/')) {
+    for (offset += 2; offset != end && *offset != to_ascii('/'); ++offset) {
       // loop does the work
     }
   }
 
   // PATH
-  for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('?')
-      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('#'); mark++) {
+  for (mark = offset;
+       mark != end && *mark != to_ascii('?') && *mark != to_ascii('#');
+       ++mark) {
     // loop does the work
   }
   if (part == PATH) {
-    return this->utf8str->sub(offset, mark - offset);
+    return this->utf8str->sub(offset - begin, mark - offset);
   }
   offset = mark;
   // leave ? or # for reference
 
   // QUERY
-  if (offset >= this->utf8str->size()) {
+  if (offset == end) {
     return NULL;
   }
-  if ((*(this->utf8str))[offset] == (uint8_t) to_ascii('?')) {
-    offset++;
-    for (mark = offset; mark < this->utf8str->size()
-      && (*(this->utf8str))[mark] != (uint8_t) to_ascii('#'); mark++) {
+  if (*offset == to_ascii('?')) {
+    ++offset;
+    for (mark = offset; mark != end && *mark != to_ascii('#'); ++mark) {
       // loop does the work
     }
     if (part == QUERY) {
-      return this->utf8str->sub(offset, mark - offset);
+      return this->utf8str->sub(offset - begin, mark - offset);
     }
     offset = mark;
     // leave # for reference
@@ -226,12 +215,11 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
   }
 
   // FRAGMENT
-  if (offset >= this->utf8str->size()
-      || (*(this->utf8str))[offset] != (uint8_t) to_ascii('#')) {
+  if (offset == end || *offset != to_ascii('#')) {
     return NULL;
   }
-  offset++;
-  return this->utf8str->sub(offset, this->utf8str->size() - offset);
+  ++offset;
+  return this->utf8str->sub(offset - begin, end - offset);
 }
 
 IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
@@ -253,43 +241,45 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
 
   // Percent encoding; decode if IUnreserved
   uint8_t bits = UINT8_C(0);
-  size_t i, j, k;
-  j = 0;
-  k = 0;
-  for (i = 0; i < this->utf8str->size(); i = j) {
-    for (j = i; j < this->utf8str->size()
-        && (*(this->utf8str))[j] != (uint8_t) to_ascii('%'); j++) {
+  uint8_t *begin = this->utf8str->dptr();
+  uint8_t *end = begin + this->utf8str->size();
+  uint8_t *marki = begin;
+  uint8_t *markj = begin;
+  uint8_t *markk = normed;
+  for (; marki != end; marki = markj) {
+    for (markj = marki; markj != end && *markj != to_ascii('%'); ++markj) {
       // loop does the work
     }
-    memmove(normed + k, this->utf8str->dptr() + i, (j - i) * sizeof(uint8_t));
-    k += (j - i);
-    if (j >= this->utf8str->size()) {
+    memmove(markk, marki, (markj - marki) * sizeof(uint8_t));
+    markk += (markj - marki);
+    if (markj == end) {
       break;
     }
     // decode percent-encoding
-    uint8_t n = (((uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+1])) << 4)
-        | (uint8_t) IRI_HEX_VALUE((*(this->utf8str))[j+2]);
+    uint8_t n = (((uint8_t) IRI_HEX_VALUE(markj[1])) << 4)
+        | (uint8_t) IRI_HEX_VALUE(markj[2]);
     if (bits > UINT8_C(0x7F) || IRIRef::isIUnreserved(n)) {
       if (n > UINT8_C(0x7F)) {
         bits = n << 1;
       } else {
         bits <<= 1;
       }
-      normed[k++] = n;
-      j += 3;
+      *markk = n;
+      ++markk;
+      markj += 3;
       if (this->urified && IRIRef::isUCSChar(n)) {
         this->urified = false;
       }
     } else {
-      normed[k++] = (*(this->utf8str))[j++];
-      uint8_t c = (*(this->utf8str))[j++];
-      normed[k++] = to_upper(c);
-      c = (*(this->utf8str))[j++];
-      normed[k++] = to_upper(c);
+      markk[0] = markj[0];
+      markk[1] = to_upper(markj[1]);
+      markk[2] = to_upper(markj[2]);
+      markj += 3;
+      markk += 3;
     }
   }
-  if (k < this->utf8str->size()) {
-    DPtr<uint8_t> *temp = normal->sub(0, k);
+  if (markk != end) {
+    DPtr<uint8_t> *temp = normal->sub(0, markk - normed);
     normal->drop();
     normal = temp;
   }
@@ -316,15 +306,19 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
   // Case normalization; scheme and host
   DPtr<uint8_t> *part = this->getPart(SCHEME);
   if (part != NULL) {
-    for (i = 0; i < part->size(); i++) {
-      (*part)[i] = to_lower((*part)[i]);
+    begin = part->dptr();
+    end = begin + part->size();
+    for (; begin != end; ++begin) {
+      *begin = to_lower(*begin);
     }
     part->drop();
   }
   part = this->getPart(HOST);
   if (part != NULL) {
-    for (i = 0; i < part->size(); i++) {
-      (*part)[i] = to_lower((*part)[i]);
+    begin = part->dptr();
+    end = begin + part->size();
+    for (; begin != end; ++begin) {
+      *begin = to_lower(*begin);
     }
     part->drop();
   }
@@ -400,83 +394,64 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
     DPtr<uint8_t> *query = this->getPart(QUERY);
     DPtr<uint8_t> *fragment = this->getPart(FRAGMENT);
 
-    size_t i = 0;
-    size_t j = 0;
-    while (i < normal->size()) {
-      if (normal->size() - i >= 3
-          && (*normal)[i] == (uint8_t) to_ascii('.')
-          && (*normal)[i+1] == (uint8_t) to_ascii('.')
-          && (*normal)[i+2] == (uint8_t) to_ascii('/')) {
-        i += 3;
-      } else  if (normal->size() - i >= 2
-          && (*normal)[i] == (uint8_t) to_ascii('.')
-          && (*normal)[i+1] == (uint8_t) to_ascii('/')) {
-        i += 2;
-      } else if (normal->size() - i >= 3
-          && (*normal)[i] == (uint8_t) to_ascii('/')
-          && (*normal)[i+1] == (uint8_t) to_ascii('.')
-          && (*normal)[i+2] == (uint8_t) to_ascii('/')) {
-        i += 2;
-      } else if (normal->size() - i == 2
-          && (*normal)[i] == (uint8_t) to_ascii('/')
-          && (*normal)[i+1] == (uint8_t) to_ascii('.')) {
-        (*normal)[++i] = (uint8_t) to_ascii('/');
-      } else if (normal->size() - i >= 4
-          && (*normal)[i] == (uint8_t) to_ascii('/')
-          && (*normal)[i+1] == (uint8_t) to_ascii('.')
-          && (*normal)[i+2] == (uint8_t) to_ascii('.')
-          && (*normal)[i+3] == (uint8_t) to_ascii('/')) {
-        for (; j > 0 && (*normal)[j-1] != (uint8_t) to_ascii('/'); j--) {
+    uint8_t *begin = normal->dptr();
+    uint8_t *end = begin + normal->size();
+    uint8_t *marki = begin;
+    uint8_t *markj = begin;
+    while (marki != end) {
+      size_t remaining = end - marki;
+      if (remaining >= 3 && ascii_strncmp(marki, "../", 3) == 0) {
+        marki += 3;
+      } else  if (remaining >= 2 && ascii_strncmp(marki, "./", 2) == 0) {
+        marki += 2;
+      } else if (remaining >= 3 && ascii_strncmp(marki, "/./", 3) == 0) {
+        marki += 2;
+      } else if (remaining == 2 && ascii_strncmp(marki, "/.", 2) == 0) {
+        *(++marki) = to_ascii('/');
+      } else if (remaining >= 4 && ascii_strncmp(marki, "/../", 4) == 0) {
+        for (; markj != begin && *(markj - 1) != to_ascii('/'); --markj) {
           // loop does the work
         }
-        if (j > 0) {
-          j--; // get rid of the slash, too
+        if (markj != begin) {
+          --markj; // get rid of the slash, too
         }
-        i += 3;
-      } else if (normal->size() - i == 3
-          && (*normal)[i] == (uint8_t) to_ascii('/')
-          && (*normal)[i+1] == (uint8_t) to_ascii('.')
-          && (*normal)[i+2] == (uint8_t) to_ascii('.')) {
-        for (; j > 0 && (*normal)[j-1] != (uint8_t) to_ascii('/'); j--) {
+        marki += 3;
+      } else if (remaining == 3 && ascii_strncmp(marki, "/..", 3) == 0) {
+        for (; markj != begin && *(markj - 1) != to_ascii('/'); --markj) {
           // loop does the work
         }
-        if (j > 0) {
-          j--; // get rid of the slash, too
+        if (markj != begin) {
+          --markj; // get rid of the slash, too
         }
-        i += 2;
-        (*normal)[i] = (uint8_t) to_ascii('/');
-      } else if (normal->size() - i == 1
-          && (*normal)[i] == (uint8_t) to_ascii('.')) {
-        i += 1;
-      } else if (normal->size() - i == 2
-          && (*normal)[i] == (uint8_t) to_ascii('.')
-          && (*normal)[i] == (uint8_t) to_ascii('.')) {
-        i += 2;
+        marki += 2;
+        *marki = to_ascii('/');
+      } else if (remaining == 1 && *marki == to_ascii('.')) {
+        ++marki;
+      } else if (remaining == 2 && ascii_strncmp(marki, "..", 2) == 0) {
+        marki += 2;
       } else {
-        size_t k;
-        for (k = i + 1; k < normal->size() && (*normal)[k] != to_ascii('/');
-            k++) {
+        uint8_t *markk = marki + 1;
+        for (; markk != end && *markk != to_ascii('/'); ++markk) {
           // loop does the work
         }
-        memmove(normal->dptr() + j, normal->dptr() + i, (k-i)*sizeof(uint8_t));
-        j += (k - i);
-        i = k;
+        memmove(markj, marki, (markk - marki) * sizeof(uint8_t));
+        markj += (markk - marki);
+        marki = markk;
       }
     }
     if (query != NULL) {
-      memmove(normal->dptr() + j, query->dptr() - 1,
+      memmove(markj, query->dptr() - 1,
           (query->size() + 1) * sizeof(uint8_t));
-      j += query->size() + 1;
+      markj += query->size() + 1;
       query->drop();
     }
     if (fragment != NULL) {
-      memmove(normal->dptr() + j, fragment->dptr() - 1,
+      memmove(markj, fragment->dptr() - 1,
           (fragment->size() + 1) * sizeof(uint8_t));
-      j += fragment->size() + 1;
+      markj += fragment->size() + 1;
       fragment->drop();
     }
-    fragment = this->utf8str->sub(0,
-        this->utf8str->size() - (normal->size() - j));
+    fragment = this->utf8str->sub(0, this->utf8str->size() - (end - markj));
     normal->drop();
     this->utf8str->drop();
     this->utf8str = fragment;
@@ -526,16 +501,17 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
           path->drop();
           path = newpath;
         } else {
-          size_t slash;
-          for (slash = base_path->size();
-               slash > 0 && (*base_path)[slash-1] != (uint8_t) to_ascii('/');
-               slash--) {
+          const uint8_t *begin = base_path->dptr();
+          const uint8_t *end = begin + base_path->size();
+          const uint8_t *slash = end;
+          for (; slash != begin && *(slash-1) != to_ascii('/'); --slash) {
             // loop does the work; finds last slash in base path
           }
           DPtr<uint8_t> *newpath;
-          NEW(newpath, MPtr<uint8_t>, slash + path->size());
-          memcpy(newpath->dptr(), base_path->dptr(), slash * sizeof(uint8_t));
-          memcpy(newpath->dptr() + slash, path->dptr(),
+          size_t sz = slash - begin;
+          NEW(newpath, MPtr<uint8_t>, sz + path->size());
+          memcpy(newpath->dptr(), begin, sz * sizeof(uint8_t));
+          memcpy(newpath->dptr() + sz, path->dptr(),
               path->size() * sizeof(uint8_t));
           path->drop();
           path = newpath;
