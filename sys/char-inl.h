@@ -75,6 +75,10 @@ inline bool is_xdigit(uint32_t c) {
          (UINT32_C(0x61) <= c && c <= UINT32_C(0x66));
 }
 
+inline bool is_ascii(uint32_t c) {
+  return c <= UINT32_C(0x7F);
+}
+
 inline uint32_t to_lower(uint32_t c) {
   return is_upper(c) ? c + UINT32_C(0x20) : c;
 }

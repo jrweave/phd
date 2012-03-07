@@ -15,7 +15,7 @@ using namespace std;
 using namespace ucs;
 
 RDFTerm::RDFTerm(DPtr<uint8_t> *label) throw(SizeUnknownException)
-    : type(BNODE), iri(NULL), lang(NULL) {
+    : type(BNODE), iri(NULL), lang(NULL), normalized(false) {
   if (label != NULL && !label->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
@@ -27,7 +27,7 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *label) throw(SizeUnknownException)
 
 RDFTerm::RDFTerm(const IRIRef &iriref)
     throw(BaseException<IRIRef>, BadAllocException)
-    : type(IRI), lang(NULL), bytes(NULL) {
+    : type(IRI), lang(NULL), bytes(NULL), normalized(false) {
   if (iriref.isRelativeRef()) {
     THROW(BaseException<IRIRef>, iriref, "IRIRef must not be relative.");
   }
@@ -40,7 +40,7 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
     throw(SizeUnknownException, BaseException<void*>, BadAllocException,
           InvalidEncodingException, InvalidCodepointException)
     : type(lang == NULL ? SIMPLE_LITERAL : LANG_LITERAL), iri(NULL),
-      lang(NULL) {
+      lang(NULL), normalized(false) {
   if (utf8lex == NULL) {
     THROW(BaseException<void*>, (void*) NULL, "utf8lex must not be NULL.");
   }
@@ -63,7 +63,7 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const LangTag *lang)
 RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const IRIRef &datatype)
     throw(SizeUnknownException, BaseException<void*>, BadAllocException,
           InvalidEncodingException, InvalidCodepointException)
-    : type(TYPED_LITERAL), lang(NULL) {
+    : type(TYPED_LITERAL), lang(NULL), normalized(false) {
   if (utf8lex == NULL) {
     THROW(BaseException<void*>, (void*) NULL, "utf8lex must not be NULL.");
   }
@@ -82,7 +82,7 @@ RDFTerm::RDFTerm(DPtr<uint8_t> *utf8lex, const IRIRef &datatype)
 }
 
 RDFTerm::RDFTerm(const RDFTerm &copy) throw(BadAllocException)
-    : type(copy.type) {
+    : type(copy.type), normalized(copy.normalized) {
   if (copy.iri == NULL) {
     this->iri = NULL;
   } else {
@@ -559,6 +559,56 @@ DPtr<uint8_t> *RDFTerm::toUTF8String() const throw(BadAllocException) {
   }
 }
 
+RDFTerm &RDFTerm::normalize() throw(BadAllocException) {
+  if (this->normalized) {
+    return *this;
+  }
+  if (this->iri != NULL) {
+    try {
+      this->iri->urify();
+    } RETHROW_BAD_ALLOC
+  }
+  if (this->lang != NULL) {
+    try {
+      this->lang->normalize();
+    } RETHROW_BAD_ALLOC
+  }
+  if (this->type != BNODE && this->bytes != NULL) {
+    const uint8_t *begin = this->bytes->dptr();
+    const uint8_t *end = begin + this->bytes->size();
+    for (; begin != end && is_ascii(*begin); ++begin) {
+      // see if all ASCII
+    }
+    // if all ASCII, don't bother with NFC normalization
+    if (begin != end) {
+      DPtr<uint32_t> *codepoints;
+      try {
+        codepoints = utf8dec(this->bytes);
+      } JUST_RETHROW(BadAllocException, "(rethrow)")
+      DPtr<uint32_t> *nfcnorm;
+      try {
+        nfcnorm = nfc_opt(codepoints);
+      } catch (BadAllocException &e) {
+        codepoints->drop();
+        RETHROW(e, "(rethrow)");
+      }
+      codepoints->drop();
+      DPtr<uint8_t> *nfcbytes;
+      try {
+        nfcbytes = utf8enc(nfcnorm);
+      } catch (BadAllocException &e) {
+        nfcnorm->drop();
+        RETHROW(e, "(rethrow)");
+      }
+      nfcnorm->drop();
+      this->bytes->drop();
+      this->bytes = nfcbytes;
+    }
+  }
+  this->normalized = true;
+  return *this;
+}
+
 DPtr<uint8_t> *RDFTerm::getLabel() const
     throw(BaseException<enum RDFTermType>) {
   if (this->type != BNODE) {
@@ -641,6 +691,7 @@ RDFTerm &RDFTerm::operator=(const RDFTerm &rhs) throw(BadAllocException) {
     this->bytes->hold();
   }
   this->type = rhs.type;
+  this->normalized = rhs.normalized;
 }
 
 } // end namespace rdf

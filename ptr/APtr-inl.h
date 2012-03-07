@@ -105,7 +105,7 @@ DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
   if (!this->sizeKnown()) {
     return NULL;
   }
-  if (this->alone() && this->offset == 0 && this->num == this->actual_num) {
+  if (this->alone() && this->offset == 0 && this->size() == this->actual_num) {
     return this;
   }
   arr_type *arr = NULL;
@@ -115,10 +115,17 @@ DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
   copy(this->dptr(), this->dptr() + this->size(), arr);
   if (this->localRefs() > 1) {
     DPtr<arr_type> *d;
-    NEW(d, APtr<arr_type>, arr, this->size());
+    try {
+      NEW(d, APtr<arr_type>, arr, this->size());
+    } catch (BadAllocException &e) {
+      DELETE_ARRAY(arr);
+      RETHROW(e, "(rethrow)");
+    }
+    this->actual_num = this->size();
     this->drop();
     return d;
   }
+  this->actual_num = this->size();
   DPtr<arr_type>::reset(arr, true, this->size());
   return this;
 }

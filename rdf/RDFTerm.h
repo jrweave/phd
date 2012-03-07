@@ -36,6 +36,7 @@ private:
   LangTag *lang;
   DPtr<uint8_t> *bytes;
   enum RDFTermType type;
+  bool normalized;
 public:
   RDFTerm() throw(); // anonymous blank node
   RDFTerm(DPtr<uint8_t> *label) throw(SizeUnknownException);
@@ -70,6 +71,7 @@ public:
   bool isPlainLiteral() const throw();
   DPtr<uint8_t> *toUTF8String() const throw(BadAllocException);
   bool equals(const RDFTerm &term) const throw();
+  RDFTerm &normalize() throw(BadAllocException);
 
   // BNODE
   DPtr<uint8_t> *getLabel() const throw(BaseException<enum RDFTermType>);

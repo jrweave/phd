@@ -10,7 +10,7 @@ using namespace std;
 
 inline
 RDFTerm::RDFTerm() throw()
-    : type(BNODE), iri(NULL), lang(NULL), bytes(NULL) {
+    : type(BNODE), iri(NULL), lang(NULL), bytes(NULL), normalized(false) {
   // do nothing
 }
 

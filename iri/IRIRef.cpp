@@ -255,19 +255,24 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
     for (markj = marki; markj != end && *markj != to_ascii('%'); ++markj) {
       // loop does the work
     }
-    memmove(markk, marki, (markj - marki) * sizeof(uint8_t));
-    markk += (markj - marki);
+    size_t sz = markj - marki;
+    memmove(markk, marki, sz * sizeof(uint8_t));
+    markk += sz;
     if (markj == end) {
       break;
+    }
+    size_t i;
+    for (i = 0; bits > UINT8_C(0x7F) && i < sz; ++i) {
+      bits <<= 1;
     }
     // decode percent-encoding
     uint8_t n = (((uint8_t) IRI_HEX_VALUE(markj[1])) << 4)
         | (uint8_t) IRI_HEX_VALUE(markj[2]);
     if (bits > UINT8_C(0x7F) || IRIRef::isIUnreserved(n)) {
-      if (n > UINT8_C(0x7F)) {
-        bits = n << 1;
-      } else {
+      if (bits > UINT8_C(0x7F)) {
         bits <<= 1;
+      } else if (n > UINT8_C(0x7F)) {
+        bits = n << 1;
       }
       *markk = n;
       ++markk;
@@ -276,6 +281,9 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
         this->urified = false;
       }
     } else {
+      if (bits > UINT8_C(0x7F)) {
+        bits <<= 1;
+      }
       markk[0] = markj[0];
       markk[1] = to_upper(markj[1]);
       markk[2] = to_upper(markj[2]);

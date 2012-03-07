@@ -19,6 +19,7 @@ bool is_punct(uint32_t c);
 bool is_space(uint32_t c);
 bool is_upper(uint32_t c);
 bool is_xdigit(uint32_t c);
+bool is_ascii(uint32_t c);
 uint32_t to_lower(uint32_t c);
 uint32_t to_upper(uint32_t c);
 

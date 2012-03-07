@@ -248,6 +248,10 @@ DPtr<uint32_t> *nfopt(DPtr<uint32_t> *codepoints, bool use_c, bool use_k)
     uint32_t *end = begin + codepoints->size();
     uint32_t *mark = begin;
     for (; mark != end; ++mark) {
+      if (*mark <= UINT32_C(0x7F)) {
+        // ASCII doesn't need a lookup
+        continue;
+      }
       const uint32_t *d = nflookupd(*mark);
       if (d == NULL && !nfvalid(*mark)) {
         THROW(InvalidCodepointException, *mark);
