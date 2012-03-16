@@ -520,19 +520,7 @@ bool RIFTerm::isGround() const throw() {
   case VARIABLE:
     return false;
   case CONSTANT:
-    return true;
   case LIST:
-    if (this->state == NULL) {
-      return true;
-    }
-    DPtr<RIFTerm> *list = (DPtr<RIFTerm>*) this->state;
-    RIFTerm *begin = list->dptr();
-    RIFTerm *end = begin + list->size();
-    for (; begin != end; ++begin) {
-      if (!begin->isGround()) {
-        return false;
-      }
-    }
     return true;
   case FUNCTION: {
     func_state *f = (func_state *) this->state;
@@ -547,106 +535,6 @@ bool RIFTerm::isGround() const throw() {
       }
     }
     return true;
-  }
-  }
-}
-
-bool RIFTerm::isWellFormed(ContextMap &contexts, const SchemaMap *schema) const
-    throw() {
-  ContextMap::iterator cit;
-  switch (this->type) {
-  case CONSTANT: {
-    RIFConst *c = ((RIFConst*) this->state);
-    cit = contexts.find(*c);
-    if (cit == contexts.end()) {
-      contexts.insert(pair<RIFConst,RIFContext>(*c, INDIVIDUAL_NAME));
-    } else if (cit->second != INDIVIDUAL_NAME) {
-      return false;
-    }
-    return true;
-  }
-  case VARIABLE:
-    return true;
-  case LIST: {
-    if (this->state == NULL) {
-      return true;
-    }
-    DPtr<RIFTerm> *l = (DPtr<RIFTerm> *) this->state;
-    RIFTerm *begin = l->dptr();
-    RIFTerm *end = begin + l->size();
-    for (; begin != end; ++begin) {
-      if (!begin->isWellFormed(contexts, schema)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  case FUNCTION: {
-    if (schema == NULL) {
-      return false;
-    }
-    func_state *f = (func_state *) this->state;
-    cit = contexts.find(f->pred);
-    if (cit == contexts.end()) {
-      contexts.insert(pair<RIFConst,RIFContext>(f->pred, FUNCTION_NAME));
-    } else if (cit->second != FUNCTION_NAME) {
-      return false;
-    }
-    if (f->args != NULL) {
-      RIFTerm *begin = f->args->dptr();
-      RIFTerm *end = begin + f->args->size();
-      for (; begin != end; ++begin) {
-        if (!begin->isWellFormed(contexts, schema)) {
-          return false;
-        }
-      }
-    }
-    pair<SchemaMap::const_iterator,SchemaMap::const_iterator> range
-        = schema->equal_range(f->pred);
-    if (range.first == range.second) {
-      return false;
-    }
-    bool found = false;
-    for (; !found && range.first != range.second; ++(range.first)) {
-      VarMap sub(RIFVar::cmplt0);
-      sub.clear();
-      RIFTerm sch = range.first->second;
-      // sanity check
-      if (sch.getType() != FUNCTION || !sch.getPred().equals(f->pred)) {
-        continue; // TODO log
-      }
-      DPtr<RIFTerm> *schargs = sch.getArgs();
-      size_t mylen = f->args == NULL ? 0 : f->args->size();
-      if (mylen != schargs->size()) {
-        schargs->drop();
-        continue;
-      }
-      found = true;
-      if (mylen == 0) {
-        schargs->drop();
-        continue;
-      }
-      RIFTerm *begin = schargs->dptr();
-      RIFTerm *end = begin + schargs->size();
-      RIFTerm *mark = f->args->dptr();
-      for (; begin != end; ++begin) {
-        if (begin->getType() == VARIABLE) {
-          VarMap::iterator vit = sub.find(begin->getVar());
-          if (vit == sub.end()) {
-            sub.insert(pair<RIFVar,RIFTerm>(begin->getVar(), *mark));
-          } else if (!vit->second.equals(*mark)) {
-            found = false;
-            break;
-          }
-        } else if (!begin->equals(*mark)) {
-          found = false;
-          break;
-        }
-        ++mark;
-      }
-      schargs->drop();
-    }
-    return found;
   }
   }
 }
@@ -707,6 +595,9 @@ DPtr<RIFTerm> *RIFTerm::getArgs() const
 }
 
 RIFTerm &RIFTerm::operator=(const RIFTerm &rhs) throw(BadAllocException) {
+  if (this == &rhs) {
+    return *this;
+  }
   if (this->type == rhs.type) {
     switch (this->type) {
     case VARIABLE:

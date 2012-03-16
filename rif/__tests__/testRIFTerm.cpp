@@ -25,7 +25,7 @@ RIFTerm s2t(const char *c) {
 }
 
 bool testState(RIFTerm term, DPtr<uint8_t> *str, enum RIFTermType type,
-    bool is_simple, bool is_ground, bool is_wf) {
+    bool is_simple, bool is_ground) {
   DPtr<uint8_t> *s = term.toUTF8String();
   PROG(s->size() == str->size());
   PROG(memcmp(s->dptr(), str->dptr(), s->size()*sizeof(uint8_t)) == 0);
@@ -34,12 +34,11 @@ bool testState(RIFTerm term, DPtr<uint8_t> *str, enum RIFTermType type,
   PROG(term.getType() == type);
   PROG(term.isSimple() == is_simple);
   PROG(term.isGround() == is_ground);
-  PROG(term.isWellFormed() == is_wf);
   PASS;
 }
 
 bool testVar(RIFTerm term, DPtr<uint8_t> *str) {
-  PROG(testState(term, str, VARIABLE, true, false, true));
+  PROG(testState(term, str, VARIABLE, true, false));
   try {
     RIFVar v = term.getVar();
     // TODO more testing
@@ -77,7 +76,7 @@ bool testVar(RIFTerm term, DPtr<uint8_t> *str) {
 }
 
 bool testConst(RIFTerm term, DPtr<uint8_t> *str) {
-  PROG(testState(term, str, CONSTANT, true, true, true));
+  PROG(testState(term, str, CONSTANT, true, true));
   try {
     RIFConst c = term.getConst();
     // TODO more testing
@@ -114,8 +113,8 @@ bool testConst(RIFTerm term, DPtr<uint8_t> *str) {
   PASS;
 }
 
-bool testList(RIFTerm term, DPtr<uint8_t> *str, size_t n, bool is_wf) {
-  PROG(testState(term, str, LIST, false, true, is_wf));
+bool testList(RIFTerm term, DPtr<uint8_t> *str, size_t n) {
+  PROG(testState(term, str, LIST, false, true));
   try {
     DPtr<RIFTerm> *items = term.getItems();
     PROG(items->size() == n);
@@ -154,7 +153,7 @@ bool testList(RIFTerm term, DPtr<uint8_t> *str, size_t n, bool is_wf) {
 }
 
 bool testFunc(RIFTerm term, DPtr<uint8_t> *str, size_t n, bool is_ground) {
-  PROG(testState(term, str, FUNCTION, false, is_ground, false));
+  PROG(testState(term, str, FUNCTION, false, is_ground));
   try {
     RIFConst pred = term.getPred();
     // TODO more testing
@@ -198,15 +197,17 @@ int main(int argc, char **argv) {
                 s2p("?\"quoted var name\""));
   TEST(testConst, s2t("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"),
                   s2p("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"));
+  TEST(testConst, s2t("\"\"^^<s:>"),
+                  s2p("\"\"^^<s:>"));
   TEST(testList, s2t("List()"),
                  s2p("List()"),
-                 0, true);
+                 0);
   TEST(testList, s2t("List(\t\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string> )"),
                  s2p("List(\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string>)"),
-                 2, true);
+                 2);
   TEST(testList, s2t("List(\t\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> List( \"embedded list\"^^<http://www.w3.org/2001/XMLSchema#string>\n) \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string> )"),
                  s2p("List(\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> List(\"embedded list\"^^<http://www.w3.org/2001/XMLSchema#string>) \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string>)"),
-                 3, true);
+                 3);
   TEST(testFunc, s2t("\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>( \"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string> )"),
                  s2p("\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>(\"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string>)"),
                  2, true);
@@ -218,9 +219,9 @@ int main(int argc, char **argv) {
                  2, true);
   TEST(testList, s2t("List(\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/20(07/rif#iri>( \"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string> ))"),
                  s2p("List(\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/20(07/rif#iri>(\"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string>))"),
-                 1, false);
+                 1);
   TEST(testList, s2t("List(\"\"^^<scheme:> \"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>( \"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string> ) \"1\"^^<http://www.w3.org/2001/XMLSchema#integer>)"),
                  s2p("List(\"\"^^<scheme:> \"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>(\"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string>) \"1\"^^<http://www.w3.org/2001/XMLSchema#integer>)"),
-                 3, false);
+                 3);
   FINAL;
 }

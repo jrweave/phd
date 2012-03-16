@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= rif
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= RIFConst.o RIFVar.o RIFTerm.o
+OBJS		= RIFConst.o RIFVar.o RIFTerm.o RIFAtomic.o
 
 all : build __tests__
 
@@ -41,3 +41,7 @@ RIFVar.o : RIFVar.h RIFVar-inl.h RIFVar.cpp RIFConst.o
 RIFTerm.o : RIFTerm.h RIFTerm-inl.h RIFTerm.cpp RIFConst.o RIFVar.o
 	$(ECHO) $(CC) $(CFLAGS) -c -o RIFTerm.o RIFTerm.cpp
 	$(CC) $(CFLAGS) -c -o RIFTerm.o RIFTerm.cpp
+
+RIFAtomic.o : RIFAtomic.h RIFAtomic-inl.h RIFAtomic.cpp RIFConst.o RIFVar.o
+	$(ECHO) $(CC) $(CFLAGS) -c -o RIFAtomic.o RIFAtomic.cpp
+	$(CC) $(CFLAGS) -c -o RIFAtomic.o RIFAtomic.cpp

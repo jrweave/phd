@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 SUBDIR	= rif/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testRIFConst testRIFVar testRIFTerm
+TESTS		= testRIFConst testRIFVar testRIFTerm testRIFAtomic
 
 all :
 
@@ -39,3 +39,10 @@ testRIFTerm : testRIFTerm.cpp ../RIFTerm.o
 	$(CC) $(CFLAGS) -o testRIFTerm testRIFTerm.cpp ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
 	$(ECHO) [TEST] ./testRIFTerm
 	./testRIFTerm
+
+testRIFAtomic : testRIFAtomic.cpp ../RIFAtomic.o
+	$(ECHO) running test $(SUBDIR)/testRIFAtomic
+	$(ECHO) $(CC) $(CFLAGS) -o testRIFAtomic testRIFAtomic.cpp ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(CC) $(CFLAGS) -o testRIFAtomic testRIFAtomic.cpp ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(ECHO) [TEST] ./testRIFAtomic
+	./testRIFAtomic

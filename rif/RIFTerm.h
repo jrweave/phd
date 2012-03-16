@@ -29,20 +29,9 @@ enum RIFContext {
 
 class RIFTerm;
 
-typedef map<RIFConst,
-            enum RIFContext,
-            bool(*)(const RIFConst &, const RIFConst &)>
-        ContextMap;
-
-typedef multimap<RIFConst,
-                 RIFTerm,
-                 bool(*)(const RIFConst &, const RIFConst &)>
-        SchemaMap;
-
-typedef map<RIFVar,
-            RIFTerm,
-            bool(*)(const RIFVar &, const RIFVar &)>
-        VarMap;
+typedef set<RIFTerm,
+            bool(*)(const RIFTerm &, const RIFTerm &)>
+        TermSet;
 
 class RIFTerm {
 private:
@@ -76,6 +65,9 @@ private:
       }
     }
     func_state &operator=(const func_state &rhs) throw() {
+      if (this == &rhs) {
+        return *this;
+      }
       if (this->args != NULL) {
         this->args->drop();
       }
@@ -111,9 +103,6 @@ public:
   enum RIFTermType getType() const throw();
   bool isSimple() const throw();
   bool isGround() const throw();
-  bool isWellFormed() const throw();
-  bool isWellFormed(ContextMap &contexts, const SchemaMap *schema) const
-      throw();
 
   // VARIABLE
   RIFVar getVar() const throw(BaseException<enum RIFTermType>);

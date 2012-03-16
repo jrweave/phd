@@ -33,10 +33,4 @@ bool RIFTerm::isSimple() const throw() {
   return this->type == VARIABLE || this->type == CONSTANT;
 }
 
-inline
-bool RIFTerm::isWellFormed() const throw() {
-  ContextMap contexts(RIFConst::cmplt0);
-  return this->isWellFormed(contexts, NULL);
-}
-
 }
