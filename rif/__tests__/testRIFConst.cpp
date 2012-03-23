@@ -51,11 +51,15 @@ bool test(RIFConst con, DPtr<uint8_t> *str, DPtr<uint8_t> *lex, IRIRef dt) {
   lex->drop();
   IRIRef d = con.getDatatype();
   PROG(dt.equals(d));
+  con.normalize();
   PASS;
 }
 
 int main(int argc, char **argv) {
   INIT;
+  TEST(test, s2c("\"\"^^<s:>"),
+             s2p("\"\"^^<s:>"),
+             s2p(""), s2i("s:"));
   TEST(test, s2c("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"),
              s2p("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"),
              s2p("1"), s2i("http://www.w3.org/2001/XMLSchema#integer"));

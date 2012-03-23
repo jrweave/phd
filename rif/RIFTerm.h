@@ -33,6 +33,10 @@ typedef set<RIFTerm,
             bool(*)(const RIFTerm &, const RIFTerm &)>
         TermSet;
 
+typedef set<RIFVar,
+            bool(*)(const RIFVar &, const RIFVar &)>
+        VarSet;
+
 class RIFTerm {
 private:
   void *state; // NULL == empty list
@@ -103,6 +107,7 @@ public:
   enum RIFTermType getType() const throw();
   bool isSimple() const throw();
   bool isGround() const throw();
+  void getVars(VarSet &vars) const throw();
 
   // VARIABLE
   RIFVar getVar() const throw(BaseException<enum RIFTermType>);

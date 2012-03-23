@@ -117,6 +117,7 @@ public:
   RIFAtomic &normalize() throw(BadAllocException);
   enum RIFAtomicType getType() const throw();
   bool isGround() const throw();
+  void getVars(VarSet &vars) const throw();
 
   // ATOM, EXTERNAL
   RIFConst getPred() const throw(BaseException<enum RIFAtomicType>);

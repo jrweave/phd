@@ -304,12 +304,12 @@ RIFTerm RIFTerm::parse(DPtr<uint8_t> *utf8str) throw(BadAllocException,
       RETHROW(e, "(rethrow)");
     } catch (MalformedIRIRefException &e) {
       item->drop();
-      for (++mark; mark != end && is_space(*mark); ++mark) {
+      for (; mark != end && is_space(*mark); ++mark) {
         // move to next non-space
       }
     } catch (TraceableException &e) {
       item->drop();
-      for (++mark; mark != end && is_space(*mark); ++mark) {
+      for (; mark != end && is_space(*mark); ++mark) {
         // move to next non-space
       }
     }
@@ -346,7 +346,9 @@ RIFTerm RIFTerm::parse(DPtr<uint8_t> *utf8str) throw(BadAllocException,
     RIFConst pred = RIFConst::parse(predstr);
     predstr->drop();
     RIFTerm ret(pred, terms);
-    terms->drop();
+    if (terms != NULL) {
+      terms->drop();
+    }
     return ret;
   } catch (bad_alloc &e) {
     predstr->drop();
@@ -536,6 +538,21 @@ bool RIFTerm::isGround() const throw() {
     }
     return true;
   }
+  }
+}
+
+void RIFTerm::getVars(VarSet &vars) const throw() {
+  if (this->type == VARIABLE) {
+    vars.insert(*((RIFVar*)this->state));
+  } else if (this->type == FUNCTION) {
+    func_state *f = (func_state*) this->state;
+    if (f->args != NULL) {
+      RIFTerm *mark = f->args->dptr();
+      RIFTerm *end = mark + f->args->size();
+      for (; mark != end; ++mark) {
+        mark->getVars(vars);
+      }
+    }
   }
 }
 

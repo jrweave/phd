@@ -195,6 +195,8 @@ int main(int argc, char **argv) {
                 s2p("?var"));
   TEST(testVar, s2t("?\"quoted var name\""),
                 s2p("?\"quoted var name\""));
+  TEST(testVar, s2t("?\"variable name\""),
+                s2p("?\"variable name\""));
   TEST(testConst, s2t("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"),
                   s2p("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"));
   TEST(testConst, s2t("\"\"^^<s:>"),
@@ -208,6 +210,9 @@ int main(int argc, char **argv) {
   TEST(testList, s2t("List(\t\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> List( \"embedded list\"^^<http://www.w3.org/2001/XMLSchema#string>\n) \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string> )"),
                  s2p("List(\"1\"^^<http://www.w3.org/2001/XMLSchema#integer> List(\"embedded list\"^^<http://www.w3.org/2001/XMLSchema#string>) \"string with spaces\"^^<http://www.w3.org/2001/XMLSchema#string>)"),
                  3);
+  TEST(testFunc, s2t("\"function\"^^<s:>()"),
+                 s2p("\"function\"^^<s:>()"),
+                 0, true);
   TEST(testFunc, s2t("\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>( \"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string> )"),
                  s2p("\"http://www.w3.org/TR/xpath-functions/#func-compare\"^^<http://www.w3.org/2007/rif#iri>(\"first arg\"^^<http://www.w3.org/2001/XMLSchema#string> \"second arg\"^^<http://www.w3.org/2001/XMLSchema#string>)"),
                  2, true);

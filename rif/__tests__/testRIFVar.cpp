@@ -42,6 +42,7 @@ bool test(RIFVar var, DPtr<uint8_t> *str, DPtr<uint8_t> *name) {
   PROG(memcmp(utf8str->dptr(), name->dptr(), name->size() * sizeof(uint8_t)) == 0);
   utf8str->drop();
   name->drop();
+  var.normalize();
   PASS;
 }
 

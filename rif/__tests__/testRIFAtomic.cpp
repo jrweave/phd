@@ -155,12 +155,15 @@ bool testFrame(RIFAtomic atomic, DPtr<uint8_t> *str, RIFTerm obj, size_t nattrs,
 int main(int argc, char **argv) {
   INIT;
   TEST(testAtom, s2a("\"\"^^<s:>( )"), s2p("\"\"^^<s:>()"), s2c("\"\"^^<s:>"), 0, false, true);
+  TEST(testAtom, s2a("\"\"^^<s:>( ?\"variable\" )"), s2p("\"\"^^<s:>(?variable)"), s2c("\"\"^^<s:>"), 1, false, false);
+  TEST(testAtom, s2a("\"\"^^<s:>( ?\"variable name\" )"), s2p("\"\"^^<s:>(?\"variable name\")"), s2c("\"\"^^<s:>"), 1, false, false);
   TEST(testAtom, s2a("External(\"\"^^<s:>( ))"), s2p("External(\"\"^^<s:>())"), s2c("\"\"^^<s:>"), 0, true, true);
   TEST(testEquality, s2a("?var=\"\"^^<s:>"), s2p("?var = \"\"^^<s:>"), s2t("?var"), s2t("\"\"^^<s:>"), false);
+  TEST(testEquality, s2a("?var = \"\"^^<s:>"), s2p("?var = \"\"^^<s:>"), s2t("?var"), s2t("\"\"^^<s:>"), false);
   TEST(testEquality, s2a("\"\"^^<s:?q=a>=\"\"^^<s:>"), s2p("\"\"^^<s:?q=a> = \"\"^^<s:>"), s2t("\"\"^^<s:?q=a>"), s2t("\"\"^^<s:>"), true);
   TEST(testMembership, s2a("\"\"^^<s:>#\"\"^^<s:>"), s2p("\"\"^^<s:> # \"\"^^<s:>"), s2t("\"\"^^<s:>"), s2t("\"\"^^<s:>"), true);
   TEST(testMembership, s2a("\"\"^^<s:#>#\"\"^^<s:>"), s2p("\"\"^^<s:#> # \"\"^^<s:>"), s2t("\"\"^^<s:#>"), s2t("\"\"^^<s:>"), true);
   TEST(testSubclass, s2a("List(\"1\"^^<s:>)##\"\"^^<s:>"), s2p("List(\"1\"^^<s:>) ## \"\"^^<s:>"), s2t("List(\"1\"^^<s:>)"), s2t("\"\"^^<s:>"), true);
   TEST(testFrame, s2a("?frame[?a1->?v1 ?a2  ->  \"\"^^<s:> ?a2->?x]"), s2p("?frame[?a1 -> ?v1 ?a2 -> \"\"^^<s:> ?a2 -> ?x]"), s2t("?frame"), 2, false);
-  FINAL;
+  FINAL; 
 }

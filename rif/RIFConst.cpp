@@ -228,9 +228,9 @@ RIFConst RIFConst::parse(DPtr<uint8_t> *utf8str) throw(BadAllocException,
   DPtr<uint8_t> *iristr = utf8str->sub(mark - begin + 4, end - mark - 5);
   try {
     IRIRef iriref(iristr);
+    iristr->drop();
     RIFConst rifconst(lex, iriref);
     lex->drop();
-    iristr->drop();
     return rifconst;
   } catch (MalformedIRIRefException &e) {
     lex->drop();
@@ -283,6 +283,9 @@ RIFConst &RIFConst::normalize() throw(BadAllocException) {
     nfcnorm->drop();
     this->lex->drop();
     this->lex = nfcbytes;
+  }
+  if (this->lex->standable()) {
+    this->lex = this->lex->stand();
   }
   this->normalized = true;
   return *this;

@@ -112,7 +112,10 @@ int RIFAtomic::cmp(const RIFAtomic &a1, const RIFAtomic &a2) throw() {
     DPtr<RIFTerm> *args1 = a1.getArgs();
     DPtr<RIFTerm> *args2 = a2.getArgs();
     if (args1->size() != args2->size()) {
-      return args1->size() < args2->size() ? -1 : 1;
+      c = args1->size() < args2->size() ? -1 : 1;
+      args1->drop();
+      args2->drop();
+      return c;
     }
     RIFTerm *begin = args1->dptr();
     RIFTerm *end = begin + args1->size();
@@ -120,10 +123,14 @@ int RIFAtomic::cmp(const RIFAtomic &a1, const RIFAtomic &a2) throw() {
     for (; begin != end; ++begin) {
       c = RIFTerm::cmp(*begin, *mark);
       if (c != 0) {
+        args1->drop();
+        args2->drop();
         return c;
       }
       ++mark;
     }
+    args1->drop();
+    args2->drop();
     return 0;
   }
   case EQUALITY:
@@ -180,6 +187,7 @@ int RIFAtomic::cmp(const RIFAtomic &a1, const RIFAtomic &a2) throw() {
         if (c != 0) {
           return c;
         }
+        ++itt2;
       }
       ++it2;
     }
@@ -207,9 +215,14 @@ RIFAtomic RIFAtomic::parse(DPtr<uint8_t> *utf8str)
       // find possible delimiter
     }
     if (mark == end) {
-      break;
+      THROW(TraceableException, "Invalid RIFAtomic string.");
     }
-    sub = utf8str->sub(begin - utf8str->dptr(), mark - begin);
+    const uint8_t *backup = mark - 1;
+    for (; backup != begin && is_space(*backup); --backup) {
+      // find end of first part
+    }
+    ++backup;
+    sub = utf8str->sub(begin - utf8str->dptr(), backup - begin);
     if (*mark == to_ascii('(') && !external) {
       external = (ascii_strncmp(begin, "External", 8) == 0);
       if (external) {
@@ -270,7 +283,7 @@ RIFAtomic RIFAtomic::parse(DPtr<uint8_t> *utf8str)
         THROW(TraceableException, "No closing ')' on ATOM.");
       }
       vector<RIFTerm> args;
-      for (begin = ++mark; begin != end && is_space(*begin); ++begin) {
+      for (begin = mark + 1; begin != end && is_space(*begin); ++begin) {
         // find beginning of arguments
       }
       if (begin != end) {
@@ -287,14 +300,13 @@ RIFAtomic RIFAtomic::parse(DPtr<uint8_t> *utf8str)
         sub = utf8str->sub(begin - utf8str->dptr(), mark - begin);
         try {
           RIFTerm arg = RIFTerm::parse(sub);
+          sub->drop();
+          sub = NULL;
           args.push_back(arg);
-          begin = mark;
-          if (begin != end) {
-            for (++begin; begin != end && is_space(*begin); ++begin) {
-              // find next argument, or end
-            }
-            mark = begin;
+          for (; mark != end && is_space(*mark); ++mark) {
+            // find next argument, or end
           }
+          begin = mark;
         } catch (BadAllocException &e) {
           sub->drop();
           RETHROW(e, "(rethrow)");
@@ -307,19 +319,24 @@ RIFAtomic RIFAtomic::parse(DPtr<uint8_t> *utf8str)
         } catch (MalformedIRIRefException &e) {
           sub->drop();
           sub = NULL;
+          for (; mark != end && is_space(*mark); ++mark) {
+            // find next argument, or end
+          }
           continue; // ignore and try again
         } catch (TraceableException &e) {
           sub->drop();
           sub = NULL;
+          for (; mark != end && is_space(*mark); ++mark) {
+            // find next argument, or end
+          }
           continue; // ignore and try again
         }
-        sub->drop();
       }
       if (begin != end) {
         THROW(TraceableException, "Unrecognized arguments of ATOM/EXTERNAL.");
       }
       RIFConst pred = term.getConst();
-      DPtr<RIFTerm> *pargs;
+      DPtr<RIFTerm> *pargs = NULL;
       try {
         NEW(pargs, APtr<RIFTerm>, args.size());
       } RETHROW_BAD_ALLOC
@@ -777,6 +794,41 @@ bool RIFAtomic::isGround() const throw() {
       }
     }
     return true;
+  }
+  }
+}
+
+void RIFAtomic::getVars(VarSet &vars) const throw() {
+  switch (this->type) {
+  case ATOM:
+  case EXTERNAL: {
+    atom_state *a = (atom_state*) this->state;
+    if (a->args != NULL) {
+      RIFTerm *mark = a->args->dptr();
+      RIFTerm *end = mark + a->args->size();
+      for (; mark != end; ++mark) {
+        mark->getVars(vars);
+      }
+    }
+    return;
+  }
+  case EQUALITY:
+  case MEMBERSHIP:
+  case SUBCLASS: {
+    pair<RIFTerm, RIFTerm> *p = (pair<RIFTerm, RIFTerm>*) this->state;
+    p->first.getVars(vars);
+    p->second.getVars(vars);
+    return;
+  }
+  case FRAME: {
+    frame_state *f = (frame_state*) this->state;
+    f->object.getVars(vars);
+    SlotMap::const_iterator it = f->slots.begin();
+    for (; it != f->slots.end(); ++it) {
+      it->first.getVars(vars);
+      it->second.getVars(vars);
+    }
+    return;
   }
   }
 }

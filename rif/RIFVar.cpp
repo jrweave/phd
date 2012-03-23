@@ -72,6 +72,7 @@ RIFVar RIFVar::parse(DPtr<uint8_t> *utf8str)
     UTF8Iter end(name);
     end.finish();
     if (!isNCName(begin, end)) {
+      name->drop();
       THROW(TraceableException,
             "Var name must be NCName or Unicode string in quotes.");
     }
@@ -140,6 +141,9 @@ RIFVar &RIFVar::normalize() throw(BadAllocException) {
     codepoints->drop();
     nfcpoints->drop();
   }
+  if (this->utf8name->standable()) {
+    this->utf8name = this->utf8name->stand();
+  }
   this->normalized = true;
   return *this;
 }
@@ -158,9 +162,9 @@ DPtr<uint8_t> *RIFVar::toUTF8String() const throw(BadAllocException) {
   DPtr<uint8_t> *utf8str;
   if (this->utf8name == NULL) {
     try {
-      NEW(utf8str, MPtr<uint8_t>, 1);
+      NEW(utf8str, MPtr<uint8_t>, 3);
     } RETHROW_BAD_ALLOC
-    **utf8str = to_ascii('?');
+    ascii_strcpy(utf8str->dptr(), "?\"\"");
     return utf8str;
   }
   UTF8Iter begin(this->utf8name);
