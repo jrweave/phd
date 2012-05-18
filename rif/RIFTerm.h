@@ -2,6 +2,7 @@
 #define __RIF__RIFTERM_H__
 
 #include <map>
+#include <set>
 #include "ptr/BadAllocException.h"
 #include "ptr/DPtr.h"
 #include "rif/RIFConst.h"

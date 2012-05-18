@@ -125,7 +125,7 @@ public:
     memset(this->bytes, 0, i);
     return *this;
   }
-  RDFID<N> operator<<(const size_t k) const {
+  RDFID<N> operator>>(const size_t k) const {
     return RDFID<N>(*this) >>= k;
   }
   bool operator<(const RDFID<N> &id) const {
@@ -320,7 +320,7 @@ public:                                               \
     return i;                                         \
   }                                                   \
   RDFID<N> operator<<=(const size_t k) {              \
-    this->bytes << k;                                 \
+    this->bytes <<= k;                                \
     return *this;                                     \
   }                                                   \
   RDFID<N> operator<<(const size_t k) const {         \
@@ -329,7 +329,7 @@ public:                                               \
     return id;                                        \
   }                                                   \
   RDFID<N> operator>>=(const size_t k) {              \
-    this->bytes >> k;                                 \
+    this->bytes >>= k;                                \
     return *this;                                     \
   }                                                   \
   RDFID<N> operator>>(const size_t k) const {         \

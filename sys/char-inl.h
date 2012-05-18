@@ -17,6 +17,11 @@ inline uint8_t *ascii_strcpy(uint8_t *ascii, const char *cstr) {
   return (uint8_t *)memcpy(ascii, cstr, strlen(cstr));
 }
 
+inline uint8_t *ascii_strncpy(uint8_t *ascii, const char *cstr,
+                              const size_t n) {
+  return (uint8_t *)memcpy(ascii, cstr, n);
+}
+
 inline int ascii_strncmp(const uint8_t *ascii, const char *cstr,
     const size_t n) {
   return strncmp((const char *)ascii, cstr, n);
