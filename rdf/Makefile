@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= rdf
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= RDFTerm.o
+OBJS		= RDFTerm.o RDFTriple.o NTriplesReader.o
 
 all : build __tests__
 
@@ -34,3 +34,11 @@ force_look :
 RDFTerm.o : RDFTerm.h RDFTerm-inl.h RDFTerm.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o RDFTerm.o RDFTerm.cpp
 	$(CC) $(CFLAGS) -c -o RDFTerm.o RDFTerm.cpp
+
+RDFTriple.o : RDFTriple.h RDFTriple-inl.h RDFTriple.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o RDFTriple.o RDFTriple.cpp
+	$(CC) $(CFLAGS) -c -o RDFTriple.o RDFTriple.cpp
+
+NTriplesReader.o : NTriplesReader.h NTriplesReader.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o NTriplesReader.o NTriplesReader.cpp
+	$(CC) $(CFLAGS) -c -o NTriplesReader.o NTriplesReader.cpp
