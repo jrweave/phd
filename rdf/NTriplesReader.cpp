@@ -39,6 +39,7 @@ bool NTriplesReader::read(RDFTriple &triple) {
     // find end of line/triple
   }
   DPtr<uint8_t> *triplestr = this->buffer->sub(this->offset, p - begin);
+  this->offset += triplestr->size() + 1; // skip '\n'
   if (p != end) {
     try {
       triple = RDFTriple::parse(triplestr);
@@ -55,7 +56,6 @@ bool NTriplesReader::read(RDFTriple &triple) {
       triplestr->drop();
       RETHROW(e, "(rethrow)");
     }
-    this->offset += triplestr->size() + 1; // skip '\n'
     triplestr->drop();
     return true;
   }
@@ -87,11 +87,11 @@ bool NTriplesReader::read(RDFTriple &triple) {
       // find end of line/triple
     }
     triplestr = this->buffer->sub(0, p - begin);
+    this->offset = triplestr->size() + 1;
     if (!triplestr->standable()) {
       THROW(TraceableException, "CANNOT STAND POINTER!");
     }
     triplestr->stand();
-    this->offset = triplestr->size() + 1;
     len += triplestr->size();
     parts.push_back((void*) triplestr);
   } while (p == end);

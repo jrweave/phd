@@ -33,7 +33,7 @@ testRDFDictionary : testRDFDictionary.cpp ../RDFDictionary.h ../RDFDictionary-in
 	$(ECHO) [TEST] ./testRDFDictionary
 	./testRDFDictionary
 
-testNTriplesReader : testNTriplesReader.cpp ../NTriplesReader.h
+testNTriplesReader : testNTriplesReader.cpp ../NTriplesReader.h foaf.nt
 	$(ECHO) running test $(SUBDIR)/testNTriplesReader
 	$(ECHO) $(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o  ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o
 	$(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o

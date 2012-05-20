@@ -243,7 +243,7 @@ DPtr<uint8_t> *RDFTerm::escape(DPtr<uint8_t> *str, bool as_iri)
 
 DPtr<uint8_t> *RDFTerm::unescape(DPtr<uint8_t> *str, bool as_iri)
     throw(SizeUnknownException, BadAllocException, BaseException<void*>,
-          TraceableException) {
+          TraceableException, InvalidEncodingException) {
   if (str == NULL) {
     THROW(BaseException<void*>, NULL, "str must not be NULL.");
   }
@@ -313,10 +313,8 @@ DPtr<uint8_t> *RDFTerm::unescape(DPtr<uint8_t> *str, bool as_iri)
       uint8_t buf[4];
       try {
         max = utf8len(c, buf);
-      } catch (InvalidEncodingException &e) {
-        THROW(TraceableException,
-              "Unicode escape sequence specifies invalid character.");
-      }
+      } JUST_RETHROW (InvalidEncodingException,
+          "Unicode escape sequence specifies invalid character.")
       vec.insert(vec.end(), buf, buf + max);
     } else {
       THROW(TraceableException, "Invalid escape sequence.");

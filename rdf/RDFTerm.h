@@ -59,7 +59,7 @@ public:
       throw(SizeUnknownException, BadAllocException, BaseException<void*>);
   static DPtr<uint8_t> *unescape(DPtr<uint8_t> *str, bool as_iri)
       throw(SizeUnknownException, BadAllocException, BaseException<void*>,
-            TraceableException);
+            InvalidEncodingException, TraceableException);
   static RDFTerm parse(DPtr<uint8_t> *utf8str)
       throw(SizeUnknownException, BaseException<void*>, TraceableException,
             InvalidEncodingException, InvalidCodepointException);

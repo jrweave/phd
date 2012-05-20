@@ -13,6 +13,7 @@ bool test1() {
   InputStream *is;
   NEW(is, IFStream, "foaf.nt");
   size_t count = 0;
+  size_t nerrs = 0;
   DPtr<uint8_t> *bytes = is->read();
   while (bytes != NULL) {
     count += bytes->size();
@@ -27,9 +28,18 @@ bool test1() {
   NTriplesReader *nt;
   NEW(nt, NTriplesReader, is);
   RDFTriple triple;
-  for (count = 0; nt->read(triple); ++count) {
-    // counting triples
-  }
+  count = 0;
+  bool r;
+  do {
+    try {
+      r = nt->read(triple);
+      if (r) ++count;
+    } catch (TraceableException &e) {
+      cerr << e.what() << endl;
+      ++nerrs;
+    }
+  } while(r);
+  PROG(nerrs == 0);
   PROG(count == 94);
   nt->close();
   DELETE(nt);
