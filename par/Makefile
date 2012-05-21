@@ -2,7 +2,7 @@ include ../Makefile.inc
 
 SUBDIR	= par
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= MPIFileInputStream.o MPIDelimFileInputStream.o DistException.o MPIPacketDistributor.o
+OBJS		= MPIFileInputStream.o MPIDelimFileInputStream.o DistException.o MPIPacketDistributor.o StringDistributor.o
 
 all : build __tests__
 
@@ -45,3 +45,7 @@ DistException.o : DistException.h DistException.cpp
 MPIPacketDistributor.o : MPIPacketDistributor.h MPIPacketDistributor.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o MPIPacketDistributor.o MPIPacketDistributor.cpp
 	$(CC) $(CFLAGS) -c -o MPIPacketDistributor.o MPIPacketDistributor.cpp
+
+StringDistributor.o : StringDistributor.h StringDistributor.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o StringDistributor.o StringDistributor.cpp
+	$(CC) $(CFLAGS) -c -o StringDistributor.o StringDistributor.cpp

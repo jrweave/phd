@@ -173,9 +173,7 @@ bool MPIPacketDistributor::done() throw(DistException) {
   }
   this->check_count = 0;
   int net;
-  cerr << "[" << this->comm.Get_rank() << "] Waiting on Allreduce." << endl;
   this->comm.Allreduce(&this->net_send_recv, &net, 1, MPI::INT, MPI::SUM);
-  cerr << "[" << this->comm.Get_rank() << "] Passed Allreduce." << endl;
   if (net != 0) {
     return false;
   }

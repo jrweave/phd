@@ -40,16 +40,24 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
   MPI::Offset extra_pages = num_pages % size;
   this->begin = rank * pages_per_proc * page_size;
   if (rank < extra_pages) {
-    this->begin += page_size;
+    this->begin += rank*page_size;
+  } else {
+    this->begin += extra_pages*page_size;
   }
   this->at = this->begin;
   if (rank == size - 1) {
     this->end = filesize; // last processor gets dangling bytes
   } else {
     this->end = this->begin + pages_per_proc * page_size;
+    if (rank < extra_pages) {
+      this->end += page_size;
+    }
   }
+  bool found_delim = rank == 0 || rank == size - 1;
+  MPI::Offset adjust = 0;
+  MPI::Offset myadjust = 0;
+  MPI::Status stat;
   if (this->at < this->end) {
-    MPI::Status stat;
     MPI::Offset amount = min(this->end - this->at,
                              (MPI::Offset) this->buffer->size());
     try {
@@ -71,8 +79,6 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
         THROW(IOException, e.Get_error_string());
       }
     }
-    MPI::Offset adjust = 0;
-    MPI::Offset myadjust = 0;
     if (rank > 0) {
       const uint8_t *p;
       const uint8_t *q;
@@ -84,6 +90,7 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
         }
         adjust += p - this->buffer->dptr();
         if (p != q) {
+          found_delim = true;
           this->length = q - p - 1;
           memcpy(this->buffer->dptr(), p + 1, this->length * sizeof(uint8_t));
           ++adjust;
@@ -117,26 +124,42 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
       } while (p == q);
       this->begin += adjust;
     }
-    int send_to = rank == 0 ? size - 1 : rank - 1;
-    int recv_from = rank == size - 1 ? 0 : rank + 1;
+  }
+  int send_to = rank == 0 ? size - 1 : rank - 1;
+  int recv_from = rank == size - 1 ? 0 : rank + 1;
+  try {
+    MPI::Request recvreq = comm.Irecv(&myadjust, sizeof(MPI::Offset),
+                                      MPI::BYTE, recv_from, 0);
+    if (!found_delim) {
+      while (!recvreq.Test()) {
+        // wait to get adjustment
+      }
+      adjust += myadjust;
+      myadjust = 0;
+    }
+    MPI::Request sendreq = comm.Isend(&adjust, sizeof(MPI::Offset),
+                                      MPI::BYTE, send_to, 0);
+    if (found_delim) {
+      while (!recvreq.Test()) {
+        // wait to get adjustment
+      }
+    }
+    while  (!sendreq.Test()) {
+      // wait for send to complete
+    }
+  } catch (MPI::Exception &e) {
+    THROW(IOException, e.Get_error_string());
+  }
+  if (this->at == this->end && myadjust > 0) {
+    MPI::Offset amount = min(myadjust, (MPI::Offset) this->asyncbuf->size());
     try {
-      comm.Sendrecv(  &adjust, sizeof(MPI::Offset), MPI::BYTE,   send_to, 0,
-                    &myadjust, sizeof(MPI::Offset), MPI::BYTE, recv_from, 0,
-                    stat);
+      this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
+                                      MPI::BYTE);
     } catch (MPI::Exception &e) {
       THROW(IOException, e.Get_error_string());
     }
-    if (this->at == this->end && myadjust > 0) {
-      amount = min(myadjust, (MPI::Offset) this->asyncbuf->size());
-      try {
-        this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
-                                        MPI::BYTE);
-      } catch (MPI::Exception &e) {
-        THROW(IOException, e.Get_error_string());
-      }
-    }
-    this->end += myadjust;
   }
+  this->end += myadjust;
 }
 
 MPIDelimFileInputStream::~MPIDelimFileInputStream() throw(IOException) {

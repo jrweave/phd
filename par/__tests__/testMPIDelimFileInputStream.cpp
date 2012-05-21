@@ -115,6 +115,7 @@ bool atest(const char *filename) {
     data = mis->read();
   }
 
+  PROG(true);
   mis->reset();
   size_t part_len = 0;
   data = mis->read();
