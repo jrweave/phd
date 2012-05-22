@@ -2,6 +2,7 @@
 
 namespace io {
 
+inline
 IFStream::IFStream(const char *filename)
     throw(BadAllocException, IOException)
     : IStream<ifstream>(4096) {
@@ -11,6 +12,7 @@ IFStream::IFStream(const char *filename)
   }
 }
 
+inline
 IFStream::IFStream(const char *filename, const size_t bufsize)
     throw(BadAllocException, IOException)
     : IStream<ifstream>(bufsize) {
@@ -20,6 +22,7 @@ IFStream::IFStream(const char *filename, const size_t bufsize)
   }
 }
 
+inline
 IFStream::~IFStream() throw(IOException) {
   // do nothing; superclass destructor closes
 }

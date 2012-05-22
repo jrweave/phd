@@ -11,7 +11,7 @@ using namespace std;
 bool test1() {
   int commsize = MPI::COMM_WORLD.Get_size();
   int rank = MPI::COMM_WORLD.Get_rank();
-  int max_packets = 1000000;
+  int max_packets = 100000;
 
   // These parameters should be tweaked based on underlying system.
   int num_requests = commsize;

@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 SUBDIR	= par/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testMPIDelimFileInputStream testMPIPacketDistributor testStringDistributor
+TESTS		= testMPIDelimFileInputStream testMPIPacketDistributor testStringDistributor testMPIDistPtrFileOutputStream
 
 all :
 
@@ -11,6 +11,7 @@ clean :
 	$(ECHO) -$(RM) -f $(TESTS)
 	-$(RM) -vf $(TESTS)
 	-$(RM) -vfr *.dSYM
+	-$(RM) -vf foaf.out
 
 thorough : runtests
 
@@ -39,3 +40,11 @@ testStringDistributor : testStringDistributor.cpp ../StringDistributor.o foaf.nt
 	$(CC) $(CFLAGS) -o testStringDistributor testStringDistributor.cpp ../StringDistributor.o ../MPIPacketDistributor.o ../MPIDelimFileInputStream.o ../../io/IOException.o ../../io/InputStream.o ../MPIFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../DistException.o ../../rdf/RDFTriple.o ../../rdf/RDFTerm.o ../../ucs/InvalidEncodingException.o ../../ptr/SizeUnknownException.o ../../lang/LangTag.o ../../iri/IRIRef.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidCodepointException.o ../../ucs/utf.o ../../lang/MalformedLangTagException.o
 	$(ECHO) [TEST] ./testStringDistributor `pwd`/foaf.nt
 	$(RUN) -np 4 ./testStringDistributor `pwd`/foaf.nt
+
+testMPIDistPtrFileOutputStream : testMPIDistPtrFileOutputStream.cpp ../MPIDistPtrFileOutputStream.o foaf.nt ../MPIFileOutputStream.cpp ../MPIFileOutputStream.o
+	-$(RM) -vf foaf.out
+	$(ECHO) running test $(SUBDIR)/testMPIDistPtrFileOutputStream
+	$(ECHO) $(CC) $(CFLAGS) -o testMPIDistPtrFileOutputStream testMPIDistPtrFileOutputStream.cpp ../MPIDistPtrFileOutputStream.o ../MPIPacketDistributor.o ../MPIDelimFileInputStream.o ../../io/IOException.o ../../io/InputStream.o ../MPIFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../DistException.o ../../rdf/RDFTriple.o ../../rdf/RDFTerm.o ../../ucs/InvalidEncodingException.o ../../ptr/SizeUnknownException.o ../../lang/LangTag.o ../../iri/IRIRef.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidCodepointException.o ../../ucs/utf.o ../../lang/MalformedLangTagException.o ../MPIFileOutputStream.o ../../io/OutputStream.o ../../rdf/NTriplesReader.o
+	$(CC) $(CFLAGS) -o testMPIDistPtrFileOutputStream testMPIDistPtrFileOutputStream.cpp ../MPIDistPtrFileOutputStream.o ../MPIPacketDistributor.o ../MPIDelimFileInputStream.o ../../io/IOException.o ../../io/InputStream.o ../MPIFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../DistException.o ../../rdf/RDFTriple.o ../../rdf/RDFTerm.o ../../ucs/InvalidEncodingException.o ../../ptr/SizeUnknownException.o ../../lang/LangTag.o ../../iri/IRIRef.o ../../ucs/UTF8Iter.o ../../ucs/nf.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidCodepointException.o ../../ucs/utf.o ../../lang/MalformedLangTagException.o ../MPIFileOutputStream.o ../../io/OutputStream.o ../../rdf/NTriplesReader.o
+	$(ECHO) [TEST] ./testMPIDistPtrFileOutputStream `pwd`/foaf.nt `pwd`/foaf.out
+	$(RUN) -np 4 ./testMPIDistPtrFileOutputStream `pwd`/foaf.nt `pwd`/foaf.out

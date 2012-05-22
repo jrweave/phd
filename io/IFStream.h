@@ -20,4 +20,6 @@ public:
 
 }
 
+#include "IFStream-inl.h"
+
 #endif /* __IO__IFSTREAM_H__ */

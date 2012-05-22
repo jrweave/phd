@@ -1,11 +1,8 @@
 #ifndef __IO__INPUTSTREAM_H__
 #define __IO__INPUTSTREAM_H__
 
-#include "ex/BaseException.h"
-#include "ex/TraceableException.h"
 #include "io/IOException.h"
 #include "ptr/DPtr.h"
-#include "ptr/SizeUnknownException.h"
 #include "sys/ints.h"
 
 namespace io {
@@ -29,5 +26,7 @@ public:
 };
 
 }
+
+#include "io/InputStream-inl.h"
 
 #endif /* __IO__INPUTSTREAM_H__ */

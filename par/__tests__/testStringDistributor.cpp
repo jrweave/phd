@@ -25,19 +25,15 @@ bool test(char *filename) {
   int check_every = 25;
   size_t packet_size = 128;
 
-  cerr << "[" << rank << "] Opening " << filename << endl;
-
   MPIDelimFileInputStream mis(MPI::COMM_WORLD, filename,
       MPI::MODE_RDONLY, MPI::INFO_NULL, 4096, to_ascii('\n'));
 
   MPI::COMM_WORLD.Barrier();
-  cerr << "[" << rank << "] Creating packet distributor" << endl;
 
 
   MPIPacketDistributor *packet_dist;
   NEW(packet_dist, MPIPacketDistributor, MPI::COMM_WORLD, packet_size, num_requests, check_every, 1);
   MPI::COMM_WORLD.Barrier();
-  cerr << "[" << rank << "] Creating string distributor" << endl;
   StringDistributor dist(rank, packet_size, packet_dist);
   dist.init();
 
@@ -48,26 +44,26 @@ bool test(char *filename) {
   int recvd_bytes = 0;
   size_t nerrs = 0;
   while (line != NULL) {
-    cerr << "[" << rank << "] loop" << endl;
     const uint8_t *b = line->dptr();
     const uint8_t *e = b + line->size();
     for (; b != e; ++b) {
       readbuf << to_ascii(*b);
     }
     readbuf << endl;
-    try {
-      RDFTriple::parse(line);
-    } catch (TraceableException &e) {
-      cerr << "****************************************************************************************************************[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
-      ++nerrs;
+    bool blank_line = line->size() == 0 || (line->size() == 1 && **line == to_ascii('\n'));
+    if (!blank_line) {
+      try {
+        RDFTriple::parse(line);
+      } catch (TraceableException &e) {
+        cerr << "[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
+        ++nerrs;
+      }
     }
     ++local_lines;
     local_bytes += line->size();
     int send_to = rand() % commsize;
     do {
-      cerr << "[" << rank << "] before receive" << endl;
       DPtr<uint8_t> *recvd = dist.receive();
-      cerr << "[" << rank << "] after receive" << endl;
       if (recvd != NULL) {
         const uint8_t *b = recvd->dptr();
         const uint8_t *e = b + recvd->size();
@@ -75,17 +71,19 @@ bool test(char *filename) {
           recvbuf << to_ascii(*b);
         }
         recvbuf << endl;
-        try {
-          RDFTriple::parse(recvd);
-        } catch (TraceableException &e) {
-          cerr << "****************************************************************************************************************[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
-          ++nerrs;
+        blank_line = recvd->size() == 0 || (recvd->size() == 1 && **recvd == to_ascii('\n'));
+        if (!blank_line) {
+          try {
+            RDFTriple::parse(recvd);
+          } catch (TraceableException &e) {
+            cerr << "[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
+            ++nerrs;
+          }
         }
         ++recvd_lines;
         recvd_bytes += recvd->size();
         recvd->drop();
       }
-      cerr << "[" << rank << "] test done and send" << endl;
     } while (!dist.done() && !dist.send(send_to, line));
     line->drop();
     line = mis.readDelimited();
@@ -100,31 +98,20 @@ bool test(char *filename) {
         recvbuf << to_ascii(*b);
       }
       recvbuf << endl;
-      try {
-        RDFTriple::parse(recvd);
-      } catch (TraceableException &e) {
-        cerr << "****************************************************************************************************************[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
-        ++nerrs;
+      bool blank_line = recvd->size() == 0 || (recvd->size() == 1 && **recvd == to_ascii('\n'));
+      if (!blank_line) {
+        try {
+          RDFTriple::parse(recvd);
+        } catch (TraceableException &e) {
+          cerr << "[" << rank << "] Exception: " << e.amendStackTrace(__FILE__, __LINE__).what() << endl;
+          ++nerrs;
+        }
       }
       ++recvd_lines;
       recvd_bytes += recvd->size();
       recvd->drop();
     }
   } while (!dist.done());
-
-//  cerr.flush();
-//  MPI::COMM_WORLD.Barrier();
-//  cerr.flush();
-//  ONEBYONE_START
-//  cerr.flush();
-//  cerr << "========== PROCESSOR " << rank << " READ ==============" << endl;
-//  cerr << readbuf.str() << endl;
-//  cerr << "========== PROCESSOR " << rank << " RECEIVED ==========" << endl;
-//  cerr << recvbuf.str() << endl;
-//  cerr.flush();
-//  ONEBYONE_END
-//  cerr.flush();
-//  MPI::COMM_WORLD.Barrier();
 
   int total_lines_read, total_lines_dist;
   int total_bytes_read, total_bytes_dist;

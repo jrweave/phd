@@ -92,3 +92,4 @@ _:JimMiller <http://xmlns.com/foaf/0.1/surname> "Miller" .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> <http://data.semanticweb.org/person/jacopo-urbani> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf> <http://xmlns.com/foaf/0.1/primaryTopic> <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf> <http://www.w3.org/2000/01/rdf-schema#seeAlso> <http://www.cs.rpi.edu/~weavej3/papers.rdf> .
+

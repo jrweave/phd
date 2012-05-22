@@ -60,6 +60,9 @@ DPtr<uint8_t> *IStream<istream_t>::read(const int64_t amount)
   int64_t avail = max(INT64_C(1), this->available());
   int64_t actual = min(avail, amount);
   if (this->offset >= this->length) {
+    if (!this->buffer->alone()) {
+      this->buffer = this->buffer->stand();
+    }
     uint8_t *p = this->buffer->dptr();
     uint8_t *end = p + actual;
     for (; p != end; ++p) {

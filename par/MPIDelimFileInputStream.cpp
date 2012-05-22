@@ -72,6 +72,9 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
     if (this->at < this->end) {
       amount = min(this->end - this->at,
                    (MPI::Offset) this->asyncbuf->size());
+      if (!this->asyncbuf->alone()) {
+        this->asyncbuf = this->asyncbuf->stand();
+      }
       try {
         this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
                                         MPI::BYTE);
@@ -113,6 +116,9 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
           if (this->at < this->end) {
             amount = min(this->end - this->at,
                          (MPI::Offset) this->asyncbuf->size());
+            if (!this->asyncbuf->alone()) {
+              this->asyncbuf = this->asyncbuf->stand();
+            }
             try {
               this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(),
                                               amount, MPI::BYTE);
@@ -152,6 +158,9 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
   }
   if (this->at == this->end && myadjust > 0) {
     MPI::Offset amount = min(myadjust, (MPI::Offset) this->asyncbuf->size());
+    if (!this->asyncbuf->alone()) {
+      this->asyncbuf = this->asyncbuf->stand();
+    }
     try {
       this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
                                       MPI::BYTE);
@@ -192,6 +201,9 @@ void MPIDelimFileInputStream::reset() throw(IOException) {
   MPI::Offset amount = this->asyncbuf->size()
                        - (this->at % this->asyncbuf->size());
   amount = min(amount, this->end - this->at);
+  if (!this->asyncbuf->alone()) {
+    this->asyncbuf = this->asyncbuf->stand();
+  }
   try {
     this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
                                     MPI::BYTE);
@@ -290,6 +302,9 @@ void MPIDelimFileInputStream::fillBuffer() throw(IOException) {
   if (this->at < this->end) {
     MPI::Offset amount = min((MPI::Offset) this->asyncbuf->size(),
                              this->end - this->at);
+    if (!this->asyncbuf->alone()) {
+      this->asyncbuf = this->asyncbuf->stand();
+    }
     try {
       this->req = this->file.Iread_at(this->at, this->asyncbuf->ptr(), amount,
                                       MPI::BYTE);

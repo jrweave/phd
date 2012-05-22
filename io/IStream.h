@@ -30,7 +30,7 @@ public:
       throw(BadAllocException, BaseException<size_t>);
   virtual ~IStream() throw(IOException);
   virtual int64_t available() throw(IOException);
-  virtual void close() throw(IOException) ;
+  virtual void close() throw(IOException);
   virtual bool mark(const int64_t read_limit) throw(IOException);
   virtual bool markSupported() const throw();
   //virtual DPtr<uint8_t> *read() throw(IOException, BadAllocException);

@@ -34,7 +34,24 @@ bool NTriplesReader::read(RDFTriple &triple) {
   }
   const uint8_t *begin = this->buffer->dptr() + this->offset;
   const uint8_t *end = this->buffer->dptr() + this->buffer->size();
-  const uint8_t *p = begin;
+  const uint8_t *p;
+  do {
+    for (p = begin; p != end && *p == to_ascii('\n'); ++p) {
+      // skip blank lines
+    }
+    if (p == end) {
+      this->buffer->drop();
+      try {
+        this->buffer = this->input->read();
+      } JUST_RETHROW(IOException, "(rethrow)")
+      if (this->buffer == NULL) {
+        return NULL;
+      }
+      this->offset = 0;
+      begin = this->buffer->dptr();
+      end = begin + this->buffer->size();
+    }
+  } while (p == end);
   for (; p != end && *p != to_ascii('\n'); ++p) {
     // find end of line/triple
   }

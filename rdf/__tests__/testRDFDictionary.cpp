@@ -32,15 +32,12 @@ RDFTerm *s2t(const char *cstr) {
 template<size_t N>
 bool bitseq(uint64_t test, RDFID<N> id) {
   bool ret = true;
-  cerr << "==== BEGIN ====" << endl;
   while (test != 0) {
     bool testbit = ((test & UINT64_C(1)) != 0);
-    cerr << (testbit ? 1 : 0) << ":" << (id[0] ? 1 : 0) << endl;
     ret &= (!testbit ^ id[0]);
     test >>= 1;
     id >>= 1;
   }
-  cerr << "==== END (final test at return) ====" << endl;
   return ret && id == RDFID<N>::zero();
 }
 
