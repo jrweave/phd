@@ -3,11 +3,6 @@
 namespace io {
 
 inline
-InputStream::~InputStream() throw(IOException) {
-  // do nothing
-}
-
-inline
 int64_t InputStream::available() throw(IOException) {
   return INT64_C(0);
 }

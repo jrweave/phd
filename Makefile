@@ -1,8 +1,8 @@
 include Makefile.inc
 
 # When adding a new subdirectory, make sure to modify DIRS
-DIRS      = test sys util ex ptr ucs iri lang rdf rif io par
-EXE       = main
+DIRS      = test sys util ex ptr ucs iri lang rdf rif io par main
+EXE       = exec
 OBJS      =
 OBJLIBS		=
 LIBS      = -L.
@@ -36,7 +36,7 @@ force_look :
 
 # add main.o to dependencies
 $(EXE) : $(OBJLIBS)
-	$(ECHO) This is where compiling main would happen
+	$(ECHO) This is where compiling exec would happen
 #$(ECHO) $(LD) -o $(EXE) $(OBJS) $(LIBS)
 #$(LD) -o $(EXE) $(OBJS) $(LIBS)
 

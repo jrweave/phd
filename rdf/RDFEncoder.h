@@ -1,11 +1,13 @@
 #ifndef __RDF__RDFENCODER_H__
 #define __RDF__RDFENCODER_H__
 
+#include "ex/TraceableException.h"
 #include "rdf/RDFTerm.h"
 #include "sys/ints.h"
 
 namespace rdf {
 
+using namespace ex;
 using namespace std;
 
 template<size_t N>
@@ -14,6 +16,10 @@ private:
   uint8_t bytes[N];
 public:
   RDFID() {}
+  RDFID(const int init) {
+    memcpy(this->bytes + N - sizeof(int), &init, sizeof(int));
+    memset(this->bytes, 0, N - sizeof(int));
+  }
   RDFID(const RDFID<N> &copy) {
     memcpy(this->bytes, copy.bytes, N);
   }
@@ -44,6 +50,7 @@ public:
     }
     return oldv;
   }
+  const uint8_t *operator&() const { return bytes; }
   uint8_t *operator&() { return bytes; }
   RDFID<N> &operator++() {
     size_t i = N;
@@ -262,6 +269,7 @@ private:                                              \
   int_t bytes;                                        \
 public:                                               \
   RDFID() {}                                          \
+  RDFID(const int init) : bytes((int_t)init) {}       \
   RDFID(const RDFID<N> &copy) : bytes(copy.bytes) {}  \
   ~RDFID() {}                                         \
   static RDFID<N> min() {                             \
@@ -283,6 +291,9 @@ public:                                               \
       this->bytes ^= (1 << i);                        \
     }                                                 \
     return oldv;                                      \
+  }                                                   \
+  const uint8_t *operator&() const {                  \
+    return (uint8_t*)(&this->bytes);                  \
   }                                                   \
   uint8_t *operator&() {                              \
     return (uint8_t*)(&this->bytes);                  \

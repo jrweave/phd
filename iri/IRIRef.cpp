@@ -227,7 +227,7 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
   return this->utf8str->sub(offset - begin, end - offset);
 }
 
-IRIRef *IRIRef::normalize() THROWS(BadAllocException) {
+IRIRef *IRIRef::normalize() THROWS(BadAllocException, TraceableException) {
   if (this->normalized && !this->urified) {
     return this;
   }
@@ -464,7 +464,7 @@ IRIRef *IRIRef::resolve(IRIRef *base) THROWS(BadAllocException) {
       markj += fragment->size() + 1;
       fragment->drop();
     }
-    fragment = this->utf8str->sub(0, this->utf8str->size() - (end - markj));
+    fragment = this->utf8str->sub(0, markj - this->utf8str->dptr());
     normal->drop();
     this->utf8str->drop();
     this->utf8str = fragment;

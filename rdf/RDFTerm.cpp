@@ -557,13 +557,13 @@ DPtr<uint8_t> *RDFTerm::toUTF8String() const throw(BadAllocException) {
   }
 }
 
-RDFTerm &RDFTerm::normalize() throw(BadAllocException) {
+RDFTerm &RDFTerm::normalize() throw(BadAllocException, TraceableException) {
   if (this->normalized) {
     return *this;
   }
   if (this->iri != NULL) {
     try {
-      this->iri->urify();
+      this->iri->normalize();
     } RETHROW_BAD_ALLOC
   }
   if (this->lang != NULL) {
@@ -693,3 +693,14 @@ RDFTerm &RDFTerm::operator=(const RDFTerm &rhs) throw(BadAllocException) {
 }
 
 } // end namespace rdf
+
+std::ostream& operator<<(std::ostream &stream, const rdf::RDFTerm &term) {
+  ptr::DPtr<uint8_t> *utf8str = term.toUTF8String();
+  const uint8_t *begin = utf8str->dptr();
+  const uint8_t *end = begin + utf8str->size();
+  for (; begin != end; ++begin) {
+    stream << to_lchar(*begin);
+  }
+  utf8str->drop();
+  return stream;
+}

@@ -40,7 +40,7 @@ public:
   DPtr<uint8_t> *toUTF8String(const bool with_dot_endl) const
       throw(BadAllocException);
   bool equals(const RDFTriple &t) const throw();
-  RDFTriple &normalize() throw(BadAllocException);
+  RDFTriple &normalize() throw(BadAllocException, TraceableException);
 
   enum RDFTermType getSubjType() const throw();
   RDFTerm getSubj() const throw();
@@ -57,6 +57,10 @@ public:
 };
 
 }
+
+// TODO
+//std::istream& operator>>(std::istream &stream, rdf::RDFTriple &triple);
+std::ostream& operator<<(std::ostream &stream, const rdf::RDFTriple &triple);
 
 #include "rdf/RDFTriple-inl.h"
 

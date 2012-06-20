@@ -1,5 +1,7 @@
 #include "io/OStream.h"
 
+#include "sys/char.h"
+
 namespace io {
 
 template<typename ostream_t>

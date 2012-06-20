@@ -16,8 +16,35 @@ IStream<istream_t>::IStream(const size_t bufsize) throw(BadAllocException)
 }
 
 template<typename istream_t>
+IStream<istream_t>::IStream(istream_t &stream) throw(BadAllocException)
+    : stream(stream), offset(0), length(0), marked(false) {
+  try {
+    NEW(this->buffer, MPtr<uint8_t>, 4096);
+  } RETHROW_BAD_ALLOC
+  this->mark_support = (this->stream.tellg() != (streampos) -1);
+}
+
+template<typename istream_t>
+IStream<istream_t>::IStream(istream_t &stream, const size_t bufsize)
+    throw(BadAllocException, BaseException<size_t>)
+    : stream(stream), offset(0), length(0), marked(false) {
+  if (bufsize <= 0) {
+    THROW(BaseException<size_t>, 0, "Specified buffer size must be positive.");
+  }
+  try {
+    NEW(this->buffer, MPtr<uint8_t>, bufsize);
+  } RETHROW_BAD_ALLOC
+  this->mark_support = (this->stream.tellg() != (streampos) -1);
+}
+
+template<typename istream_t>
 IStream<istream_t>::~IStream() throw(IOException) {
   this->buffer->drop();
+}
+
+template<typename istream_t>
+void IStream<istream_t>::close() throw(IOException) {
+  this->stream.close();
 }
 
 template<typename istream_t>
@@ -29,11 +56,6 @@ int64_t IStream<istream_t>::available() throw(IOException) {
     (size_t) (this->stream.rdbuf()->in_avail()
               * sizeof(char) / sizeof(uint8_t)),
     this->buffer->size());
-}
-
-template<typename istream_t>
-void IStream<istream_t>::close() throw(IOException) {
-  this->stream.close();
 }
 
 template<typename istream_t>

@@ -146,7 +146,7 @@ public:
   DPtr<uint8_t> *getPart(const enum IRIRefPart part) const throw();
 
   // Virtual Methods
-  virtual IRIRef *normalize() throw(BadAllocException);
+  virtual IRIRef *normalize() throw(BadAllocException, TraceableException);
   virtual IRIRef *urify() throw(BadAllocException);
   virtual IRIRef *resolve(IRIRef *base) throw(BadAllocException);
 

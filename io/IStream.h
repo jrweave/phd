@@ -26,7 +26,7 @@ protected:
   IStream(const size_t bufsize) throw(BadAllocException);
 public:
   IStream(istream_t &stream) throw(BadAllocException);
-  IStream(istream_t &stream, size_t bufsize)
+  IStream(istream_t &stream, const size_t bufsize)
       throw(BadAllocException, BaseException<size_t>);
   virtual ~IStream() throw(IOException);
   virtual int64_t available() throw(IOException);

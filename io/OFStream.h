@@ -17,4 +17,6 @@ public:
 
 }
 
+#include "OFStream-inl.h"
+
 #endif /* __IO__OFSTREAM_H__ */

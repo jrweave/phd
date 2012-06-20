@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 SUBDIR	= rdf/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testRDFTerm testRDFDictionary testNTriplesReader
+TESTS		= testRDFTerm testRDFDictionary testNTriplesReader testNTriplesWriter
 
 all :
 
@@ -11,6 +11,7 @@ clean :
 	$(ECHO) -$(RM) -f $(TESTS)
 	-$(RM) -vf $(TESTS)
 	-$(RM) -vfr *.dSYM
+	-$(RM) -vf foaf.out
 
 thorough : runtests
 
@@ -35,7 +36,15 @@ testRDFDictionary : testRDFDictionary.cpp ../RDFDictionary.h ../RDFDictionary-in
 
 testNTriplesReader : testNTriplesReader.cpp ../NTriplesReader.h foaf.nt
 	$(ECHO) running test $(SUBDIR)/testNTriplesReader
-	$(ECHO) $(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o  ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o
-	$(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o
+	$(ECHO) $(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o  ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/InputStream.o ../../io/IFStream.o ../../io/IOException.o
+	$(CC) $(CFLAGS) -o testNTriplesReader testNTriplesReader.cpp ../NTriplesReader.o ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/InputStream.o ../../io/IFStream.o ../../io/IOException.o
 	$(ECHO) [TEST] ./testNTriplesReader
 	./testNTriplesReader
+
+testNTriplesWriter : testNTriplesWriter.cpp ../NTriplesWriter.h ../NTriplesWriter.cpp foaf.nt
+	-$(RM) -vf foaf.out
+	$(ECHO) running test $(SUBDIR)/testNTriplesWriter
+	$(ECHO) $(CC) $(CFLAGS) -o testNTriplesWriter testNTriplesWriter.cpp ../NTriplesWriter.o ../NTriplesReader.o ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o ../../io/OutputStream.o
+	$(CC) $(CFLAGS) -o testNTriplesWriter testNTriplesWriter.cpp ../NTriplesWriter.o ../NTriplesReader.o ../RDFTriple.o ../RDFTerm.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../io/IFStream.o ../../io/IOException.o ../../io/InputStream.o ../../io/OutputStream.o
+	$(ECHO) [TEST] ./testNTriplesWriter
+	./testNTriplesWriter

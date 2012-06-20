@@ -196,7 +196,8 @@ DPtr<uint8_t> *RDFTriple::toUTF8String(const bool with_dot_endl) const
   return str;
 }
 
-RDFTriple &RDFTriple::normalize() THROWS(BadAllocException) {
+RDFTriple &RDFTriple::normalize() THROWS(BadAllocException,
+    TraceableException) {
   this->subject.normalize();
   this->predicate.normalize();
   this->object.normalize();
@@ -213,4 +214,11 @@ RDFTriple &RDFTriple::operator=(const RDFTriple &rhs)
 }
 TRACE(BadAllocException, "(trace)")
 
+}
+
+std::ostream& operator<<(std::ostream &stream, const rdf::RDFTriple &triple) {
+  stream << triple.getSubj() << " "
+         << triple.getPred() << " "
+         << triple.getObj() << " .\n";
+  return stream;
 }

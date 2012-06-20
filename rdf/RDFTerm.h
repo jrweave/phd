@@ -71,7 +71,7 @@ public:
   bool isPlainLiteral() const throw();
   DPtr<uint8_t> *toUTF8String() const throw(BadAllocException);
   bool equals(const RDFTerm &term) const throw();
-  RDFTerm &normalize() throw(BadAllocException);
+  RDFTerm &normalize() throw(BadAllocException, TraceableException);
 
   // BNODE
   DPtr<uint8_t> *getLabel() const throw(BaseException<enum RDFTermType>);
@@ -95,7 +95,7 @@ public:
 
 // TODO
 //std::istream& operator>>(std::istream &stream, rdf::RDFTerm &term);
-//std::ostream& operator<<(std::ostream &stream, const rdf::RDFTerm &term);
+std::ostream& operator<<(std::ostream &stream, const rdf::RDFTerm &term);
 
 #include "rdf/RDFTerm-inl.h"
 

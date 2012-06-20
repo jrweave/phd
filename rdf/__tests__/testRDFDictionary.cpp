@@ -65,24 +65,26 @@ bool testN() {
   RDFID<N> id;
 
   RDFTerm *term = s2t("<tag:jrweave@gmail.com,2012:test>");
-  PROG(dict(*term, id));
+  dict.encode(*term);
+  PROG(dict.lookup(*term, id));
   RDFTerm term2;
-  PROG(dict(id, term2));
+  PROG(dict.lookup(id, term2));
   PROG(term->equals(term2));
   DELETE(term);
 
   RDFID<N> id2;
   term = s2t("_:blank");
-  PROG(dict(*term, id2));
+  dict.encode(*term);
+  PROG(dict.lookup(*term, id2));
   PROG(id != id2);
-  PROG(dict(id2, term2));
+  PROG(dict.lookup(id2, term2));
   PROG(term->equals(term2));
-  PROG(dict(id, term2));
+  PROG(dict.lookup(id, term2));
   PROG(!term->equals(term2));
   DELETE(term);
 
   RDFID<N> id3;
-  PROG((id != id3 && id != id2) ^ dict(id3, term2));
+  PROG((id != id3 && id != id2) ^ dict.lookup(id3, term2));
   
   PASS;
 }
@@ -91,24 +93,26 @@ bool test8() {
   RDFDictionary<> dict;
   rdf8_t id;
   RDFTerm *term = s2t("<tag:jrweave@gmail.com,2012:test>");
-  PROG(dict(*term, id));
+  dict.encode(*term);
+  PROG(dict.lookup(*term, id));
   RDFTerm term2;
-  PROG(dict(id, term2));
+  PROG(dict.lookup(id, term2));
   PROG(term->equals(term2));
   DELETE(term);
 
   rdf8_t id2;
   term = s2t("_:blank");
-  PROG(dict(*term, id2));
+  dict.encode(*term);
+  PROG(dict.lookup(*term, id2));
   PROG(id != id2);
-  PROG(dict(id2, term2));
+  PROG(dict.lookup(id2, term2));
   PROG(term->equals(term2));
-  PROG(dict(id, term2));
+  PROG(dict.lookup(id, term2));
   PROG(!term->equals(term2));
   DELETE(term);
 
   rdf8_t id3;
-  PROG((id != id3 && id != id2) ^ dict(id3, term2));
+  PROG((id != id3 && id != id2) ^ dict.lookup(id3, term2));
   
   PASS;
 }

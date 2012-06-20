@@ -52,10 +52,10 @@
 <http://kasei.us/about/foaf.xrdf#greg> <http://www.w3.org/2000/01/rdf-schema#seeAlso> <http://kasei.us/about/foaf.xrdf> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> <http://kasei.us/about/foaf.xrdf#greg> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> <http://data.semanticweb.org/person/gregory-williams> .
-_:Xixi_Luo <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
-_:Xixi_Luo <http://xmlns.com/foaf/0.1/firstName> "Xixi"@en .
-_:Xixi_Luo <http://xmlns.com/foaf/0.1/surname> "Luo"@en .
-<http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> _:Xixi_Luo .
+_:XixiLuo <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+_:XixiLuo <http://xmlns.com/foaf/0.1/firstName> "Xixi"@en .
+_:XixiLuo <http://xmlns.com/foaf/0.1/surname> "Luo"@en .
+<http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> _:XixiLuo .
 _:Jim_Miller <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 _:Jim_Miller <http://xmlns.com/foaf/0.1/nick> "Jim" .
 _:Jim_Miller <http://xmlns.com/foaf/0.1/firstName> "James" .
@@ -92,4 +92,3 @@ _:Jim_Miller <http://xmlns.com/foaf/0.1/surname> "Miller" .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> <http://data.semanticweb.org/person/jacopo-urbani> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf> <http://xmlns.com/foaf/0.1/primaryTopic> <http://www.cs.rpi.edu/~weavej3/foaf.rdf#me> .
 <http://www.cs.rpi.edu/~weavej3/foaf.rdf> <http://www.w3.org/2000/01/rdf-schema#seeAlso> <http://www.cs.rpi.edu/~weavej3/papers.rdf> .
-

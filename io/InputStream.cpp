@@ -2,6 +2,10 @@
 
 namespace io {
 
+InputStream::~InputStream() throw(IOException) {
+  // do nothing
+}
+
 DPtr<uint8_t> *InputStream::read() 
     throw(IOException, BadAllocException) {
   try {

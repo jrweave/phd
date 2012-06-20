@@ -27,4 +27,9 @@ IFStream::~IFStream() throw(IOException) {
   // do nothing; superclass destructor closes
 }
 
+inline
+void IFStream::close() throw(IOException) {
+  this->stream.close();
+}
+
 }

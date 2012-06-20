@@ -16,6 +16,7 @@ public:
   IFStream(const char *filename, const size_t bufsize)
       throw(BadAllocException, IOException);
   virtual ~IFStream() throw(IOException);
+  virtual void close() throw(IOException);
 };
 
 }

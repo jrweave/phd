@@ -22,7 +22,7 @@ bool test1() {
   }
   is->close();
   DELETE(is);
-  PROG(count == 11142);
+  PROG(count == 11137);
 
   NEW(is, IFStream, "foaf.nt");
   NTriplesReader *nt;

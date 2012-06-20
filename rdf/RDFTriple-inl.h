@@ -75,5 +75,4 @@ IRIRef RDFTriple::getObjIRI() const THROWS(BaseException<enum RDFTermType>) {
 }
 TRACE(BaseException<enum RDFTermType>, "(trace)")
 
-
 }
