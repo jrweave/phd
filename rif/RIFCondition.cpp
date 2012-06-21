@@ -37,35 +37,39 @@ RIFCondition::RIFCondition(const RIFCondition &copy, bool dont_negate)
     : type(dont_negate ? copy.type : NEGATION) {
   if (dont_negate) {
     switch (copy.type) {
-    case ATOMIC:
+    case ATOMIC: {
       RIFAtomic *a;
       try {
         NEW(a, RIFAtomic, *((RIFAtomic*)copy.state));
       } RETHROW_BAD_ALLOC
       this->state = (void*) a;
       break;
+    }
     case CONJUNCTION:
-    case DISJUNCTION:
+    case DISJUNCTION: {
       DPtr<RIFCondition> *p = (DPtr<RIFCondition>*) copy.state;
       if (p != NULL) {
         p->hold();
       }
       this->state = (void*) p;
       break;
-    case NEGATION:
+    }
+    case NEGATION: {
       RIFCondition *c;
       try {
         NEW(c, RIFCondition, *((RIFCondition*)copy.state));
       } RETHROW_BAD_ALLOC
       this->state = (void*) c;
       break;
-    case EXISTENTIAL:
+    }
+    case EXISTENTIAL: {
       exist_state *es;
       try {
         NEW(es, exist_state, *((exist_state*)copy.state));
       } RETHROW_BAD_ALLOC
       this->state = (void*) es;
       break;
+    }
     }
   } else {
     RIFCondition *c;
@@ -91,35 +95,39 @@ RIFCondition::RIFCondition(DPtr<RIFVar> *vars, const RIFCondition &sub)
 RIFCondition::RIFCondition(const RIFCondition &copy) throw(BadAllocException)
     : type(copy.type) {
   switch (copy.type) {
-  case ATOMIC:
+  case ATOMIC: {
     RIFAtomic *a;
     try {
       NEW(a, RIFAtomic, *((RIFAtomic*)copy.state));
     } RETHROW_BAD_ALLOC
     this->state = (void*) a;
     break;
+  }
   case CONJUNCTION:
-  case DISJUNCTION:
+  case DISJUNCTION: {
     DPtr<RIFCondition> *p = (DPtr<RIFCondition>*) copy.state;
     if (p != NULL) {
       p->hold();
     }
     this->state = (void*) p;
     break;
-  case NEGATION:
+  }
+  case NEGATION: {
     RIFCondition *c;
     try {
       NEW(c, RIFCondition, *((RIFCondition*)copy.state));
     } RETHROW_BAD_ALLOC
     this->state = (void*) c;
     break;
-  case EXISTENTIAL:
+  }
+  case EXISTENTIAL: {
     exist_state *es;
     try {
       NEW(es, exist_state, *((exist_state*)copy.state));
     } RETHROW_BAD_ALLOC
     this->state = (void*) es;
     break;
+  }
   }
 }
 
@@ -591,7 +599,7 @@ RIFCondition &RIFCondition::normalize() THROWS(BadAllocException) {
   case NEGATION:
     ((RIFCondition*)this->state)->normalize();
     return *this;
-  case EXISTENTIAL:
+  case EXISTENTIAL: {
     exist_state *e = (exist_state*) this->state;
     RIFVar *mark = e->vars->dptr();
     RIFVar *end = mark + e->vars->size();
@@ -600,6 +608,7 @@ RIFCondition &RIFCondition::normalize() THROWS(BadAllocException) {
     }
     e->sub.normalize();
     return *this;
+  }
   }
 }
 TRACE(BadAllocException, "(trace)")
@@ -623,7 +632,7 @@ void RIFCondition::getVars(VarSet &vars) const throw() {
   case NEGATION:
     ((RIFCondition*)this->state)->getVars(vars);
     return;
-  case EXISTENTIAL:
+  case EXISTENTIAL: {
     VarSet local_vars(vars.key_comp());
     exist_state *e = (exist_state*) this->state;
     e->sub.getVars(local_vars);
@@ -634,6 +643,7 @@ void RIFCondition::getVars(VarSet &vars) const throw() {
     }
     vars.insert(local_vars.begin(), local_vars.end());
     return;
+  }
   }
 }
 

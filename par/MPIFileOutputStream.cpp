@@ -4,6 +4,8 @@
 
 namespace par {
 
+// TODO: for some reason, using this constructor seems to make
+// TODO: the object not work; fix this some time
 MPIFileOutputStream::MPIFileOutputStream(const MPI::File &f,
     const size_t page_size, const bool no_splitting)
     throw(BadAllocException, TraceableException)

@@ -65,28 +65,31 @@ RIFTerm::RIFTerm(const RIFConst &pred, DPtr<RIFTerm> *args)
 RIFTerm::RIFTerm(const RIFTerm &copy) throw(BadAllocException)
     : type(copy.type) {
   switch(copy.type) {
-  case CONSTANT:
+  case CONSTANT: {
     RIFConst *c;
     try {
       NEW(c, RIFConst, *((RIFConst*) copy.state));
     } RETHROW_BAD_ALLOC
     this->state = c;
     break;
-  case VARIABLE:
+  }
+  case VARIABLE: {
     RIFVar *v;
     try {
       NEW(v, RIFVar, *((RIFVar*) copy.state));
     } RETHROW_BAD_ALLOC
     this->state = v;
     break;
-  case LIST:
+  }
+  case LIST: {
     DPtr<RIFTerm> *l = (DPtr<RIFTerm>*) copy.state;
     if (l != NULL) {
       l->hold();
     }
     this->state = l;
     break;
-  case FUNCTION:
+  }
+  case FUNCTION: {
     func_state *f1 = (func_state *) copy.state;
     func_state *f2;
     try {
@@ -95,24 +98,29 @@ RIFTerm::RIFTerm(const RIFTerm &copy) throw(BadAllocException)
     this->state = f2;
     break;
   }
+  }
 }
 
 RIFTerm::~RIFTerm() throw() {
   switch(this->type) {
-  case VARIABLE:
+  case VARIABLE: {
     DELETE((RIFVar*) this->state);
     break;
-  case CONSTANT:
+  }
+  case CONSTANT: {
     DELETE((RIFConst*) this->state);
     break;
-  case LIST:
+  }
+  case LIST: {
     if (this->state != NULL) {
       ((DPtr<RIFTerm> *) this->state)->drop();
     }
     break;
-  case FUNCTION:
+  }
+  case FUNCTION: {
     DELETE((func_state*) this->state);
     break;
+  }
   }
 }
 
@@ -630,34 +638,38 @@ RIFTerm &RIFTerm::operator=(const RIFTerm &rhs) throw(BadAllocException) {
   }
   void *new_state = NULL;
   switch (rhs.type) {
-  case VARIABLE:
+  case VARIABLE: {
     RIFVar *v;
     try {
       NEW(v, RIFVar, *((RIFVar*)rhs.state));
     } RETHROW_BAD_ALLOC
     new_state = v;
     break;
-  case CONSTANT:
+  }
+  case CONSTANT: {
     RIFConst *c;
     try {
       NEW(c, RIFConst, *((RIFConst*)rhs.state));
     } RETHROW_BAD_ALLOC
     new_state = c;
     break;
-  case LIST:
+  }
+  case LIST: {
     DPtr<RIFTerm> *l = (DPtr<RIFTerm>*)rhs.state;
     if (l != NULL) {
       l->hold();
     }
     new_state = l;
     break;
-  case FUNCTION:
+  }
+  case FUNCTION: {
     func_state *f;
     try {
       NEW(f, func_state, *((func_state*)rhs.state));
     } RETHROW_BAD_ALLOC
     new_state = f;
     break;
+  }
   }
   switch (this->type) {
   case VARIABLE:

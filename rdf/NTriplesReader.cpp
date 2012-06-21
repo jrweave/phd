@@ -45,7 +45,7 @@ bool NTriplesReader::read(RDFTriple &triple) {
         this->buffer = this->input->read();
       } JUST_RETHROW(IOException, "(rethrow)")
       if (this->buffer == NULL) {
-        return NULL;
+        return false;
       }
       this->offset = 0;
       begin = this->buffer->dptr();
@@ -120,7 +120,7 @@ bool NTriplesReader::read(RDFTriple &triple) {
     for (; it != parts.end(); ++it) {
       ((DPtr<uint8_t>*)(*it))->drop();
     }
-    return NULL;
+    return false;
   }
   try {
     NEW(triplestr, MPtr<uint8_t>, len);
