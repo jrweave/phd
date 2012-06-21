@@ -83,6 +83,12 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
     }
   }
   try {
+    MPI::Status stat;
+    this->file.Write_at_all_end(this->asyncbuf->dptr(), stat);
+  } catch (MPI::Exception &e) {
+    THROW(IOException, e.Get_error_string());
+  }
+  try {
     MPIFileOutputStream::close();
   } JUST_RETHROW(IOException, "Couldn't close.")
 }
