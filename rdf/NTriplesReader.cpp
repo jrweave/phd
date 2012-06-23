@@ -74,9 +74,6 @@ bool NTriplesReader::read(RDFTriple &triple) {
       RETHROW(e, "(rethrow)");
     }
     triplestr->drop();
-    try {
-      triple.normalize();
-    } JUST_RETHROW(BadAllocException, "Couldn't normalize triple.")
     return true;
   }
   vector<void*> parts;
@@ -161,9 +158,6 @@ bool NTriplesReader::read(RDFTriple &triple) {
     RETHROW(e, "(rethrow)");
   }
   triplestr->drop();
-//  try {
-//    triple.normalize();
-//  } JUST_RETHROW(BadAllocException, "Couldn't normalize triple.")
   return true;
 }
 

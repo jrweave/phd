@@ -373,6 +373,7 @@ public:                                               \
 };                                                    \
 typedef RDFID<N> rdf##N##_t;
 
+// TODO #if BIG_ENDIAN allow these
 //SPECIALIZE_RDFID(1,  uint8_t,  UINT8_C(0),  UINT8_MAX)
 //SPECIALIZE_RDFID(2, uint16_t, UINT16_C(0), UINT16_MAX)
 //SPECIALIZE_RDFID(4, uint32_t, UINT32_C(0), UINT32_MAX)

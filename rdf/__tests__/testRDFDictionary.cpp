@@ -43,7 +43,7 @@ bool bitseq(uint64_t test, RDFID<N> id) {
 
 bool testRDFID() {
   RDFID<7> id7 = RDFID<7>::zero();
-  rdf8_t id8 = rdf8_t::zero();
+  RDFID<8> id8 = RDFID<8>::zero();
   uint64_t i8 = UINT64_C(0);
   PROG(bitseq<7>(i8, id7));
   PROG(bitseq<8>(i8, id8));
@@ -51,7 +51,7 @@ bool testRDFID() {
   PROG(bitseq<7>(i8, id7));
   PROG(bitseq<8>(i8, id8));
   id7 ^= ++++++++++RDFID<7>::zero();
-  id8 ^= ++++++++++rdf8_t::zero();
+  id8 ^= ++++++++++RDFID<8>::zero();
   i8 ^= UINT64_C(5);
   PROG(bitseq<7>(i8, id7));
   PROG(bitseq<8>(i8, id8));
@@ -91,7 +91,7 @@ bool testN() {
 
 bool test8() {
   RDFDictionary<> dict;
-  rdf8_t id;
+  RDFID<8> id;
   RDFTerm *term = s2t("<tag:jrweave@gmail.com,2012:test>");
   dict.encode(*term);
   PROG(dict.lookup(*term, id));
@@ -100,7 +100,7 @@ bool test8() {
   PROG(term->equals(term2));
   DELETE(term);
 
-  rdf8_t id2;
+  RDFID<8> id2;
   term = s2t("_:blank");
   dict.encode(*term);
   PROG(dict.lookup(*term, id2));
@@ -111,7 +111,7 @@ bool test8() {
   PROG(!term->equals(term2));
   DELETE(term);
 
-  rdf8_t id3;
+  RDFID<8> id3;
   PROG((id != id3 && id != id2) ^ dict.lookup(id3, term2));
   
   PASS;

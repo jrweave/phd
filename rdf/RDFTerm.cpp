@@ -366,6 +366,10 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
       THROW(TraceableException,
             "Encountered invalid RDFTerm labelled BNODE string.");
     }
+    try {
+      utf8validate(utf8str);
+    } JUST_RETHROW(InvalidEncodingException, "Expected UTF-8 encoded bnode.")
+      JUST_RETHROW(InvalidCodepointException, "Invalid codepoint in bnode.")
     DPtr<uint8_t> *label = utf8str->sub(2, utf8str->size() - 2);
     RDFTerm term(label);
     label->drop();
@@ -402,6 +406,15 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     DPtr<uint8_t> *lexp = utf8str->sub(1, mark - begin - 1);
     DPtr<uint8_t> *unesc_lex = RDFTerm::unescape(lexp, false);
     lexp->drop();
+    try {
+      utf8validate(unesc_lex);
+    } catch (InvalidEncodingException &e) {
+      unesc_lex->drop();
+      RETHROW(e, "Lexical rep not UTF8 encoded correctly.");
+    } catch (InvalidCodepointException &e) {
+      unesc_lex->drop();
+      RETHROW(e, "Lexical rep contains invalid codepoint.");
+    }
     if (*(end - 1) == to_ascii('"')) {
       try {
         RDFTerm term(unesc_lex, NULL);
