@@ -19,6 +19,7 @@
 #define NEW_ARRAY(a, t, s) a = new t[s]
 #define DELETE_ARRAY(a) delete[] a
 #define PERSIST_PTRS(b)
+#define CHECK(p)
 #else
 #include <iostream>
 #include <set>
@@ -48,6 +49,7 @@ extern unsigned long __persist_ptrs;
   delete[] i
 #define PERSIST_PTRS(b) \
   ptr::__persist_ptrs += (b ? 1 : -1)
+#define CHECK(p) if (ptr::__PTRS.count(p) <= 0) std::cerr << "[PTR_MEMDEBUG] " << __FILE__ << ":" << __LINE__ << ": INVALID POINTER " << #p << "=" << (void*) p << endl
 #endif
 
   

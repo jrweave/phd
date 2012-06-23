@@ -3,19 +3,26 @@
 
 #include <list>
 #include <vector>
+#include "io/OutputStream.h"
 #include "par/DistComputation.h"
 #include "rdf/RDFDictionary.h"
+#include "rdf/RDFReader.h"
+#include "rdf/RDFTriple.h"
+#include "util/hash.h"
 
 namespace par {
 
+using namespace io;
 using namespace rdf;
 using namespace std;
+using namespace util;
 
+template<size_t N, typename ID, typename ENC>
 class DistRDFDictEncode;
 
 template<size_t N, typename ID=RDFID<N>, typename ENC=RDFEncoder<ID> >
 class DistRDFDictionary : public RDFDictionary<ID, ENC> {
-protected;
+protected:
   int rank;
   virtual bool nextID(ID &id);
   virtual void set(const RDFTerm &term, const ID &id);
@@ -29,7 +36,7 @@ public:
   virtual ID encode(const RDFTerm &term);
   virtual ID locallyEncode(const RDFTerm &term);
 
-  friend class DistRDFDictEncode;
+  friend class DistRDFDictEncode<N, ID, ENC>;
 };
 
 template<size_t N, typename ID=RDFID<N>, typename ENC=RDFEncoder<ID> >
@@ -44,7 +51,7 @@ private:
     uint8_t need;
   };
   struct pending_position {
-    list<pending_triple>::iterator triple;
+    typename list<pending_triple>::iterator triple;
     uint8_t pos;
   };
   struct pending_response {
@@ -52,17 +59,17 @@ private:
     uint32_t n;
     int send_to;
   };
-  list<pending_triple> pending_responses;
+  list<pending_response> pending_responses;
   list<pending_triple> pending_triples;
   multimap<uint32_t, pending_position> pending_positions;
   Term2IMap pending_term2i;
   I2TermMap pending_i2term;
   RDFTriple current;
-  list<pending_triple>::iterator curpend;
+  typename list<pending_triple>::iterator curpend;
   RDFReader *reader;
   OutputStream *output;
   DPtr<uint8_t> *outbuf;
-  DistRDFDictionary<ID, ENC> *dict;
+  DistRDFDictionary<N, ID, ENC> *dict;
   int ndonesent;
   int nprocdone;
   int nproc;
@@ -84,7 +91,7 @@ public:
       Distributor *dist, OutputStream *out, ENC &enc)
       throw(BaseException<void*>, BadAllocException);
   virtual ~DistRDFDictEncode() throw(DistException);
-  DistRDFDictionary<ID, ENC> *getDictionary() throw();
+  DistRDFDictionary<N, ID, ENC> *getDictionary() throw();
 };
 
 }

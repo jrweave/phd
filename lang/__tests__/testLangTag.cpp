@@ -281,6 +281,7 @@ int main (int argc, char **argv) {
   TEST(equiv, str2tag("zh-hak-hans-cn-pinyin-v-and-hi-u-hello-world-x-x"), str2ptr("zh-hak-hans-cn-pinyin-v-and-hi-u-hello-world-x-x"), str2ptr("zh-hak"), str2ptr("hans"), str2ptr("cn"), str2ptr("pinyin"), str2ptr("v-and-hi-u-hello-world"), str2ptr("x-x"));
   TEST(equiv, str2tag("zh-hak-hans-cn-pinyin-v-and-hi-u-hello-world-x-x")->normalize(), str2ptr("hak-Hans-CN-pinyin-u-hello-world-v-and-hi-x-x"), str2ptr("hak"), str2ptr("Hans"), str2ptr("CN"), str2ptr("pinyin"), str2ptr("u-hello-world-v-and-hi"), str2ptr("x-x"));
   TEST(equiv, str2tag("zh-hak-hans-cn-pinyin-v-and-hi-u-hello-world-x-x")->extlangify(), str2ptr("zh-hak-Hans-CN-pinyin-u-hello-world-v-and-hi-x-x"), str2ptr("zh-hak"), str2ptr("Hans"), str2ptr("CN"), str2ptr("pinyin"), str2ptr("u-hello-world-v-and-hi"), str2ptr("x-x"));
+  TEST(equiv, str2tag("x-notation")->extlangify(), str2ptr("x-notation"), NULL, NULL, NULL, NULL, NULL, str2ptr("x-notation"));
 
   // equality; expect case-INsensitive, lexical equality
   TEST(equal, str2tag("hak-CN"), str2tag("HAK-cn"));

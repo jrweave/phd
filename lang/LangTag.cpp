@@ -316,7 +316,7 @@ LangTag *LangTag::extlangify() THROWS(BadAllocException) {
     return this;
   }
   this->normalize();
-  if (this->isGrandfathered()) {
+  if (this->isGrandfathered() || this->isPrivateUse()) {
     this->extlang_form = true;
     return this;
   }

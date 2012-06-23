@@ -8,8 +8,8 @@ namespace par {
 class MPIDistPtrFileOutputStream : public MPIFileOutputStream {
 private:
   MPI::Intracomm &comm;
-  unsigned long long bytes_written;
-  unsigned long long last_file_length;
+  unsigned long bytes_written;
+  unsigned long last_file_length;
   DPtr<uint8_t> *asyncbuf;
   bool started;
 protected:

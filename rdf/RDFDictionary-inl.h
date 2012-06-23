@@ -62,8 +62,6 @@ ID RDFDictionary<ID, ENC>::encode(const RDFTerm &term) {
   if (range.first != this->term2id.begin()) {
     --range.first;
   }
-  id = this->counter;
-  ++this->counter;
 
   this->term2id.insert(range.first, pair<RDFTerm, ID>(term, id));
 

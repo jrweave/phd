@@ -44,7 +44,7 @@ void DistComputation::exec()
         THROW(TraceableException,
               "Call to pickup return len longer than buffer.");
       }
-      if (len < buffer->size()) {
+      if (send_to >= 0 && len < buffer->size()) {
         msg = buffer->sub(0, len);
         // vvv This check helps prevent excess copying when
         // vvv possibly standing buffer later.
@@ -83,6 +83,7 @@ void DistComputation::exec()
         recvd = NULL;
       }
     } while (!this->dist->done());
+    this->finish();
   } catch (bad_alloc &e) {
     if (buffer != NULL) buffer->drop();
     if (recvd != NULL) recvd->drop();

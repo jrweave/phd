@@ -2,10 +2,20 @@
 
 #include "util/hash.h"
 
+#define DIST_RDF_DICT_ENCODE_DEBUG 0
+
 namespace par {
 
+#if DIST_RDF_DICT_ENCODE_DEBUG
+size_t DEBUG_READ = 0;
+size_t DEBUG_SENT = 0;
+size_t DEBUG_RECV = 0;
+size_t DEBUG_WRIT = 0;
+#endif
+
 template<size_t N, typename ID, typename ENC>
-DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank) throw()
+DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank)
+    throw(TraceableException)
     : RDFDictionary<ID, ENC>(), rank(rank) {
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
@@ -18,7 +28,7 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank) throw()
 
 template<size_t N, typename ID, typename ENC>
 DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(
-    const int rank, const ENC &enc) throw()
+    const int rank, const ENC &enc) throw(TraceableException)
     : RDFDictionary<ID, ENC>(enc), rank(rank) {
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
@@ -82,7 +92,7 @@ DistRDFDictEncode<N, ID, ENC>::DistRDFDictEncode(const int rank,
       nproc(nproc), pending_term2i(Term2IMap(RDFTerm::cmplt0)),
       curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0) {
   try {
-    NEW(dist, WHOLE(DistRDFDictionary<ID, ENC>), rank);
+    NEW(dict, WHOLE(DistRDFDictionary<N, ID, ENC>), rank);
   } RETHROW_BAD_ALLOC
   try {
     NEW(this->outbuf, MPtr<uint8_t>, 3*N*sizeof(uint8_t));
@@ -104,7 +114,7 @@ DistRDFDictEncode<N, ID, ENC>::DistRDFDictEncode(const int rank,
       nproc(nproc), pending_term2i(Term2IMap(RDFTerm::cmplt0)),
       curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0) {
   try {
-    NEW(dist, WHOLE(DistRDFDictionary<ID, ENC>), rank);
+    NEW(dict, WHOLE(DistRDFDictionary<N, ID, ENC>), rank);
   } RETHROW_BAD_ALLOC
   try {
     NEW(this->outbuf, MPtr<uint8_t>, 3*N*sizeof(uint8_t));
@@ -121,12 +131,14 @@ DistRDFDictEncode<N, ID, ENC>::~DistRDFDictEncode() throw(DistException) {
   }
   this->outbuf->drop();
   DELETE(this->reader);
-  DELETE(this->output);
+  if (this->output != NULL) {
+    DELETE(this->output);
+  }
 }
 
 template<size_t N, typename ID, typename ENC>
 inline
-DistRDFDictionary<ID, ENC> *DistRDFDictEncode<N, ID, ENC>::getDictionary()
+DistRDFDictionary<N, ID, ENC> *DistRDFDictEncode<N, ID, ENC>::getDictionary()
     throw() {
   this->gotten = true;
   return this->dict;
@@ -141,7 +153,7 @@ template<size_t N, typename ID, typename ENC>
 int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     THROWS(BadAllocException, TraceableException) {
   if (!this->pending_responses.empty()) {
-    len = (ID::size() << 3) + sizeof(uint32_t) + sizeof(int);
+    len = N + sizeof(uint32_t) + sizeof(int);
     if (buffer->size() < len) {
       buffer->drop();
       try {
@@ -149,24 +161,44 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
       } RETHROW_BAD_ALLOC
     }
     const pending_response resp = this->pending_responses.front();
+
+#if DIST_RDF_DICT_ENCODE_DEBUG
+    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
+    const uint8_t *b = &resp.id;
+    const uint8_t *e = b + ID::size();
+    for (; b != e; ++b) {
+      cerr << (const int)*b << ":";
+    }
+    cerr << dec << " 4. RESPONDING " << this->dict->rank << endl;
+#endif
+
     uint8_t *write_to = buffer->dptr();
-    int neg = -resp.send_to - 1;
+    int neg = -(this->dict->rank) - 1;
     memcpy(write_to, &neg, sizeof(int));
     write_to += sizeof(int);
     memcpy(write_to, &resp.n, sizeof(uint32_t));
     write_to += sizeof(uint32_t);
     memcpy(write_to, &resp.id, N);
     this->pending_responses.pop_front();
+#if DIST_RDF_DICT_ENCODE_DEBUG
+    ++DEBUG_SENT;
+#endif
     return resp.send_to;
   }
   if (this->curpos > 2) {
     if (!this->reader->read(this->current)) {
       if (this->ndonesent < this->nproc) {
         len = 1;
+#if DIST_RDF_DICT_ENCODE_DEBUG
+        ++DEBUG_SENT;
+#endif
         return this->ndonesent++;
       }
       return this->nprocdone >= this->nproc ? -2 : -1;
     }
+#if DIST_RDF_DICT_ENCODE_DEBUG
+    ++DEBUG_READ;
+#endif
     this->curpos = 0;
     pending_triple pend;
     pend.need = 3;
@@ -208,25 +240,21 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
       }
       uint8_t *write_to = this->outbuf->dptr();
       memcpy(write_to, &pend.parts[0], N*sizeof(uint8_t));
-      write_to += N;
+      write_to += N*sizeof(uint8_t);
       memcpy(write_to, &pend.parts[1], N*sizeof(uint8_t));
-      write_to += N;
+      write_to += N*sizeof(uint8_t);
       memcpy(write_to, &pend.parts[2], N*sizeof(uint8_t));
+#if DIST_RDF_DICT_ENCODE_DEBUG
+      ++DEBUG_WRIT;
+#endif
       this->output->write(this->outbuf);
     }
     ++this->curpos;
     return -1;
   }
   DPtr<uint8_t> *termstr = term.toUTF8String();
-  int send_to = (int) hash_jenkins_one_at_a_time(termstr->dptr(),
-                                                 termstr->dptr() + len)
-                      % this->nproc;
-  if (send_to == this->dict->rank) {
-    this->dropoff(termstr);
-    termstr->drop();
-    ++this->curpos;
-    return -1;
-  }
+  int send_to = (int) (hash_jenkins_one_at_a_time(termstr->dptr(),
+                          termstr->dptr() + termstr->size()) % this->nproc);
   len = termstr->size() + sizeof(uint32_t) + sizeof(int);
   if (buffer->size() < len) {
     buffer->drop();
@@ -234,6 +262,19 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
       NEW(buffer, MPtr<uint8_t>, len);
     } RETHROW_BAD_ALLOC
   }
+
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  cerr << "send_to=" << this->dict->rank << " n=" << this->count << " astr=" << term << " 1. REQUESTING LOOKUP " << this->dict->rank << endl;
+#endif
+
+  pending_position pend;
+  pend.triple = this->curpend;
+  pend.pos = this->curpos;
+  this->pending_positions.insert(
+      pair<uint32_t, pending_position>(this->count, pend));
+
+  this->pending_term2i.insert(pair<RDFTerm, uint32_t>(term, this->count));
+  this->pending_i2term.insert(pair<uint32_t, RDFTerm>(this->count, term));
   uint8_t *write_to = buffer->dptr();
   memcpy(write_to, &this->dict->rank, sizeof(int));
   write_to += sizeof(int);
@@ -241,14 +282,21 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
   ++this->count;
   write_to += sizeof(uint32_t);
   memcpy(write_to, termstr->dptr(), termstr->size());
+  termstr->drop();
   ++this->curpos;
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  ++DEBUG_SENT;
+#endif
   return send_to;
 }
 TRACE(TraceableException, "(trace)")
 
-template<size_t N, typename ID=RDFID<N>, typename ENC=RDFEncoder<ID> >
+template<size_t N, typename ID, typename ENC>
 void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
     THROWS(TraceableException) {
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  ++DEBUG_RECV;
+#endif
   if (msg->size() <= 1) {
     ++this->nprocdone;
     return;
@@ -258,25 +306,56 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
   memcpy(&resp.send_to, read_from, sizeof(int));
   read_from += sizeof(int);
   memcpy(&resp.n, read_from, sizeof(uint32_t));
+  // non-negative "send_to" means this is a lookup request
   if (resp.send_to >= 0) {
-    DPtr<uint8_t> *termstr = msg->sub(sizeof(int) + sizeof(uint32_t));
+    DPtr<uint8_t> *termstr = msg->sub(sizeof(int) + sizeof(uint32_t),
+        msg->size() - sizeof(int) - sizeof(uint32_t));
     termstr = termstr->stand();
     RDFTerm term = RDFTerm::parse(termstr);
+    termstr->drop();
+
+#if DIST_RDF_DICT_ENCODE_DEBUG
+    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " astr=" << term << " 2. RECEIVED LOOKUP REQUEST " << this->dict->rank << endl;
+#endif
+
     resp.id = this->dict->locallyEncode(term);
     this->pending_responses.push_back(resp);
+
+#if DIST_RDF_DICT_ENCODE_DEBUG
+    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
+    const uint8_t *b = &resp.id;
+    const uint8_t *e = b + ID::size();
+    for (; b != e; ++b) {
+      cerr << (const int)*b << ":";
+    }
+    cerr << dec << " 3. PENDING RESPONSE " << this->dict->rank << endl;
+#endif
+    
     return;
   }
+  // otherwise, negative "send_to" means it is a response
   read_from += sizeof(uint32_t);
   memcpy(&resp.id, read_from, N);
-  pair<multimap<uint32_t, pending_position>::iterator,
-       multimap<uint32_t, pending_position>::iterator> range =
+
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  cerr << "send_to=" << this->dict->rank << " n=" << resp.n << " id=" << hex;
+  const uint8_t *b = &resp.id;
+  const uint8_t *e = b + ID::size();
+  for (; b != e; ++b) {
+    cerr << (const int)*b << ":";
+  }
+  cerr << dec << " 5. RECEIVED RESPONSE " << this->dict->rank << endl;
+#endif
+
+  pair<typename multimap<uint32_t, pending_position>::iterator,
+       typename multimap<uint32_t, pending_position>::iterator> range =
           this->pending_positions.equal_range(resp.n);
-  multimap<uint32_t, pending_position>::iterator it;
+  typename multimap<uint32_t, pending_position>::iterator it;
   for (it = range.first; it != range.second; ++it) {
-    it->second->triple->parts[it->second->pos] = resp.id;
-    if (--it->second->triple->need <= 0) {
-      pending_triple pend_trip = it->second->triple;
-      this->pending_triples.erase(it->second->triple);
+    it->second.triple->parts[it->second.pos] = resp.id;
+    if (--it->second.triple->need <= 0) {
+      pending_triple pend_trip = *(it->second.triple);
+      this->pending_triples.erase(it->second.triple);
       if (!this->outbuf->alone()) {
         this->outbuf = this->outbuf->stand();
       }
@@ -286,19 +365,37 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
       memcpy(write_to, &pend_trip.parts[1], N);
       write_to += N;
       memcpy(write_to, &pend_trip.parts[2], N);
+#if DIST_RDF_DICT_ENCODE_DEBUG
+      ++DEBUG_WRIT;
+#endif
       this->output->write(this->outbuf);
     }
   }
   this->pending_positions.erase(range.first, range.second);
+  I2TermMap::iterator i2t = this->pending_i2term.find(resp.n);
+  this->dict->set(i2t->second, resp.id);
+  this->pending_term2i.erase(i2t->second);
+  this->pending_i2term.erase(i2t);
 }
 TRACE(TraceableException, "(trace)")
 
 template<size_t N, typename ID, typename ENC>
 void DistRDFDictEncode<N, ID, ENC>::finish() THROWS(TraceableException) {
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  cout << "Pending Responses " << this->pending_responses.size() << endl;
+  cout << "Pending Triples " << this->pending_triples.size() << endl;
+  cout << "Pending Positions " << this->pending_positions.size() << endl;
+  cout << "Pending Term2I " << this->pending_term2i.size() << endl;
+  cout << "Pending I2Term " << this->pending_i2term.size() << endl;
+  cout << "READ " << DEBUG_READ << endl;
+  cout << "SENT " << DEBUG_SENT << endl;
+  cout << "RECV " << DEBUG_RECV << endl;
+  cout << "WRIT " << DEBUG_WRIT << endl;
+#endif
   this->reader->close();
-  this->reader = NULL;
-  this->output->close();
-  this->output = NULL;
+  if (this->output != NULL) {
+    this->output->close();
+  }
 }
 TRACE(TraceableException, "(trace)")
 

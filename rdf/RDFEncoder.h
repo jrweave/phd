@@ -373,10 +373,10 @@ public:                                               \
 };                                                    \
 typedef RDFID<N> rdf##N##_t;
 
-SPECIALIZE_RDFID(1,  uint8_t,  UINT8_C(0),  UINT8_MAX)
-SPECIALIZE_RDFID(2, uint16_t, UINT16_C(0), UINT16_MAX)
-SPECIALIZE_RDFID(4, uint32_t, UINT32_C(0), UINT32_MAX)
-SPECIALIZE_RDFID(8, uint64_t, UINT64_C(0), UINT64_MAX)
+//SPECIALIZE_RDFID(1,  uint8_t,  UINT8_C(0),  UINT8_MAX)
+//SPECIALIZE_RDFID(2, uint16_t, UINT16_C(0), UINT16_MAX)
+//SPECIALIZE_RDFID(4, uint32_t, UINT32_C(0), UINT32_MAX)
+//SPECIALIZE_RDFID(8, uint64_t, UINT64_C(0), UINT64_MAX)
 
 template<typename ID>
 class RDFEncoder {

@@ -41,18 +41,18 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
 
   // Need to do fake/empty writes to coordinate with other processors until
   // all processors are done
-  unsigned long long flen = this->last_file_length;
+  unsigned long flen = this->last_file_length;
   try {
     this->comm.Allreduce(&this->bytes_written, &this->last_file_length, 1,
-                         MPI::UNSIGNED_LONG_LONG, MPI::SUM);
+                         MPI::UNSIGNED_LONG, MPI::SUM);
   } catch (MPI::Exception &e) {
     THROW(IOException, e.Get_error_string());
   }
   while (flen != this->last_file_length) {
-    unsigned long long len = (unsigned long long) this->length;
-    unsigned long long offset;
+    unsigned long len = (unsigned long) this->length;
+    unsigned long offset;
     try {
-      this->comm.Scan(&len, &offset, 1, MPI::UNSIGNED_LONG_LONG, MPI::SUM);
+      this->comm.Scan(&len, &offset, 1, MPI::UNSIGNED_LONG, MPI::SUM);
     } catch (MPI::Exception &e) {
       THROW(IOException, e.Get_error_string());
     }
@@ -77,7 +77,7 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
     flen = this->last_file_length;
     try {
       this->comm.Allreduce(&this->bytes_written, &this->last_file_length, 1,
-                           MPI::UNSIGNED_LONG_LONG, MPI::SUM);
+                           MPI::UNSIGNED_LONG, MPI::SUM);
     } catch (MPI::Exception &e) {
       THROW(IOException, e.Get_error_string());
     }
@@ -96,14 +96,14 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
 size_t MPIDistPtrFileOutputStream::writeBuffer() throw(IOException) {
   try {
     this->comm.Allreduce(&this->bytes_written, &this->last_file_length, 1,
-                         MPI::UNSIGNED_LONG_LONG, MPI::SUM);
+                         MPI::UNSIGNED_LONG, MPI::SUM);
   } catch (MPI::Exception &e) {
     THROW(IOException, e.Get_error_string());
   }
-  unsigned long long len = (unsigned long long) this->length;
-  unsigned long long offset;
+  unsigned long len = (unsigned long) this->length;
+  unsigned long offset;
   try {
-    this->comm.Scan(&len, &offset, 1, MPI::UNSIGNED_LONG_LONG, MPI::SUM);
+    this->comm.Scan(&len, &offset, 1, MPI::UNSIGNED_LONG, MPI::SUM);
   } catch (MPI::Exception &e) {
     THROW(IOException, e.Get_error_string());
   }
