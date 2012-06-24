@@ -333,7 +333,8 @@ DPtr<uint8_t> *RDFTerm::unescape(DPtr<uint8_t> *str, bool as_iri)
 
 RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     throw(SizeUnknownException, BaseException<void*>, TraceableException,
-          InvalidEncodingException, InvalidCodepointException) {
+          InvalidEncodingException, InvalidCodepointException,
+          MalformedIRIRefException, MalformedLangTagException) {
   if (utf8str == NULL) {
     THROW(BaseException<void*>, NULL, "utf8str must not be NULL.");
   }
@@ -358,7 +359,7 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
       return RDFTerm(iriref);
     } catch (MalformedIRIRefException &e) {
       unescaped->drop();
-      RETHROW_AS(TraceableException, e);
+      RETHROW(e, "Malformed IRI.");
     }
   }
   if (*begin == to_ascii('_')) {
@@ -454,7 +455,7 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
       } catch (MalformedIRIRefException &e) {
         unesc_dt->drop();
         unesc_lex->drop();
-        RETHROW_AS(TraceableException, e);
+        RETHROW(e, "Malformed datatype IRI.");
       }
     }
     if (end - mark < 2 || mark[1] != to_ascii('@')) {
@@ -479,7 +480,7 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
       }
     } catch (MalformedLangTagException &e) {
       unesc_lex->drop();
-      RETHROW_AS(TraceableException, e);
+      RETHROW(e, "Invalid literal language tag.");
     }
   }
   THROW(TraceableException, "Invalid RDFTerm string.");

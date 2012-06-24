@@ -40,7 +40,8 @@ int RDFTriple::cmp(const RDFTriple &t1, const RDFTriple &t2) throw() {
 
 RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     THROWS(SizeUnknownException, BadAllocException, TraceableException,
-           InvalidEncodingException, InvalidCodepointException) {
+           InvalidEncodingException, InvalidCodepointException,
+           MalformedIRIRefException, MalformedLangTagException) {
   if (utf8str == NULL || !utf8str->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
@@ -66,13 +67,20 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     subject = RDFTerm::parse(part);
   } catch (InvalidEncodingException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid UTF-8 encoding of subject.");
   } catch (InvalidCodepointException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid codepoint in subject.");
+  } catch (MalformedIRIRefException &e) {
+    part->drop();
+    RETHROW(e, "Subject is malformed IRI.");
+  } catch (MalformedLangTagException &e) {
+    part->drop();
+    RETHROW(e,
+        "Subject has malformed LangTag (shouldn't have LangTag anyway).");
   } catch (TraceableException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Problem parsing subject.");
   }
   part->drop();
 
@@ -94,13 +102,20 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     predicate = RDFTerm::parse(part);
   } catch (InvalidEncodingException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid UTF-8 encoding of predicate.");
   } catch (InvalidCodepointException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid codepoint in predicate.");
+  } catch (MalformedIRIRefException &e) {
+    part->drop();
+    RETHROW(e, "Predicate is malformed IRI.");
+  } catch (MalformedLangTagException &e) {
+    part->drop();
+    RETHROW(e,
+         "Predicate has malformed LangTag (shouldn't have LangTag anyway).");
   } catch (TraceableException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Problem parsing predicate.");
   }
   part->drop();
   
@@ -125,13 +140,19 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     object = RDFTerm::parse(part);
   } catch (InvalidEncodingException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid UTF-8 encoding of object.");
   } catch (InvalidCodepointException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Invalid codepoint in object.");
+  } catch (MalformedIRIRefException &e) {
+    part->drop();
+    RETHROW(e, "Object is malformed IRI.");
+  } catch (MalformedLangTagException &e) {
+    part->drop();
+    RETHROW(e, "Object has malformed LangTag.");
   } catch (TraceableException &e) {
     part->drop();
-    RETHROW(e, "(rethrow)");
+    RETHROW(e, "Problem parsing object.");
   }
   part->drop();
   

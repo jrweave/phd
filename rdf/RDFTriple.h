@@ -34,7 +34,8 @@ public:
   static bool cmpeq0(const RDFTriple &t1, const RDFTriple &t2) throw();
   static RDFTriple parse(DPtr<uint8_t> *utf8str)
       throw(SizeUnknownException, BadAllocException, TraceableException,
-            InvalidEncodingException, InvalidCodepointException);
+            InvalidEncodingException, InvalidCodepointException,
+            MalformedIRIRefException, MalformedLangTagException);
 
   DPtr<uint8_t> *toUTF8String() const throw(BadAllocException);
   DPtr<uint8_t> *toUTF8String(const bool with_dot_endl) const

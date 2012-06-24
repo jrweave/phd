@@ -62,7 +62,8 @@ public:
             InvalidEncodingException, TraceableException);
   static RDFTerm parse(DPtr<uint8_t> *utf8str)
       throw(SizeUnknownException, BaseException<void*>, TraceableException,
-            InvalidEncodingException, InvalidCodepointException);
+            InvalidEncodingException, InvalidCodepointException,
+            MalformedIRIRefException, MalformedLangTagException);
 
   // Final Methods
   enum RDFTermType getType() const throw();

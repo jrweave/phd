@@ -7,6 +7,7 @@ namespace rdf {
 
 class RDFReader {
 public:
+  virtual ~RDFReader() {}
   virtual bool read(RDFTriple &triple) = 0;
   virtual void close() = 0;
 };

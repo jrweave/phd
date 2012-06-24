@@ -69,6 +69,12 @@ bool NTriplesReader::read(RDFTriple &triple) {
     } catch (InvalidCodepointException &e) {
       triplestr->drop();
       RETHROW(e, "(rethrow)");
+    } catch (MalformedIRIRefException &e) {
+      triplestr->drop();
+      RETHROW(e, "(rethrow)");
+    } catch (MalformedLangTagException &e) {
+      triplestr->drop();
+      RETHROW(e, "(rethrow)");
     } catch (TraceableException &e) {
       triplestr->drop();
       RETHROW(e, "(rethrow)");
@@ -151,6 +157,12 @@ bool NTriplesReader::read(RDFTriple &triple) {
     triplestr->drop();
     RETHROW(e, "(rethrow)");
   } catch (InvalidCodepointException &e) {
+    triplestr->drop();
+    RETHROW(e, "(rethrow)");
+  } catch (MalformedIRIRefException &e) {
+    triplestr->drop();
+    RETHROW(e, "(rethrow)");
+  } catch (MalformedLangTagException &e) {
     triplestr->drop();
     RETHROW(e, "(rethrow)");
   } catch (TraceableException &e) {
