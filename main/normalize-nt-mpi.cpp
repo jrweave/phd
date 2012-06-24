@@ -436,20 +436,20 @@ int main (int argc, char **argv) {
     ntw->close();
     DELETE(ntw);
   }
-  if (rank > 0) {
-    int nothing;
-    MPI::COMM_WORLD.Recv(&nothing, 1, MPI::INT, rank - 1, 18);
-  }
-  cerr << "===== ERROR SUMMARY =====" << endl;
-  map<string, size_t>::iterator it = errors.begin();
-  for (; it != errors.end(); ++it) {
-    cerr << "\t[" << it->second << "] " << it->first;
-  }
-  cerr << endl;
-  if (rank < MPI::COMM_WORLD.Get_size() - 1) {
-    int nothing;
-    MPI::COMM_WORLD.Send(&nothing, 1, MPI::INT, rank + 1, 18);
-  }
+//  if (rank > 0) {
+//    int nothing;
+//    MPI::COMM_WORLD.Recv(&nothing, 1, MPI::INT, rank - 1, 18);
+//  }
+//  cerr << "===== ERROR SUMMARY =====" << endl;
+//  map<string, size_t>::iterator it = errors.begin();
+//  for (; it != errors.end(); ++it) {
+//    cerr << "\t[" << it->second << "] " << it->first;
+//  }
+//  cerr << endl;
+//  if (rank < MPI::COMM_WORLD.Get_size() - 1) {
+//    int nothing;
+//    MPI::COMM_WORLD.Send(&nothing, 1, MPI::INT, rank + 1, 18);
+//  }
   unsigned long totalstats[STAT_NUM_CODES];
   MPI::COMM_WORLD.Reduce(stats, totalstats, STAT_NUM_CODES, MPI::UNSIGNED_LONG, MPI::SUM, 0);
   if (rank == 0) {
