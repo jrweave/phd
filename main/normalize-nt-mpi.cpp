@@ -352,7 +352,6 @@ int main (int argc, char **argv) {
           ntr.close();
           break;
         }
-        ++stats[STAT_NUM_INPUT_TRIPLES];
 #if COLLECT_STATS
         RDFTriple norm = collect_stats(triple);
 #else
@@ -364,6 +363,7 @@ int main (int argc, char **argv) {
         } else {
           ntw->write(norm);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_OUTPUT_TRIPLES];
 #if COLLECT_STATS
       } catch (MalformedIRIRefException &e) {
@@ -374,6 +374,7 @@ int main (int argc, char **argv) {
         } else {
           ++(it->second);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_ERROR_TRIPLES];
         ++stats[STAT_NUM_MALFORMED_IRI_ERROR];
         continue;
@@ -385,6 +386,7 @@ int main (int argc, char **argv) {
         } else {
           ++(it->second);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_ERROR_TRIPLES];
         ++stats[STAT_NUM_MALFORMED_LANG_ERROR];
         continue;
@@ -396,6 +398,7 @@ int main (int argc, char **argv) {
         } else {
           ++(it->second);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_ERROR_TRIPLES];
         ++stats[STAT_NUM_INVALID_UTF8_ENCODING_ERROR];
         continue;
@@ -407,6 +410,7 @@ int main (int argc, char **argv) {
         } else {
           ++(it->second);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_ERROR_TRIPLES];
         ++stats[STAT_NUM_INVALID_UCS_CODEPOINT_ERROR];
         continue;
@@ -419,6 +423,7 @@ int main (int argc, char **argv) {
         } else {
           ++(it->second);
         }
+        ++stats[STAT_NUM_INPUT_TRIPLES];
         ++stats[STAT_NUM_ERROR_TRIPLES];
 #if COLLECT_STATS
         ++stats[STAT_NUM_OTHER_ERROR];

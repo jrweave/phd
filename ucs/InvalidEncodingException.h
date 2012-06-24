@@ -2,6 +2,7 @@
 #define __UCS__INVALIDENCODINGEXCEPTION_H__
 
 #include "ex/TraceableException.h"
+#include "sys/ints.h"
 
 namespace ucs {
 

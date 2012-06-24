@@ -20,6 +20,12 @@ private:
   uint32_t value;
   bool flip;
 public:
+  typedef input_iterator_tag iterator_category;
+  typedef uint32_t value_type;
+  typedef size_t difference_type;
+  typedef uint32_t* pointer;
+  typedef uint32_t& reference;
+
   UTF32Iter() throw(BadAllocException);
   UTF32Iter(DPtr<uint32_t> *utf32str) throw(SizeUnknownException);
   UTF32Iter(const UTF32Iter &copy);

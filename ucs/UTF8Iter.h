@@ -19,6 +19,12 @@ private:
   uint32_t reset_value;
   uint32_t value;
 public:
+  typedef input_iterator_tag iterator_category;
+  typedef uint32_t value_type;
+  typedef size_t difference_type;
+  typedef uint32_t* pointer;
+  typedef uint32_t& reference;
+
   UTF8Iter() throw(BadAllocException);
   UTF8Iter(DPtr<uint8_t> *utf8str) throw(SizeUnknownException);
   UTF8Iter(const UTF8Iter &copy);

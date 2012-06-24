@@ -2,6 +2,7 @@
 #define __SYS__CHAR_H__
 
 #include <cctype>
+#include <cstring>
 #include "sys/ints.h"
 
 uint8_t to_ascii(char c);
