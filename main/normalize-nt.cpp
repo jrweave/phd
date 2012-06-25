@@ -48,7 +48,7 @@ int main (int argc, char **argv) {
         RDFTriple norm(triple);
         norm.normalize();
         if (!norm.equals(triple)) {
-          cerr << "Normalized: " << triple << "     --->     " << norm << endl;
+          //cerr << "Normalized: " << triple << "     --->     " << norm << endl;
           ++numnormalized;
         }
         if (ntw == NULL) {
@@ -87,4 +87,5 @@ int main (int argc, char **argv) {
     ntw->close();
     DELETE(ntw);
   }
+  ASSERTNPTR(0);
 }

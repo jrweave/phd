@@ -128,9 +128,11 @@ bool isIHierPart(iter begin, iter end) {
       ++slash;
       iter auth;
       auth = slash;
-      for (++slash; slash != end &&
-          *slash != to_ascii('/'); ++slash) {
-        // loop does the work
+      if (slash != end) {
+        for (++slash; slash != end &&
+            *slash != to_ascii('/'); ++slash) {
+          // loop does the work
+        }
       }
       if (isIAuthority(auth, slash) && isIPathAbsEmpty(slash, end)) {
         return true;

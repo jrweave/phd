@@ -101,6 +101,7 @@ RDFTerm collect_stats(RDFTerm term) {
     if (norm.equals(term)) {
       ++stats[STAT_NUM_BNODES_NFC_LABELLED];
     }
+    label->drop();
     return norm;
   }
   case IRI: {
@@ -495,6 +496,7 @@ int main (int argc, char **argv) {
     PRINT(STAT_NUM_INVALID_UCS_CODEPOINT_ERROR);
     PRINT(STAT_NUM_OTHER_ERROR);
 #endif
+    ASSERTNPTR(0);
   }
 
   // Added this barrier to prevent finalize from hanging with MVAPICH2.

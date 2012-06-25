@@ -20,6 +20,7 @@
 #define DELETE_ARRAY(a) delete[] a
 #define PERSIST_PTRS(b)
 #define CHECK(p)
+#define ASSERTNPTR(n)
 #else
 #include <iostream>
 #include <set>
@@ -50,6 +51,7 @@ extern unsigned long __persist_ptrs;
 #define PERSIST_PTRS(b) \
   ptr::__persist_ptrs += (b ? 1 : -1)
 #define CHECK(p) if (ptr::__PTRS.count(p) <= 0) std::cerr << "[PTR_MEMDEBUG] " << __FILE__ << ":" << __LINE__ << ": INVALID POINTER " << #p << "=" << (void*) p << endl
+#define ASSERTNPTR(n) if (n != ptr::__PTRS.size()) std::cerr << "[PTR_MEMDEBUG] " << __FILE__ << ":" << __LINE__ << ": FAILED ASSERTION OF " << n << " POINTERS.  ACTUALLY " << ptr::__PTRS.size() << endl
 #endif
 
   
