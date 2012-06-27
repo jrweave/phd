@@ -75,6 +75,9 @@ bool NTriplesReader::read(RDFTriple &triple) {
     } catch (MalformedLangTagException &e) {
       triplestr->drop();
       RETHROW(e, "(rethrow)");
+    } catch (BaseException<IRIRef> &e) {
+      triplestr->drop();
+      RETHROW(e, "(rethrow)");
     } catch (TraceableException &e) {
       triplestr->drop();
       RETHROW(e, "(rethrow)");

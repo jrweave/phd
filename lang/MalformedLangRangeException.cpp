@@ -18,7 +18,8 @@ MalformedLangRangeException::MalformedLangRangeException(const char *file,
     const unsigned int line, DPtr<uint8_t> *mal) throw()
     : TraceableException(file, line, "Malformed LangRange") {
   if (mal != NULL) {
-    this->stack_trace.push_back(string((char*) mal->ptr(), mal->size()));
+    this->amendStackTrace(file, line,
+                          string((char*) mal->ptr(), mal->size()).c_str());
   }
 }
 

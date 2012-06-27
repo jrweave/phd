@@ -9,19 +9,16 @@ using namespace std;
 
 InvalidCodepointException::InvalidCodepointException(const char *file,
     const unsigned int line, const uint32_t codepoint) throw()
-    : TraceableException(file, line), codepoint(codepoint) {
-  // do nothing
+    : TraceableException(file, line, "Invalid codepoint."),
+      codepoint(codepoint) {
+  stringstream ss (stringstream::in | stringstream::out);
+  ss << TraceableException::what() << " caused by 0x"
+      << hex << this->codepoint << "\n";
+  this->stack_trace.append(ss.str());
 }
 
 InvalidCodepointException::~InvalidCodepointException() throw() {
   // do nothing
-}
-
-const char *InvalidCodepointException::what() const throw() {
-  stringstream ss (stringstream::in | stringstream::out);
-  ss << TraceableException::what() << "\tcaused by invalid codepoint 0x"
-      << hex << this->codepoint << "\n";
-  return ss.str().c_str();
 }
 
 }

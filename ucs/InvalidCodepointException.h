@@ -16,9 +16,6 @@ public:
   InvalidCodepointException(const char *file, const unsigned int line,
     const uint32_t codepoint) throw();
   virtual ~InvalidCodepointException() throw();
-
-  // Inherited Methods
-  const char *what() const throw();
 };
 
 }

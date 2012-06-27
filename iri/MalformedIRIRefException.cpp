@@ -29,7 +29,7 @@ MalformedIRIRefException::MalformedIRIRefException(const char *file,
         str.push_back((char) buf[i]);
       }
     }
-    this->stack_trace.push_back(str);
+    this->amendStackTrace(file, line, str.c_str());
     DELETE(mal);
   }
 }

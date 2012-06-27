@@ -45,8 +45,8 @@ private:
   const char *file;
   const unsigned int line;
 protected:
-  char message[128];
-  vector<string> stack_trace;
+  string message, stack_trace;
+  void init_stack_trace() throw();
 public:
   TraceableException(const char *file, const unsigned int line)
       throw(const char *);

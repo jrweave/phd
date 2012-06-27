@@ -35,7 +35,8 @@ public:
   static RDFTriple parse(DPtr<uint8_t> *utf8str)
       throw(SizeUnknownException, BadAllocException, TraceableException,
             InvalidEncodingException, InvalidCodepointException,
-            MalformedIRIRefException, MalformedLangTagException);
+            MalformedIRIRefException, MalformedLangTagException,
+            BaseException<IRIRef>);
 
   DPtr<uint8_t> *toUTF8String() const throw(BadAllocException);
   DPtr<uint8_t> *toUTF8String(const bool with_dot_endl) const

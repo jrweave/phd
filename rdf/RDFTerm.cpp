@@ -334,7 +334,8 @@ DPtr<uint8_t> *RDFTerm::unescape(DPtr<uint8_t> *str, bool as_iri)
 RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     throw(SizeUnknownException, BaseException<void*>, TraceableException,
           InvalidEncodingException, InvalidCodepointException,
-          MalformedIRIRefException, MalformedLangTagException) {
+          MalformedIRIRefException, MalformedLangTagException,
+          BaseException<IRIRef>) {
   if (utf8str == NULL) {
     THROW(BaseException<void*>, NULL, "utf8str must not be NULL.");
   }
@@ -360,6 +361,9 @@ RDFTerm RDFTerm::parse(DPtr<uint8_t> *utf8str)
     } catch (MalformedIRIRefException &e) {
       unescaped->drop();
       RETHROW(e, "Malformed IRI.");
+    } catch (BaseException<IRIRef> &e) {
+      // unescaped already dropped
+      RETHROW(e, "Relative IRI.");
     }
   }
   if (*begin == to_ascii('_')) {

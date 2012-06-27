@@ -41,7 +41,8 @@ int RDFTriple::cmp(const RDFTriple &t1, const RDFTriple &t2) throw() {
 RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     THROWS(SizeUnknownException, BadAllocException, TraceableException,
            InvalidEncodingException, InvalidCodepointException,
-           MalformedIRIRefException, MalformedLangTagException) {
+           MalformedIRIRefException, MalformedLangTagException,
+           BaseException<IRIRef>) {
   if (utf8str == NULL || !utf8str->sizeKnown()) {
     THROWX(SizeUnknownException);
   }
@@ -78,6 +79,9 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     part->drop();
     RETHROW(e,
         "Subject has malformed LangTag (shouldn't have LangTag anyway).");
+  } catch (BaseException<IRIRef> &e) {
+    part->drop();
+    RETHROW(e, "Problem parsing subject.");
   } catch (TraceableException &e) {
     part->drop();
     RETHROW(e, "Problem parsing subject.");
@@ -113,6 +117,9 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
     part->drop();
     RETHROW(e,
          "Predicate has malformed LangTag (shouldn't have LangTag anyway).");
+  } catch (BaseException<IRIRef> &e) {
+    part->drop();
+    RETHROW(e, "Problem parsing predicate.");
   } catch (TraceableException &e) {
     part->drop();
     RETHROW(e, "Problem parsing predicate.");
@@ -150,6 +157,9 @@ RDFTriple RDFTriple::parse(DPtr<uint8_t> *utf8str)
   } catch (MalformedLangTagException &e) {
     part->drop();
     RETHROW(e, "Object has malformed LangTag.");
+  } catch (BaseException<IRIRef> &e) {
+    part->drop();
+    RETHROW(e, "Problem parsing object.");
   } catch (TraceableException &e) {
     part->drop();
     RETHROW(e, "Problem parsing object.");

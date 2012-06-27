@@ -13,7 +13,7 @@ TraceableException::TraceableException(const char *file,
   if (file == NULL) {
     throw file;
   }
-  memset(this->message, 0, 128);
+  this->init_stack_trace();
 }
 
 TraceableException::TraceableException(const char *file,
@@ -22,24 +22,26 @@ TraceableException::TraceableException(const char *file,
   if (file == NULL) {
     throw file;
   }
-  memset(this->message, 0, 128);
   if (message != NULL) {
-    strncpy(this->message, message, 127);
+    this->message = string(message);
   }
+  this->init_stack_trace();
 }
 
 TraceableException::TraceableException(const TraceableException *ex) throw ()
-    : file(ex->file), line(ex->line) {
-  memset(this->message, 0, 128);
-  if (ex->message != NULL) {
-    strncpy(this->message, ex->message, 127);
-  }
-  this->stack_trace.insert(this->stack_trace.begin(),
-      ex->stack_trace.begin(), ex->stack_trace.end());
+    : file(ex->file), line(ex->line), message(ex->message),
+      stack_trace(ex->stack_trace) {
+  // do nothing
 }
 
 TraceableException::~TraceableException() throw() {
   // do nothing
+}
+
+void TraceableException::init_stack_trace() throw() {
+  stringstream ss (stringstream::in | stringstream::out);
+  ss << this->file << ":" << this->line << ": " << this->message << endl;
+  this->stack_trace = ss.str();
 }
 
 const char *TraceableException::getFile() const throw() {
@@ -51,7 +53,7 @@ unsigned int TraceableException::getLine() const throw() {
 }
 
 const char *TraceableException::getMessage() const throw() {
-  return this->message;
+  return this->message.c_str();
 }
 
 TraceableException &TraceableException::amendStackTrace(const char *file,
@@ -65,26 +67,17 @@ TraceableException &TraceableException::amendStackTrace(const char *file,
     throw file;
   }
   stringstream ss (stringstream::in | stringstream::out);
-  ss << file << ":" << line;
+  ss << "\t" << file << ":" << line;
   if (message != NULL) {
     ss << ": " << message;
   }
-  this->stack_trace.push_back(ss.str());
+  ss << endl;
+  this->stack_trace.append(ss.str());
   return *this;
 }
 
 const char *TraceableException::what() const throw() {
-  stringstream ss (stringstream::in | stringstream::out);
-  ss << this->file << ":" << line;
-  if (this->message != NULL) {
-    ss << ": " << this->message;
-  }
-  ss << "\n";
-  vector<string>::const_iterator it;
-  for (it = this->stack_trace.begin(); it != this->stack_trace.end(); it++) {
-    ss << "\t\t" << *it << "\n";
-  }
-  return ss.str().c_str();
+  return this->stack_trace.c_str();
 }
 
 }

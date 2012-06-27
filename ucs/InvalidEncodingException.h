@@ -16,9 +16,6 @@ public:
   InvalidEncodingException(const char *file, const unsigned int line,
     const char *message, const uint32_t encoded) throw();
   virtual ~InvalidEncodingException() throw();
-
-  // Inherited Methods
-  const char *what() const throw();
 };
 
 }

@@ -10,7 +10,9 @@ template<typename cause_type>
 BaseException<cause_type>::BaseException(const char *file,
     const unsigned int line, const cause_type cause) throw()
     : TraceableException(file, line), cause(cause) {
-  // do nothing
+  stringstream ss (stringstream::in | stringstream::out);
+  ss << " caused by " << this->cause << endl;
+  this->stack_trace.append(ss.str());
 }
 
 template<typename cause_type>
@@ -18,7 +20,9 @@ BaseException<cause_type>::BaseException(const char *file,
     const unsigned int line, const cause_type cause,
     const char *message) throw()
     : TraceableException(file, line, message), cause(cause) {
-  // do nothing
+  stringstream ss (stringstream::in | stringstream::out);
+  ss << " caused by " << this->cause << endl;
+  this->stack_trace.append(ss.str());
 }
 
 template<typename cause_type>
@@ -39,9 +43,7 @@ const cause_type BaseException<cause_type>::getCause() const throw() {
 
 template<typename cause_type>
 const char *BaseException<cause_type>::what() const throw() {
-  stringstream ss (stringstream::in | stringstream::out);
-  ss << TraceableException::what() << "\tcaused by " << this->cause << endl;
-  return ss.str().c_str();
+  return this->stack_trace.c_str();
 }
 
 }
