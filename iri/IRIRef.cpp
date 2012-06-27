@@ -154,7 +154,8 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
       ++mark;
     } else {
       for (mark = offset;
-           mark != end && *mark != to_ascii(':') && *mark != to_ascii('/');
+           mark != end && *mark != to_ascii(':') && *mark != to_ascii('/') &&
+           *mark != to_ascii('?') && *mark != to_ascii('#');
            ++mark) {
         // loop does the work
       }
@@ -172,17 +173,21 @@ DPtr<uint8_t> *IRIRef::getPart(const enum IRIRefPart part) const throw() {
     if (offset == end || *offset != to_ascii(':')) {
       return NULL;
     }
-    offset++;
-    for (mark = offset; mark != end && *mark != to_ascii('/'); ++mark) {
-      // loop does the work
+    if (*offset == to_ascii(':')) {
+      offset++;
+      for (mark = offset; mark != end && *mark != to_ascii('/') &&
+           *mark != to_ascii('?') && *mark != to_ascii('#'); ++mark) {
+        // loop does the work
+      }
+      return this->utf8str->sub(offset - begin, mark - offset);
     }
-    return this->utf8str->sub(offset - begin, mark - offset);
   }
   
   // Skip over //authority if necessary.
   if (end - offset >= 2 && *offset == to_ascii('/')
       && *(offset + 1) == to_ascii('/')) {
-    for (offset += 2; offset != end && *offset != to_ascii('/'); ++offset) {
+    for (offset += 2; offset != end && *offset != to_ascii('/')
+         && *offset != to_ascii('?') && *offset != to_ascii('#'); ++offset) {
       // loop does the work
     }
   }

@@ -50,8 +50,8 @@ public:
     }
     return oldv;
   }
-  const uint8_t *operator&() const { return bytes; }
-  uint8_t *operator&() { return bytes; }
+  const uint8_t *ptr() const { return &bytes[0]; }
+  uint8_t *ptr() { return &bytes[0]; }
   RDFID<N> &operator++() {
     size_t i = N;
     for (; i > 0; --i) {
@@ -187,7 +187,10 @@ public:
 //    }                                                 
 //    return oldv;                                      
 //  }                                                   
-//  uint8_t *operator&() {                              
+//  uint8_t *ptr() {                              
+//    return (uint8_t*)(&this->bytes);                  
+//  }                                                   
+//  const uint8_t *ptr() const {                              
 //    return (uint8_t*)(&this->bytes);                  
 //  }                                                   
 //  RDFID<1> &operator++() { ++this->bytes; return *this;}    
@@ -292,10 +295,10 @@ public:                                               \
     }                                                 \
     return oldv;                                      \
   }                                                   \
-  const uint8_t *operator&() const {                  \
+  const uint8_t *ptr() const {                        \
     return (uint8_t*)(&this->bytes);                  \
   }                                                   \
-  uint8_t *operator&() {                              \
+  uint8_t *ptr() {                                    \
     return (uint8_t*)(&this->bytes);                  \
   }                                                   \
   RDFID<N> &operator++() {                            \

@@ -92,6 +92,7 @@ bool equiv(IRIRef *iriref, DPtr<uint8_t> *scheme, DPtr<uint8_t> *user_info,
     PROG(iriref->getPart(HOST) == NULL);
   } else {
     DPtr<uint8_t> *part = iriref->getPart(HOST);
+    cerr << "part->size() == " << part->size() << " " << (char)**part << endl;
     PROG(host->size() == part->size());
     PROG(equal(part->dptr(), part->dptr() + part->size(),
         host->dptr()));
@@ -122,6 +123,7 @@ bool equiv(IRIRef *iriref, DPtr<uint8_t> *scheme, DPtr<uint8_t> *user_info,
     PROG(iriref->getPart(QUERY) == NULL);
   } else {
     DPtr<uint8_t> *part = iriref->getPart(QUERY);
+    cerr << "part == " << (void*)part << endl;
     PROG(query->size() == part->size());
     PROG(equal(part->dptr(), part->dptr() + part->size(),
         query->dptr()));
@@ -171,6 +173,8 @@ bool testUrify(IRIRef *iri1, IRIRef *iri2, bool test_norm_diff) {
 int main (int argc, char **argv) {
   INIT;
   IRIRef *i;
+  TEST(equiv, str2iri("http://?"), str2ptr("http"), NULL, str2ptr(""), NULL,
+      str2ptr(""), str2ptr(""), NULL);
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9"),
       str2ptr("eXAMPLE"), NULL, str2ptr("a"), NULL,
       str2ptr("/./b/../b/%63/%7bfoo%7d/ros%C3%A9"), NULL, NULL);
@@ -231,6 +235,8 @@ int main (int argc, char **argv) {
     str2ptr("http"), NULL,
     str2ptr("[::ffff:192.0.2.128]"), NULL, str2ptr(""),
     NULL, NULL);
+  TEST(equiv, str2iri("file:///path"), str2ptr("file"), NULL, str2ptr(""), NULL,
+      str2ptr("/path"), NULL, NULL);
 
   TEST(testUrify, str2iri("tag:jrweave@gmail.com,2012:\xE6\x9D\xB0\xE8\xA5\xBF"),
                   str2iri("tag:jrweave@gmail.com,2012:%E6%9D%B0%E8%A5%BF"), true);

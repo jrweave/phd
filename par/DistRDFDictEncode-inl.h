@@ -20,7 +20,7 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank)
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
   }
-  memcpy(&this->counter, &rank, sizeof(int));
+  memcpy(this->counter.ptr(), &rank, sizeof(int));
   if (rank == 0) {
     ++this->counter;
   }
@@ -33,7 +33,7 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
   }
-  memcpy(&this->counter, &rank, sizeof(int));
+  memcpy(this->counter.ptr(), &rank, sizeof(int));
   if (rank == 0) {
     ++this->counter;
   }
@@ -47,7 +47,7 @@ DistRDFDictionary<N, ID, ENC>::~DistRDFDictionary() throw() {
 template<size_t N, typename ID, typename ENC>
 bool DistRDFDictionary<N, ID, ENC>::nextID(ID &id) {
   int proc;
-  memcpy(&proc, &this->counter, sizeof(int));
+  memcpy(&proc, this->counter.ptr(), sizeof(int));
   if (proc != this->rank) {
     return false;
   }

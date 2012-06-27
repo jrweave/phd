@@ -59,7 +59,6 @@ void Ptr::drop() throw() {
       dalloc(this->global_refs);
       this->global_refs = NULL;
     }
-    void *x = this;
     DELETE(this);
   }
 }

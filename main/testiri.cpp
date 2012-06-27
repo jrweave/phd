@@ -50,4 +50,8 @@ int main (int argc, char **argv) {
   p = triple.toUTF8String(true);
   print(p);
   p->drop();
+
+  p = s2p("file:///path");
+  iri = IRIRef(p);
+  p->drop();
 }
