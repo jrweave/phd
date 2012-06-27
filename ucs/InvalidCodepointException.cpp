@@ -12,8 +12,7 @@ InvalidCodepointException::InvalidCodepointException(const char *file,
     : TraceableException(file, line, "Invalid codepoint."),
       codepoint(codepoint) {
   stringstream ss (stringstream::in | stringstream::out);
-  ss << TraceableException::what() << " caused by 0x"
-      << hex << this->codepoint << "\n";
+  ss << " caused by 0x" << hex << this->codepoint << "\n";
   this->stack_trace.append(ss.str());
 }
 
