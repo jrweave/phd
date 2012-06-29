@@ -22,7 +22,7 @@
 #define COORDEVERY 100000
 #define NUMREQUESTS 4
 #define PACKETBYTES 128
-#define PAGEBYTES 4096
+#define PAGEBYTES (1 << 20)
 #define IDBYTES 8
 #define RANDOMIZE true
 
@@ -97,7 +97,8 @@ private:
 public:
   StorageStream(STORAGE<IDTrip> &s) : trips(&s), it(s.begin()) 
   { NEW(buf, MPtr<uint8_t>, 3*ID::size()); }
-  ~StorageStream() throw(IOException) {}
+  ~StorageStream() throw(IOException) 
+  { this->buf->drop(); }
   void close() throw(IOException) {}
   DPtr<uint8_t> *read(const int64_t amt)
       THROWS(IOException, BadAllocException) {
@@ -192,12 +193,10 @@ public:
       send_to = this->rank;
       ++this->rank;
     }
-    cerr << "SEND " << send_to << endl;
     return send_to;
   }
   void dropoff(DPtr<uint8_t> *msg) throw(TraceableException) {
     IDTrip trip;
-    cerr << "RECV " << MPI::COMM_WORLD.Get_rank() << endl;
     const uint8_t *read_from = msg->dptr();
     memcpy(trip.parts[0].ptr(), read_from, ID::size());
     read_from += ID::size();

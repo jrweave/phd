@@ -127,6 +127,7 @@ RDFTerm NTriplesWriter::sanitize(const RDFTerm &bnode)
   if (mark == end) {
     if (*begin != to_ascii('Q') && *begin != to_ascii('X') &&
         *begin != to_ascii('Z') && !is_digit(*begin)) {
+      label->drop();
       return bnode;
     }
     DPtr<uint8_t> *newlabel;
