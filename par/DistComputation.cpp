@@ -4,6 +4,10 @@
 
 namespace par {
 
+using namespace ex;
+using namespace ptr;
+using namespace std;
+
 DistComputation::DistComputation(Distributor *dist)
     throw(BaseException<void*>)
     : dist(dist) {
@@ -32,6 +36,9 @@ void DistComputation::exec()
     int send_to;
     do {
       send_to  = this->pickup(buffer, len);
+      if (send_to < -1) {
+        continue; // results in break
+      }
       if (buffer == NULL) {
         THROW(TraceableException,
               "Call to pickup set buffer to NULL.");

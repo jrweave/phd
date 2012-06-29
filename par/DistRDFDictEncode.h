@@ -25,8 +25,8 @@ class DistRDFDictionary : public RDFDictionary<ID, ENC> {
 protected:
   int rank;
   virtual bool nextID(ID &id);
-  virtual void set(const RDFTerm &term, const ID &id);
 public:
+  virtual void set(const RDFTerm &term, const ID &id);
   DistRDFDictionary(const int rank)
       throw(TraceableException);
   DistRDFDictionary(const int rank, const ENC &enc)
