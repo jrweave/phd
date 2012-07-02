@@ -84,7 +84,7 @@ bool testN() {
   DELETE(term);
 
   RDFID<N> id3;
-  PROG((id != id3 && id != id2) ^ dict.lookup(id3, term2));
+  PROG((id != id3 && id2 != id3) ^ dict.lookup(id3, term2));
   
   PASS;
 }
@@ -112,7 +112,7 @@ bool test8() {
   DELETE(term);
 
   RDFID<8> id3;
-  PROG((id != id3 && id != id2) ^ dict.lookup(id3, term2));
+  PROG((id != id3 && id2 != id3) ^ dict.lookup(id3, term2));
   
   PASS;
 }
