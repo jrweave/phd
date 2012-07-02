@@ -521,7 +521,7 @@ DPtr<uint32_t> *utf32enc(DPtr<uint32_t> *codepoints,
     codepoints->hold();
     return codepoints;
   }
-  if ((bom == NONE || bom == ANY) && is_big_endian()) {
+  if (bom == NONE && is_big_endian()) {
     const uint32_t *begin = codepoints->dptr();
     const uint32_t *end = begin + codepoints->size();
     for (; begin != end; ++begin) {
