@@ -82,7 +82,7 @@ void MPIPacketDistributor::init() throw(DistException, BadAllocException) {
       for (j = 0; j < i; ++j) {
         this->recv_buffers[j]->drop();
       }
-      RETHROW(e, "Coult not instantiation receive buffers.");
+      RETHROW(e, "Could not instantiation receive buffers.");
     }
   }
   for (i = 0; i < this->num_requests; ++i) {

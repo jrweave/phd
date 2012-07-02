@@ -18,6 +18,7 @@
 #include "rdf/NTriplesWriter.h"
 #include "rdf/RDFReader.h"
 #include "rdf/RDFDictionary.h"
+#include "util/timing.h"
 
 #define COORDEVERY 100000
 #define NUMREQUESTS 4
@@ -25,6 +26,17 @@
 #define PAGEBYTES (1 << 20)
 #define IDBYTES 8
 #define RANDOMIZE true
+
+#ifdef TIMING_USE != TIMING_NONE
+#define MARK_TIME(t) \
+  MPI::COMM_WORLD.Barrier(); \
+  if (rank == 0) { \
+    t = TIME(); \
+  } \
+  MPI::COMM_WORLD.Barrier()
+#else
+#define MARK_TIME(t)
+#endif
 
 #define USING_SET 1
 
@@ -390,11 +402,19 @@ void rdfs_replicate(Dict *dict, STORAGE<IDTrip> &facts) {
 
 #define OUT(idtrip) GLOBAL_DICT->decode((idtrip).parts[0]) << " " << GLOBAL_DICT->decode((idtrip).parts[1]) << " " << GLOBAL_DICT->decode((idtrip).parts[2]) << " ."
 
+
 size_t rule_infer(STORAGE<IDTrip> &facts, ID *r[9], const int j1, const int j2, const int ipos[3]) {
+  int rank = MPI::COMM_WORLD.Get_rank();
+  TIME_T(begin_time, lhsidx_end_time, rhsidx_end_time, end_time);
+
+  MARK_TIME(begin_time);
+
   size_t oldsize = facts.size();
   unsigned long nprobes = 0;
   unsigned long nmatches = 0;
   unsigned long nfirings = 0;
+  unsigned long lhssize = 0;
+  unsigned long rhssize = 0;
   multimap<ID, IDTrip> lhs, rhs;
   STORAGE<IDTrip>::const_iterator begin, end;
   pair<IDTrip, IDTrip> rng = store_range(r[0], r[1], r[2]);
@@ -404,6 +424,8 @@ size_t rule_infer(STORAGE<IDTrip> &facts, ID *r[9], const int j1, const int j2, 
     lhs.insert(pair<ID, IDTrip>(begin->parts[j1], *begin));
     //cerr << "LHS: " << GLOBAL_DICT->decode(begin->parts[j1]) << " => " << OUT(*begin) << endl;
   }
+  lhssize = (unsigned long) lhs.size();
+  MARK_TIME(lhsidx_end_time);
   rng = store_range(r[3], r[4], r[5]);
   begin = LOWER_BOUND(facts, rng.first);
   end = UPPER_BOUND(facts, rng.second);
@@ -411,46 +433,49 @@ size_t rule_infer(STORAGE<IDTrip> &facts, ID *r[9], const int j1, const int j2, 
     rhs.insert(pair<ID, IDTrip>(begin->parts[j2-3], *begin));
     //cerr << "RHS: " << GLOBAL_DICT->decode(begin->parts[j2-3]) << " => " << OUT(*begin) << endl;
   }
+  rhssize = (unsigned long) rhs.size();
+  MARK_TIME(rhsidx_end_time);
   multimap<ID, IDTrip>::const_iterator lit = lhs.begin();
   deque<IDTrip> buffered;
   while (lit != lhs.end()) {
     //cerr << "JOIN " << GLOBAL_DICT->decode(lit->first) << endl;
+    ++nprobes;
     pair<multimap<ID, IDTrip>::const_iterator,
          multimap<ID, IDTrip>::const_iterator> rhs_range
          = rhs.equal_range(lit->first);
     if (rhs_range.first == rhs.end()) {
-      break;
-    }
-    pair<multimap<ID, IDTrip>::const_iterator,
-         multimap<ID, IDTrip>::const_iterator> lhs_range;
-    lhs_range.first = lit;
-    lhs_range.second = lhs.upper_bound(lit->first);
-    for (; rhs_range.first != rhs_range.second; ++rhs_range.first) {
-      ++nprobes;
-      //cerr << "PROBE " << OUT(rhs_range.first->second) << endl;
-      for (lit = lhs_range.first; lit != lhs_range.second; ++lit) {
-        ++nmatches;
-        //cerr << "MATCH " << OUT(lit->second) << endl;
-        IDTrip infer;
-        int i;
-        for (i = 0; i < 3; ++i) {
-          infer.parts[i] = ipos[i] < 3 ? lit->second.parts[ipos[i]] :
-                          (ipos[i] < 6 ?
-                              rhs_range.first->second.parts[ipos[i]-3] :
-                              *r[ipos[i]]);
-        }
-        ++nfirings;
-        //cerr << "INFER " << OUT(infer) << endl;
-        bool newly_inferred = facts.INSERT(infer).second;
-        if (newly_inferred &&
-            (r[3] == NULL || *r[3] == infer.parts[0]) &&
-            (r[4] == NULL || *r[4] == infer.parts[1]) &&
-            (r[5] == NULL || *r[5] == infer.parts[2])) {
-          buffered.push_back(infer);
+      lit = lhs.end();
+    } else {
+      pair<multimap<ID, IDTrip>::const_iterator,
+           multimap<ID, IDTrip>::const_iterator> lhs_range;
+      lhs_range.first = lit;
+      lhs_range.second = lhs.upper_bound(lit->first);
+      for (; rhs_range.first != rhs_range.second; ++rhs_range.first) {
+        //cerr << "PROBE " << OUT(rhs_range.first->second) << endl;
+        for (lit = lhs_range.first; lit != lhs_range.second; ++lit) {
+          ++nmatches;
+          //cerr << "MATCH " << OUT(lit->second) << endl;
+          IDTrip infer;
+          int i;
+          for (i = 0; i < 3; ++i) {
+            infer.parts[i] = ipos[i] < 3 ? lit->second.parts[ipos[i]] :
+                            (ipos[i] < 6 ?
+                                rhs_range.first->second.parts[ipos[i]-3] :
+                                *r[ipos[i]]);
+          }
+          ++nfirings;
+          //cerr << "INFER " << OUT(infer) << endl;
+          bool newly_inferred = facts.INSERT(infer).second;
+          if (newly_inferred &&
+              (r[3] == NULL || *r[3] == infer.parts[0]) &&
+              (r[4] == NULL || *r[4] == infer.parts[1]) &&
+              (r[5] == NULL || *r[5] == infer.parts[2])) {
+            buffered.push_back(infer);
+          }
         }
       }
+      lit = lhs_range.second;
     }
-    lit = lhs_range.second;
     if (lit == lhs.end() && !buffered.empty()) {
       rhs.clear();
       deque<IDTrip>::const_iterator it = buffered.begin();
@@ -461,27 +486,43 @@ size_t rule_infer(STORAGE<IDTrip> &facts, ID *r[9], const int j1, const int j2, 
       lit = lhs.begin();
     }
   }
-  unsigned long x[4];
-  unsigned long y[4];
+
+  MARK_TIME(end_time);
+
+  unsigned long x[6];
+  unsigned long y[6];
   x[0] = nprobes;
   x[1] = nmatches;
   x[2] = nfirings;
   x[3] = (unsigned long) (facts.size() - oldsize);
-  MPI::COMM_WORLD.Reduce(x, y, 4, MPI::UNSIGNED_LONG, MPI::SUM, 0);
+  x[4] = lhssize;
+  x[5] = rhssize;
+  MPI::COMM_WORLD.Reduce(x, y, 6, MPI::UNSIGNED_LONG, MPI::SUM, 0);
   if (MPI::COMM_WORLD.Get_rank() == 0) {
+    cerr << "LHS: " << y[4] << endl;
+    cerr << "RHS: " << y[5] << endl;
     cerr << "PROBES: " << y[0] << endl;
     cerr << "MATCHES: " << y[1] << endl;
     cerr << "FIRINGS: " << y[2] << endl;
     cerr << "INFERENCES: " << y[3] << endl;
+    cerr << "[TIME] LHS INDEX: " << TIMEOUTPUT(DIFFTIME(lhsidx_end_time, begin_time)) << endl;
+    cerr << "[TIME] RHS INDEX: " << TIMEOUTPUT(DIFFTIME(rhsidx_end_time, lhsidx_end_time)) << endl;
+    cerr << "[TIME] FIRING: " << TIMEOUTPUT(DIFFTIME(end_time, rhsidx_end_time)) << endl;
   }
   return facts.size() - oldsize;
 }
+
+TIME_T(repl_end_time);
 
 size_t rdfs_infer(Dict *dict, STORAGE<IDTrip> &facts) {
 
   int rank = MPI::COMM_WORLD.Get_rank();
 
+  size_t origsize = facts.size();
+
   rdfs_replicate(dict, facts);
+
+  MARK_TIME(repl_end_time);
 
   STORAGE<IDTrip> inferences;
 
@@ -553,17 +594,19 @@ size_t rdfs_infer(Dict *dict, STORAGE<IDTrip> &facts) {
     ninfer = rule_infer(facts, r, 0, 5, ipos);
   }
 
-  unsigned int n[3];
-  n[0] = (unsigned int) oldsize;
-  n[1] = (unsigned int) (facts.size() - oldsize);
-  n[2] = (unsigned int) facts.size();
-  unsigned int totaln[3];
-  MPI::COMM_WORLD.Reduce(n, totaln, 3, MPI::UNSIGNED_LONG, MPI::SUM, 0);
+  unsigned long n[4];
+  n[0] = (unsigned long) oldsize;
+  n[1] = (unsigned long) (facts.size() - oldsize);
+  n[2] = (unsigned long) facts.size();
+  n[3] = (unsigned long) origsize;
+  unsigned long totaln[4];
+  MPI::COMM_WORLD.Reduce(n, totaln, 4, MPI::UNSIGNED_LONG, MPI::SUM, 0);
   if (rank == 0) {
     cerr << "=== OVERALL ===" << endl;
-    cerr << "FACTS: " << n[0] << endl;
-    cerr << "INFERENCES: " << n[1] << endl;
-    cerr << "TOTAL: " << n[2] << endl;
+    cerr << "FACTS: " << totaln[3] << endl;
+    cerr << "REDIST: " << totaln[0] << endl;
+    cerr << "INFERENCES: " << totaln[1] << endl;
+    cerr << "TOTAL: " << totaln[2] << endl;
   }
   return facts.size() - oldsize;
 }
@@ -593,10 +636,17 @@ void write(const char *filename, Dict *dict, const STORAGE<IDTrip> &trips) {
 }
 
 int main (int argc, char **argv) {
+  TIME_T(load_begin_time, load_end_time);
+  TIME_T(infer_begin_time, infer_end_time);
+  TIME_T(write_begin_time, write_end_time);
+  TIME_T(overall_begin_time, overall_end_time);
+
   MPI::Init(argc, argv);
 
   int rank = MPI::COMM_WORLD.Get_rank();
   int nproc = MPI::COMM_WORLD.Get_size();
+
+  MARK_TIME(overall_begin_time);
 
   srand(rank);
   int r = rand();
@@ -608,15 +658,24 @@ int main (int argc, char **argv) {
   }
 
   STORAGE<IDTrip> trips;
+
+  MARK_TIME(load_begin_time);
   Dict *dict = load(argv[1], trips);
+  MARK_TIME(load_end_time);
+
   GLOBAL_DICT = dict;
 
+  MARK_TIME(infer_begin_time);
   rdfs_infer(dict, trips);
+  MARK_TIME(infer_end_time);
 
   if (argc > 2) {
+    MARK_TIME(write_begin_time);
     write(argv[2], dict, trips);
+    MARK_TIME(write_end_time);
   }
 
+#ifdef TOSTDOUT 
   int nothing;
   if (rank > 0) {
     MPI::COMM_WORLD.Recv(&nothing, 1, MPI::INT, rank - 1, 11);
@@ -632,8 +691,22 @@ int main (int argc, char **argv) {
   if (rank < nproc - 1) {
     MPI::COMM_WORLD.Send(&nothing, 1, MPI::INT, rank + 1, 11);
   }
+#endif
 
   DELETE(dict);
   ASSERTNPTR(0);
+
+  MARK_TIME(overall_end_time);
+
+#if TIMING_USE != TIMING_NONE
+  if (rank == 0) {
+    cerr << "[TIME] LOAD: " << TIMEOUTPUT(DIFFTIME(load_end_time, load_begin_time)) << endl;
+    cerr << "[TIME] DISTRIBUTE: " << TIMEOUTPUT(DIFFTIME(repl_end_time, infer_begin_time)) << endl;
+    cerr << "[TIME] INFER: " << TIMEOUTPUT(DIFFTIME(infer_end_time, repl_end_time)) << endl;
+    cerr << "[TIME] WRITE: " << TIMEOUTPUT(DIFFTIME(write_end_time, write_begin_time)) << endl;
+    cerr << "[TIME] OVERALL: " << TIMEOUTPUT(DIFFTIME(overall_end_time, overall_begin_time)) << endl;
+  }
+#endif
+
   MPI::Finalize();
 }
