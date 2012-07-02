@@ -27,7 +27,7 @@
 #define IDBYTES 8
 #define RANDOMIZE true
 
-#ifdef TIMING_USE != TIMING_NONE
+#if TIMING_USE != TIMING_NONE
 #define MARK_TIME(t) \
   MPI::COMM_WORLD.Barrier(); \
   if (rank == 0) { \
