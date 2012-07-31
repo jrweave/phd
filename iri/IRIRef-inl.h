@@ -395,8 +395,8 @@ bool isIRegName(iter begin, iter end) {
       iter start = begin;
       if (++begin == end) return false;
       if (++begin == end) return false;
-      if (++begin == end) return false;
-      if (!isPctEncoded(start, begin)) {
+      iter mark = begin;
+      if (!isPctEncoded(start, ++mark)) {
         return false;
       }
     }

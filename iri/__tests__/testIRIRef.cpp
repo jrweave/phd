@@ -237,6 +237,8 @@ int main (int argc, char **argv) {
     NULL, NULL);
   TEST(equiv, str2iri("file:///path"), str2ptr("file"), NULL, str2ptr(""), NULL,
       str2ptr("/path"), NULL, NULL);
+  TEST(equiv, str2iri("http://%7B%7B%7BVideo%7D%7D%7D"), str2ptr("http"), NULL,
+      str2ptr("%7B%7B%7BVideo%7D%7D%7D"), NULL, str2ptr(""), NULL, NULL);
 
   TEST(testUrify, str2iri("tag:jrweave@gmail.com,2012:\xE6\x9D\xB0\xE8\xA5\xBF"),
                   str2iri("tag:jrweave@gmail.com,2012:%E6%9D%B0%E8%A5%BF"), true);
