@@ -16,7 +16,7 @@ include ../../Makefile.inc
 
 SUBDIR	= rif/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testRIFConst testRIFVar testRIFTerm testRIFAtomic testRIFCondition testRIFDictionary
+TESTS		= testRIFConst testRIFVar testRIFTerm testRIFAtomic testRIFCondition testRIFDictionary testRIFAction testRIFActionBlock
 
 all :
 
@@ -74,3 +74,17 @@ testRIFDictionary : testRIFDictionary.cpp ../RIFDictionary.o
 	$(CC) $(CFLAGS) -o testRIFDictionary testRIFDictionary.cpp ../RIFDictionary.o ../RIFCondition.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
 	$(ECHO) [TEST] ./testRIFDictionary
 	./testRIFDictionary
+
+testRIFAction : testRIFAction.cpp ../RIFAction.o
+	$(ECHO) running test $(SUBDIR)/testRIFAction
+	$(ECHO) $(CC) $(CFLAGS) -o testRIFAction testRIFAction.cpp ../RIFAction.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(CC) $(CFLAGS) -o testRIFAction testRIFAction.cpp ../RIFAction.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(ECHO) [TEST] ./testRIFAction
+	./testRIFAction
+
+testRIFActionBlock : testRIFActionBlock.cpp ../RIFActionBlock.o
+	$(ECHO) running test $(SUBDIR)/testRIFActionBlock
+	$(ECHO) $(CC) $(CFLAGS) -o testRIFActionBlock testRIFActionBlock.cpp ../RIFActionBlock.o ../RIFAction.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(CC) $(CFLAGS) -o testRIFActionBlock testRIFActionBlock.cpp ../RIFActionBlock.o ../RIFAction.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(ECHO) [TEST] ./testRIFActionBlock
+	./testRIFActionBlock
