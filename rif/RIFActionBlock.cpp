@@ -346,13 +346,20 @@ RIFActionBlock::RIFActionBlock(DPtr<RIFAction> *acts, const ActVarMap &actvars)
       RIFAtomic atom = act->getTargetAtomic();
       if (atom.getType() == MEMBERSHIP) {
         RIFTerm obj = atom.getObject();
-        if (obj.getType() != VARIABLE || actvars.count(obj.getVar()) < 1) {
+        if (obj.getType() != VARIABLE) {
           THROW(TraceableException,
                 "Asserted membership atom must have action variable object.");
+        }
+        it = actvars.find(obj.getVar());
+        if (it == actvars.end() || !it->second.isNew()) {
+          THROW(TraceableException,
+                "Asserted membership atom must have New() action var object.");
         }
       }
     }
   }
+  // This only checks that, if Assert(?a # ?x), then (?a New()).
+  // TODO: need to check that, if ?a is an action variable, then Assert (?a#?x)
   this->actions->hold();
 }
 
