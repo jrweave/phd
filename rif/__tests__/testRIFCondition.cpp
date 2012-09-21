@@ -103,5 +103,7 @@ int main(int argc, char **argv) {
   TEST(testState, s2f("Exists ?a ( \" filled with spaces \"^^<s:>( ?\"variable name\" ) )"), s2p("Exists ?a (\" filled with spaces \"^^<s:>(?\"variable name\"))"), EXISTENTIAL, false);
   TEST(testState, s2f("Exists ?\"variable name\" ( \" filled with spaces \"^^<s:>( ?\"variable name\" ) )"), s2p("Exists ?\"variable name\" (\" filled with spaces \"^^<s:>(?\"variable name\"))"), EXISTENTIAL, true);
   TEST(testState, s2f("Exists ?\"variable name\" ( Or(INeg(\" filled with spaces \"^^<s:>( ?\"variable name\" )) ?a=?b) )"), s2p("Exists ?\"variable name\" (Or(Not(\" filled with spaces \"^^<s:>(?\"variable name\")) ?a = ?b))"), EXISTENTIAL, false);
+  TEST(testState, s2f("And(?p[\"http://www.w3.org/2000/01/rdf-schema#subPropertyOf\"^^<http://www.w3.org/2007/rif#iri> -> ?q]\n"
+                      "       ?s[?p -> ?o])"), s2p("And(?p[\"http://www.w3.org/2000/01/rdf-schema#subPropertyOf\"^^<http://www.w3.org/2007/rif#iri> -> ?q] ?s[?p -> ?o])"), CONJUNCTION, false);
   FINAL;
 }

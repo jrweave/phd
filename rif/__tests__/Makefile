@@ -16,7 +16,7 @@ include ../../Makefile.inc
 
 SUBDIR	= rif/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
-TESTS		= testRIFConst testRIFVar testRIFTerm testRIFAtomic testRIFCondition testRIFDictionary testRIFAction testRIFActionBlock
+TESTS		= testRIFConst testRIFVar testRIFTerm testRIFAtomic testRIFCondition testRIFDictionary testRIFAction testRIFActionBlock testRIFRule
 
 all :
 
@@ -88,3 +88,10 @@ testRIFActionBlock : testRIFActionBlock.cpp ../RIFActionBlock.o
 	$(CC) $(CFLAGS) -o testRIFActionBlock testRIFActionBlock.cpp ../RIFActionBlock.o ../RIFAction.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
 	$(ECHO) [TEST] ./testRIFActionBlock
 	./testRIFActionBlock
+
+testRIFRule : testRIFRule.cpp ../RIFRule.o
+	$(ECHO) running test $(SUBDIR)/testRIFRule
+	$(ECHO) $(CC) $(CFLAGS) -o testRIFRule testRIFRule.cpp ../RIFRule.o ../RIFActionBlock.o ../RIFAction.o ../RIFCondition.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(CC) $(CFLAGS) -o testRIFRule testRIFRule.cpp ../RIFRule.o ../RIFActionBlock.o ../RIFAction.o ../RIFCondition.o ../RIFAtomic.o ../RIFTerm.o ../RIFVar.o ../../iri/IRIRef.o ../../lang/LangTag.o ../../ptr/Ptr.o ../../ptr/SizeUnknownException.o ../../ex/TraceableException.o ../../ucs/utf.o ../../ucs/nf.o ../../lang/MalformedLangTagException.o ../../iri/MalformedIRIRefException.o ../../ucs/InvalidEncodingException.o ../../ptr/BadAllocException.o ../../sys/endian.o ../../ucs/InvalidCodepointException.o ../../ptr/alloc.o ../../ucs/UTF8Iter.o ../../rdf/RDFTerm.o ../../rif/RIFConst.o
+	$(ECHO) [TEST] ./testRIFRule
+	./testRIFRule

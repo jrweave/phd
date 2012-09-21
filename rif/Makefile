@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= rif
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= RIFConst.o RIFVar.o RIFTerm.o RIFAtomic.o RIFCondition.o RIFDictionary.o RIFAction.o RIFActionBlock.o
+OBJS		= RIFConst.o RIFVar.o RIFTerm.o RIFAtomic.o RIFCondition.o RIFDictionary.o RIFAction.o RIFActionBlock.o RIFRule.o
 
 all : build __tests__
 
@@ -75,3 +75,7 @@ RIFAction.o : RIFAction.h RIFAction-inl.h RIFAction.cpp
 RIFActionBlock.o : RIFActionBlock.h RIFActionBlock-inl.h RIFActionBlock.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o RIFActionBlock.o RIFActionBlock.cpp
 	$(CC) $(CFLAGS) -c -o RIFActionBlock.o RIFActionBlock.cpp
+
+RIFRule.o : RIFRule.h RIFRule-inl.h RIFRule.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o RIFRule.o RIFRule.cpp
+	$(CC) $(CFLAGS) -c -o RIFRule.o RIFRule.cpp

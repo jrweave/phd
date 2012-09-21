@@ -726,7 +726,7 @@ RIFCondition &RIFCondition::operator=(const RIFCondition &rhs)
   }
   case CONJUNCTION:
   case DISJUNCTION: {
-    if (this->state != NULL) {
+    if (rhs.state != NULL) {
       DPtr<RIFCondition> *p = (DPtr<RIFCondition>*) rhs.state;
       p->hold();
       new_state = (void*) p;
