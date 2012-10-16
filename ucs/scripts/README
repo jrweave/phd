@@ -2,9 +2,15 @@ The files listed below, in the same directory as this README, are
 licensed under the "Unicode, Inc. License Agreement for Data Files and
 Software", a copy of which is provided in UNICODE_LICENSE in the same
 directory as this README.  The files listed below are NOT otherwise
-licensed herein.
+licensed herein.  The ones named "*-old.txt" are the original versions
+used in developing code, from Unicode 6.0.0.  The others are the ones
+currently in used, from Unicode 6.2.0.
 
 DerivedNormalizationProps.txt
+DerivedNormalizationProps-old.txt
 HangulSyllableType.txt
+HangulSyllableType-old.txt
 NormalizationTest.txt
+NormalizationTest-old.txt
 UnicodeData.txt
+UnicodeData-old.txt
