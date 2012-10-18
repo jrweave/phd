@@ -13,10 +13,10 @@
 #    permissions and limitations under the License.
 
 CC        = mpicxx
-PRJCFLAGS = -O3 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DSYSTEM=SYS_DEFAULT -DMPICH_IGNORE_CXX_SEEK -DTIMING_USE=3 -DPTR_MEMDEBUG
+#PRJCFLAGS = -O3 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DSYSTEM=SYS_DEFAULT -DMPICH_IGNORE_CXX_SEEK -DTIMING_USE=3 -DPTR_MEMDEBUG
 #PRJCFLAGS = -O3 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DSYSTEM=SYS_DEFAULT -DMPICH_IGNORE_CXX_SEEK -DTIMING_USE=3 -DUCS_TRUST_CODEPOINTS -DUCS_PLAY_DUMB
-#PRJCFLAGS = -O3 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DSYSTEM=SYS_DEFAULT -DMPICH_IGNORE_CXX_SEEK -DTIMING_USE=0
-LD        = g++
+PRJCFLAGS = -O3 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DSYSTEM=SYS_DEFAULT -DMPICH_IGNORE_CXX_SEEK -DTIMING_USE=0
+LD        = mpicxx
 LDFLAGS   =
 AR        = ar
 ARFLAGS   =
@@ -28,7 +28,7 @@ TESTFILE	= /Users/jesseweaver/Desktop/_test_
 
 
 EX_OBJS		= ../ex/TraceableException.o
-IO_OBJS		= ../io/IOException.o ../io/InputStream.o ../io/OutputStream.o
+IO_OBJS		= ../io/IOException.o ../io/InputStream.o ../io/OutputStream.o ../io/IStream.o ../io/OStream.o
 IRI_OBJS		= ../iri/MalformedIRIRefException.o ../iri/IRIRef.o
 LANG_OBJS		= ../lang/MalformedLangTagException.o ../lang/LangTag.o ../lang/MalformedLangRangeException.o ../lang/LangRange.o
 PAR_OBJS		= ../par/MPIFileInputStream.o ../par/MPIDelimFileInputStream.o ../par/DistException.o ../par/MPIPacketDistributor.o ../par/StringDistributor.o ../par/MPIFileOutputStream.o ../par/MPIDistPtrFileOutputStream.o ../par/DistComputation.o

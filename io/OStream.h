@@ -16,6 +16,7 @@
 #ifndef __IO__OSTREAM_H__
 #define __IO__OSTREAM_H__
 
+#include <iostream>
 #include "io/OutputStream.h"
 
 namespace io {
@@ -27,6 +28,24 @@ protected:
   OStream() throw();
 public:
   OStream(ostream_t &stream) throw();
+  virtual ~OStream() throw(IOException);
+  virtual void close() throw(IOException);
+  virtual void flush() throw(IOException);
+  virtual void write(DPtr<uint8_t> *buf, size_t &nwritten)
+      throw(IOException, SizeUnknownException,
+            BaseException<void*>);
+  virtual streampos tellp() throw(IOException);
+  virtual void seekp(streampos pos) throw(IOException);
+  virtual void seekp(streamoff off, ios_base::seekdir dir) throw(IOException);
+};
+
+template<>
+class OStream<ostream> : public OutputStream {
+protected:
+  ostream &stream;
+  OStream() throw();
+public:
+  OStream(ostream &stream) throw();
   virtual ~OStream() throw(IOException);
   virtual void close() throw(IOException);
   virtual void flush() throw(IOException);

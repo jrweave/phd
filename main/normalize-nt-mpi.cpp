@@ -93,7 +93,8 @@ using namespace std;
 #define STAT_NUM_CODES                               3
 #endif
 
-#define PRINT(stat) cerr << #stat << ": " << totalstats[stat] << endl;
+#define STATOUT cout
+#define PRINT(stat) STATOUT << #stat << ": " << totalstats[stat] << endl;
 
 unsigned long stats[STAT_NUM_CODES];
 
@@ -312,7 +313,7 @@ int main (int argc, char **argv) {
   const char *outfilename;
 
   ONCE_BARRIER_BEGIN
-    cerr << "Executing with " << MPI::COMM_WORLD.Get_size() << " processors.\n";
+    STATOUT << "Executing with " << MPI::COMM_WORLD.Get_size() << " processors.\n";
   ONCE_BARRIER_END
 
   map<string, size_t> errors;
@@ -326,7 +327,7 @@ int main (int argc, char **argv) {
         outfilename = argv[i];
 
         ONCE_BARRIER_BEGIN
-          cerr << "Writing to " << outfilename << endl;
+          STATOUT << "Writing to " << outfilename << endl;
         ONCE_BARRIER_END
 
         if (ntw != NULL) {
@@ -340,13 +341,13 @@ int main (int argc, char **argv) {
     }
 
     ONCE_BARRIER_BEGIN
-      cerr << "Normalizing " << argv[i] << endl;
+      STATOUT << "Normalizing " << argv[i] << endl;
     ONCE_BARRIER_END
 
     InputStream *ifs;
 
     ONCE_BARRIER_BEGIN
-      cerr << "Reading from " << argv[i] << endl;
+      STATOUT << "Reading from " << argv[i] << endl;
     ONCE_BARRIER_END
 
     NEW(ifs, MPIDelimFileInputStream, MPI::COMM_WORLD, argv[i], MPI::MODE_RDONLY, MPI::INFO_NULL, 1024 * 1024, to_ascii('\n'));
@@ -452,24 +453,24 @@ int main (int argc, char **argv) {
     ntw->close();
     DELETE(ntw);
   }
-//  if (rank > 0) {
-//    int nothing;
-//    MPI::COMM_WORLD.Recv(&nothing, 1, MPI::INT, rank - 1, 18);
-//  }
-//  cerr << "===== ERROR SUMMARY =====" << endl;
-//  map<string, size_t>::iterator it = errors.begin();
-//  for (; it != errors.end(); ++it) {
-//    cerr << "\t[" << it->second << "] " << it->first;
-//  }
-//  cerr << endl;
-//  if (rank < MPI::COMM_WORLD.Get_size() - 1) {
-//    int nothing;
-//    MPI::COMM_WORLD.Send(&nothing, 1, MPI::INT, rank + 1, 18);
-//  }
+  if (rank > 0) {
+    int nothing;
+    MPI::COMM_WORLD.Recv(&nothing, 1, MPI::INT, rank - 1, 18);
+  }
+  cerr << "===== ERROR SUMMARY =====" << endl;
+  map<string, size_t>::iterator it = errors.begin();
+  for (; it != errors.end(); ++it) {
+    cerr << "\t[" << it->second << "] " << it->first;
+  }
+  cerr << endl;
+  if (rank < MPI::COMM_WORLD.Get_size() - 1) {
+    int nothing;
+    MPI::COMM_WORLD.Send(&nothing, 1, MPI::INT, rank + 1, 18);
+  }
   unsigned long totalstats[STAT_NUM_CODES];
   MPI::COMM_WORLD.Reduce(stats, totalstats, STAT_NUM_CODES, MPI::UNSIGNED_LONG, MPI::SUM, 0);
   if (rank == 0) {
-    cerr << "===== SUMMARY =====" << endl;
+    STATOUT << "===== SUMMARY =====" << endl;
     PRINT(STAT_NUM_INPUT_TRIPLES);
     PRINT(STAT_NUM_ERROR_TRIPLES);
     PRINT(STAT_NUM_OUTPUT_TRIPLES);

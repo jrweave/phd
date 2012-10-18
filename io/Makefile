@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= io
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= IOException.o InputStream.o OutputStream.o
+OBJS		= IOException.o InputStream.o OutputStream.o IStream.o OStream.o
 
 # add __tests__
 all : build
@@ -56,3 +56,11 @@ InputStream.o : InputStream.h InputStream-inl.h InputStream.cpp
 OutputStream.o : OutputStream.h OutputStream.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o OutputStream.o OutputStream.cpp
 	$(CC) $(CFLAGS) -c -o OutputStream.o OutputStream.cpp
+
+IStream.o : IStream.h IStream-inl.h IStream.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o IStream.o IStream.cpp
+	$(CC) $(CFLAGS) -c -o IStream.o IStream.cpp
+
+OStream.o : OStream.h OStream-inl.h OStream.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o OStream.o OStream.cpp
+	$(CC) $(CFLAGS) -c -o OStream.o OStream.cpp

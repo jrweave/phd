@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= normalize-nt testiri normalize-nt-mpi infer
+OBJS		= normalize-nt normalize-nt-mpi infer
 
 all : build __tests__
 
@@ -48,10 +48,6 @@ force_look :
 normalize-nt : normalize-nt.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS)
 	$(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS)
-
-testiri : testiri.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o testiri testiri.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS)
-	$(CC) $(CFLAGS) -o testiri testiri.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS)
 
 normalize-nt-mpi : normalize-nt-mpi.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt-mpi normalize-nt-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS)

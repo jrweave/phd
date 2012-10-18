@@ -16,23 +16,20 @@
 #include "io/IStream.h"
 
 #include <algorithm>
-#include <istream>
 #include "ptr/MPtr.h"
 #include "sys/char.h"
 
 namespace io {
 
-template<typename istream_t>
-IStream<istream_t>::IStream(const size_t bufsize) throw(BadAllocException)
-    : offset(0), length(0), marked(false) {
+IStream<istream>::IStream(const size_t bufsize) throw(BadAllocException)
+    : stream(cin), offset(0), length(0), marked(false) {
   try {
     NEW(this->buffer, MPtr<uint8_t>, bufsize);
   } RETHROW_BAD_ALLOC
   this->mark_support = (this->stream.tellg() != (streampos) -1);
 }
 
-template<typename istream_t>
-IStream<istream_t>::IStream(istream_t &stream) throw(BadAllocException)
+IStream<istream>::IStream(istream &stream) throw(BadAllocException)
     : stream(stream), offset(0), length(0), marked(false) {
   try {
     NEW(this->buffer, MPtr<uint8_t>, 4096);
@@ -40,8 +37,7 @@ IStream<istream_t>::IStream(istream_t &stream) throw(BadAllocException)
   this->mark_support = (this->stream.tellg() != (streampos) -1);
 }
 
-template<typename istream_t>
-IStream<istream_t>::IStream(istream_t &stream, const size_t bufsize)
+IStream<istream>::IStream(istream &stream, const size_t bufsize)
     throw(BadAllocException, BaseException<size_t>)
     : stream(stream), offset(0), length(0), marked(false) {
   if (bufsize <= 0) {
@@ -53,51 +49,15 @@ IStream<istream_t>::IStream(istream_t &stream, const size_t bufsize)
   this->mark_support = (this->stream.tellg() != (streampos) -1);
 }
 
-///// BEGIN SPECIAL CONSTRUCTORS /////
-
-//IStream<istream>::IStream(const size_t bufsize) throw(BadAllocException)
-//    : stream(cin), offset(0), length(0), marked(false) {
-//  try {
-//    NEW(this->buffer, MPtr<uint8_t>, bufsize);
-//  } RETHROW_BAD_ALLOC
-//  this->mark_support = (this->stream.tellg() != (streampos) -1);
-//}
-//
-//IStream<istream>::IStream(istream &stream) throw(BadAllocException)
-//    : stream(stream), offset(0), length(0), marked(false) {
-//  try {
-//    NEW(this->buffer, MPtr<uint8_t>, 4096);
-//  } RETHROW_BAD_ALLOC
-//  this->mark_support = (this->stream.tellg() != (streampos) -1);
-//}
-//
-//IStream<istream>::IStream(istream &stream, const size_t bufsize)
-//    throw(BadAllocException, BaseException<size_t>)
-//    : stream(stream), offset(0), length(0), marked(false) {
-//  if (bufsize <= 0) {
-//    THROW(BaseException<size_t>, 0, "Specified buffer size must be positive.");
-//  }
-//  try {
-//    NEW(this->buffer, MPtr<uint8_t>, bufsize);
-//  } RETHROW_BAD_ALLOC
-//  this->mark_support = (this->stream.tellg() != (streampos) -1);
-//}
-
-///// END SPECIAL CONSTRUCTORS /////
-
-template<typename istream_t>
-IStream<istream_t>::~IStream() throw(IOException) {
+IStream<istream>::~IStream() throw(IOException) {
   this->buffer->drop();
 }
 
-template<typename istream_t>
-void IStream<istream_t>::close() throw(IOException) {
-  // no such method for istream in general;
-  // appropriate subclasses should override and call this->stream.close();
+void IStream<istream>::close() throw(IOException) {
+  // do nothing; istream has no close method
 }
 
-template<typename istream_t>
-int64_t IStream<istream_t>::available() throw(IOException) {
+int64_t IStream<istream>::available() throw(IOException) {
   if (this->offset < this->length) {
     return this->length - this->offset;
   }
@@ -107,20 +67,17 @@ int64_t IStream<istream_t>::available() throw(IOException) {
     this->buffer->size());
 }
 
-template<typename istream_t>
-bool IStream<istream_t>::mark(const int64_t read_limit) throw(IOException) {
+bool IStream<istream>::mark(const int64_t read_limit) throw(IOException) {
   this->marked = true;
   this->marker = this->stream.tellg();
   return this->marker != (streampos) -1;
 }
 
-template<typename istream_t>
-bool IStream<istream_t>::markSupported() const throw() {
+bool IStream<istream>::markSupported() const throw() {
   return this->mark_support;
 }
 
-template<typename istream_t>
-DPtr<uint8_t> *IStream<istream_t>::read(const int64_t amount)
+DPtr<uint8_t> *IStream<istream>::read(const int64_t amount)
     throw(IOException, BadAllocException) {
   if (this->stream.eof()) {
     return NULL;
@@ -160,8 +117,7 @@ DPtr<uint8_t> *IStream<istream_t>::read(const int64_t amount)
   return s;
 }
 
-template<typename istream_t>
-void IStream<istream_t>::reset() throw(IOException) {
+void IStream<istream>::reset() throw(IOException) {
   if (!this->marked) {
     THROW(IOException, "A mark has not been set.");
   }
@@ -174,8 +130,7 @@ void IStream<istream_t>::reset() throw(IOException) {
   }
 }
 
-template<typename istream_t>
-int64_t IStream<istream_t>::skip(const int64_t n) throw(IOException) {
+int64_t IStream<istream>::skip(const int64_t n) throw(IOException) {
   streampos at = this->stream.tellg();
   this->stream.ignore(n);
   if (this->stream.bad()) {

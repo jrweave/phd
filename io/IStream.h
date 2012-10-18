@@ -16,6 +16,7 @@
 #ifndef __IO__ISTREAM_H__
 #define __IO__ISTREAM_H__
 
+#include <istream>
 #include "ex/BaseException.h"
 #include "ex/TraceableException.h"
 #include "io/IOException.h"
@@ -42,6 +43,31 @@ protected:
 public:
   IStream(istream_t &stream) throw(BadAllocException);
   IStream(istream_t &stream, const size_t bufsize)
+      throw(BadAllocException, BaseException<size_t>);
+  virtual ~IStream() throw(IOException);
+  virtual int64_t available() throw(IOException);
+  virtual void close() throw(IOException);
+  virtual bool mark(const int64_t read_limit) throw(IOException);
+  virtual bool markSupported() const throw();
+  //virtual DPtr<uint8_t> *read() throw(IOException, BadAllocException);
+  virtual DPtr<uint8_t> *read(const int64_t amount)
+      throw(IOException, BadAllocException);
+  virtual void reset() throw(IOException);
+  virtual int64_t skip(const int64_t n) throw(IOException);
+};
+
+template<>
+class IStream <istream> : public InputStream {
+protected:
+  istream &stream;
+  streampos marker;
+  DPtr<uint8_t> *buffer;
+  size_t offset, length;
+  bool mark_support, marked;
+  IStream(const size_t bufsize) throw(BadAllocException);
+public:
+  IStream(istream &stream) throw(BadAllocException);
+  IStream(istream &stream, const size_t bufsize)
       throw(BadAllocException, BaseException<size_t>);
   virtual ~IStream() throw(IOException);
   virtual int64_t available() throw(IOException);
