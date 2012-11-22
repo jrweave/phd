@@ -123,6 +123,7 @@ public:
   enum RIFTermType getType() const throw();
   bool isSimple() const throw();
   bool isGround() const throw();
+  bool containsFunction() const throw();
   void getVars(VarSet &vars) const throw();
 
   // VARIABLE

@@ -39,5 +39,10 @@ enum RIFAtomicType RIFAtomic::getType() const throw() {
   return this->type;
 }
 
+inline
+size_t RIFAtomic::startPart() const throw() {
+  return this->type == ATOM || this->type == EXTERNAL ? 0 : 1;
+}
+
 
 }

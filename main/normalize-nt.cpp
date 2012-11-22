@@ -340,7 +340,7 @@ int main (int argc, char **argv) {
     ONCE_BARRIER_END
 
     if (argv[i][0] == '-' && argv[i][1] == '\0') {
-      NEW(ifs, IStream<istream>, cin);
+      NEW(ifs, IStream<istream>, cin, 1024*1024);
     } else {
       NEW(ifs, IFStream, argv[i]);
     }

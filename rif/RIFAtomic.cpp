@@ -814,9 +814,11 @@ bool RIFAtomic::isGround() const throw() {
 }
 
 void RIFAtomic::getVars(VarSet &vars) const throw() {
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   switch (this->type) {
   case ATOM:
   case EXTERNAL: {
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     atom_state *a = (atom_state*) this->state;
     if (a->args != NULL) {
       RIFTerm *mark = a->args->dptr();
@@ -825,25 +827,103 @@ void RIFAtomic::getVars(VarSet &vars) const throw() {
         mark->getVars(vars);
       }
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
   }
   case EQUALITY:
   case MEMBERSHIP:
   case SUBCLASS: {
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     pair<RIFTerm, RIFTerm> *p = (pair<RIFTerm, RIFTerm>*) this->state;
     p->first.getVars(vars);
     p->second.getVars(vars);
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
   }
   case FRAME: {
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     frame_state *f = (frame_state*) this->state;
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     f->object.getVars(vars);
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     SlotMap::const_iterator it = f->slots.begin();
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     for (; it != f->slots.end(); ++it) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       it->first.getVars(vars);
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       it->second.getVars(vars);
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
+  }
+  default: {
+    THROW(TraceableException, "This should never happen.");
+  }
+  }
+}
+
+size_t RIFAtomic::getArity() const throw() {
+  switch (this->type) {
+  case ATOM:
+  case EXTERNAL: {
+    atom_state *a = (atom_state*) this->state;
+    return a->args == NULL ? 0 : a->args->size();
+  }
+  case EQUALITY:
+  case MEMBERSHIP:
+  case SUBCLASS: {
+    return 2;
+  }
+  case FRAME: {
+    frame_state *f = (frame_state*) this->state;
+    return 1 + (f->slots.size() << 1);
+  }
+  default: {
+    THROW(TraceableException, "This should never happen.");
+  }
+  }
+}
+
+// n can be zero only for ATOM or EXTERNAL
+RIFTerm RIFAtomic::getPart(const size_t n) const
+    throw(BaseException<size_t>) {
+  bool zero_allowed = this->type == ATOM || this->type == EXTERNAL;
+  if (n == 0 && !zero_allowed) {
+    THROW(BaseException<size_t>, n, "Invalid part index.");
+  }
+  if (n > this->getArity()) {
+    THROW(BaseException<size_t>, n, "Invalid part index.");
+  }
+  switch (this->type) {
+  case ATOM:
+  case EXTERNAL: {
+    if (n == 0) {
+      return RIFTerm(((atom_state*)this->state)->pred);
+    }
+    return *(((atom_state*)this->state)->args->dptr() + (n-1));
+  }
+  case EQUALITY:
+  case MEMBERSHIP:
+  case SUBCLASS: {
+    pair<RIFTerm, RIFTerm> *p = (pair<RIFTerm, RIFTerm>*) this->state;
+    return n == 1 ? p->first : p->second;
+  }
+  case FRAME: {
+    frame_state *f = (frame_state*) this->state;
+    if (n == 1) {
+      return f->object;
+    }
+    SlotMap::const_iterator it = f->slots.begin();
+    size_t i = n;
+    for (i -= 2; i > 1; i -= 2) {
+      ++it;
+    }
+    return i == 0 ? it->first : it->second;
+  }
+  default: {
+    THROW(BaseException<size_t>, n, "This should never happen.");
   }
   }
 }

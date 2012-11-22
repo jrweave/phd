@@ -140,65 +140,93 @@ RIFTerm::~RIFTerm() throw() {
 }
 
 int RIFTerm::cmp(const RIFTerm &t1, const RIFTerm &t2) throw() {
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   if (t1.type != t2.type) {
     return ((int) t1.type) - ((int) t2.type);
   }
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   switch (t1.type) {
   case VARIABLE:
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return RIFVar::cmp(*((RIFVar*)t1.state), *((RIFVar*)t2.state));
   case CONSTANT:
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return RIFConst::cmp(*((RIFConst*)t1.state), *((RIFConst*)t2.state));
   case LIST: {
     // sort primarily on length, for efficiency
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     DPtr<RIFTerm> *args1 = (DPtr<RIFTerm> *)t1.state;
     DPtr<RIFTerm> *args2 = (DPtr<RIFTerm> *)t2.state;
     size_t len1 = args1 == NULL ? 0 : args1->size();
     size_t len2 = args2 == NULL ? 0 : args2->size();
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     if (len1 != len2) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       return len1 < len2 ? -1 : 1;
     }
     if (len1 == 0) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       return 0;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     RIFTerm *begin = (RIFTerm *)args1->dptr();
     RIFTerm *end = begin + args1->size();
     RIFTerm *mark = (RIFTerm *)args2->dptr();
     for (; begin != end; ++begin) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       int c = RIFTerm::cmp(*begin, *mark);
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       if (c != 0) {
+        // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
         return c;
       }
       ++mark;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return 0;
   }
   case FUNCTION: {
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     func_state *f1 = (func_state *)t1.state;
     func_state *f2 = (func_state *)t2.state;
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     int c = RIFConst::cmp(f1->pred, f2->pred);
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     if (c != 0) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       return c;
     }
     DPtr<RIFTerm> *args1 = f1->args;
     DPtr<RIFTerm> *args2 = f2->args;
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     size_t len1 = args1 == NULL ? 0 : args1->size();
     size_t len2 = args2 == NULL ? 0 : args2->size();
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     if (len1 != len2) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       return len1 < len2 ? -1 : 1;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     if (len1 == 0) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       return 0;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     RIFTerm *begin = (RIFTerm *)args1->dptr();
     RIFTerm *end = begin + args1->size();
     RIFTerm *mark = (RIFTerm *)args2->dptr();
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     for (; begin != end; ++begin) {
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       int c = RIFTerm::cmp(*begin, *mark);
+      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       if (c != 0) {
+        // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
         return c;
       }
       ++mark;
     }
+    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return 0;
   }
   }
@@ -564,9 +592,35 @@ bool RIFTerm::isGround() const throw() {
   }
 }
 
+bool RIFTerm::containsFunction() const throw() {
+  switch (this->type) {
+    case VARIABLE:
+    case CONSTANT:
+      return false;
+    case FUNCTION:
+      return true;
+    case LIST: {
+      if (this->state == NULL) {
+        return false;
+      }
+      DPtr<RIFTerm> *list = (DPtr<RIFTerm>*) this->state;
+      RIFTerm *begin = list->dptr();
+      RIFTerm *end = begin + list->size();
+      for (; begin != end; ++begin) {
+        if (begin->containsFunction()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+}
+
 void RIFTerm::getVars(VarSet &vars) const throw() {
   if (this->type == VARIABLE) {
-    vars.insert(*((RIFVar*)this->state));
+    RIFVar *v = (RIFVar*)this->state;
+    RIFVar v2 = *v;
+    vars.insert(v2);
   } else if (this->type == FUNCTION) {
     func_state *f = (func_state*) this->state;
     if (f->args != NULL) {

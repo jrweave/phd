@@ -46,20 +46,31 @@ RIFVar::RIFVar(DPtr<uint8_t> *utf8name)
 }
 
 int RIFVar::cmp(const RIFVar &var1, const RIFVar &var2) throw() {
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   if (&var1 == &var2) {
     return 0;
   }
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   DPtr<uint8_t> *name1 = var1.getName();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   DPtr<uint8_t> *name2 = var2.getName();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   size_t size1 = name1->size();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   size_t size2 = name2->size();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   size_t len = min(size1, size2);
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   int cmp = memcmp(name1->dptr(), name2->dptr(), len * sizeof(uint8_t));
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   name1->drop();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   name2->drop();
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   if (cmp != 0) {
     return cmp;
   }
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   return size1 < size2 ? -1 :
         (size1 > size2 ?  1 : 0);
 }
@@ -218,6 +229,7 @@ DPtr<uint8_t> *RIFVar::toUTF8String() const throw(BadAllocException) {
 }
 
 RIFVar &RIFVar::operator=(const RIFVar &rhs) throw() {
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   if (this != &rhs) {
     if (this->utf8name != NULL) {
       this->utf8name->drop();
@@ -228,6 +240,7 @@ RIFVar &RIFVar::operator=(const RIFVar &rhs) throw() {
     }
     this->normalized = rhs.normalized;
   }
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   return *this;
 }
 

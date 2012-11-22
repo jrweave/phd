@@ -43,9 +43,11 @@ RIFVar::RIFVar() throw()
 inline
 RIFVar::RIFVar(const RIFVar &copy) throw()
     : utf8name(copy.utf8name), normalized(copy.normalized) {
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   if (this->utf8name != NULL) {
     this->utf8name->hold();
   }
+  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
 }
 
 inline

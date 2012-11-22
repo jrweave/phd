@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= normalize-nt normalize-nt-mpi infer
+OBJS		= normalize-nt normalize-nt-mpi infer prd2cnf refine
 
 all : build __tests__
 
@@ -56,3 +56,11 @@ normalize-nt-mpi : normalize-nt-mpi.cpp
 infer : infer.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS)
 	$(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS)
+
+prd2cnf : pattern-etc.cpp prd2cnf.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o prd2cnf prd2cnf.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS)
+	$(CC) $(CFLAGS) -o prd2cnf prd2cnf.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS)
+
+refine : pattern-etc.cpp refine.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o refine refine.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS)
+	$(CC) $(CFLAGS) -o refine refine.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS)

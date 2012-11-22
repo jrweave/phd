@@ -133,6 +133,9 @@ public:
   enum RIFAtomicType getType() const throw();
   bool isGround() const throw();
   void getVars(VarSet &vars) const throw();
+  size_t getArity() const throw();
+  size_t startPart() const throw();
+  RIFTerm getPart(const size_t n) const throw(BaseException<size_t>);
 
   // ATOM, EXTERNAL
   RIFConst getPred() const throw(BaseException<enum RIFAtomicType>);
