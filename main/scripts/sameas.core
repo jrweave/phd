@@ -1,0 +1,16 @@
+Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+ Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+ Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+ Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+ Prefix(rif  <http://www.w3.org/2007/rif#>)
+ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+ Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+ Prefix(dc   <http://purl.org/dc/terms/>)
+ Prefix(mine <tag://weavej3@rpi.edu,2012:/>)
+
+(* <#eq-trans> *)
+Forall ?x ?z ?y (
+   ?x[owl:sameAs->?z] :- And(
+       ?x[owl:sameAs->?y]
+       ?y[owl:sameAs->?z]  ))
+

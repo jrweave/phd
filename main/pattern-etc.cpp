@@ -31,7 +31,12 @@ using namespace sat;
 using namespace std;
 
 #define DECIDE 0
-#define NONTRIVIAL 0
+#define NOPROBLEMS 1
+#define NONTRIVIAL 1
+
+#if DECIDE
+#error "Decision isn't working yet.  Define DECIDE as 0."
+#endif
 
 typedef set<RIFTerm,
             bool (*)(const RIFTerm &, const RIFTerm &)>
@@ -430,7 +435,9 @@ bool print_literal(const bool sign, const enum Pred pred, const Pattern &patt) {
   } else {
     id = it->second;
   }
+#if !DECIDE
   id <<= 2;
+#endif
   id += 1 + (int)pred;
   if (!sign) {
     sout << '-';
@@ -444,6 +451,21 @@ void termc() {
   ++numclauses;
 }
 
+#if DECIDE
+void fix_pattern(const enum Pred pred, const Pattern &patt) {
+  if (pred != REPLICATE) {
+    cerr << "[ERROR] When in decision mode, only the pred REPLICATE can be used, but found " << pred << endl;
+    THROW(TraceableException, "In decision mode, on the pred REPLICATE can be used.");
+  }
+  enum Pred p;
+  if (is_fixed_pattern(patt, p)) {
+    return;
+  }
+  print_literal(true, pred, patt);
+  termc();
+  label2pred[patt] = pred;
+}
+#else
 void fix_pattern(const enum Pred pred, const Pattern &patt) {
   if (pred == PROBLEM) {
     cerr << "[ERROR] Not allowed to fix value to PROBLEM, as you just tried with " << patt << endl;
@@ -477,6 +499,7 @@ void fix_pattern(const enum Pred pred, const Pattern &patt) {
   }
   label2pred[patt] = pred;
 }
+#endif
 
 void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1) {
   if (possibility(sign1, pred1, patt1) > 0) {
@@ -487,9 +510,7 @@ void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1)
     cerr << "[ERROR] Contradiction in generating SAT formula.  " << patt1 << endl;
     THROW(TraceableException, "Contradiction in generating SAT formula.");
   }
-  print_literal(sign1, pred1, patt1);
-  sout << " 0" << endl;
-  ++numclauses;
+  termc();
 }
 
 void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1,
@@ -507,8 +528,7 @@ void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1,
     cerr << "[ERROR] Contradiction in generating SAT formula.  " << patt1 << " *OR* " << patt2 << endl;
     THROW(TraceableException, "Contradiction in generating SAT formula.");
   }
-  sout << " 0" << endl;
-  ++numclauses;
+  termc();
 }
 
 void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1,
@@ -532,8 +552,7 @@ void print_clause(const bool sign1, const enum Pred pred1, const Pattern &patt1,
     cerr << "[ERROR] Contradiction in generating SAT formula.  " << patt1 << " *OR* " << patt2 << endl;
     THROW(TraceableException, "Contradiction in generating SAT formula.");
   }
-  sout << " 0" << endl;
-  ++numclauses;
+  termc();
 }
 
 void condstr2patt(string str, set<Pattern> &patterns) {
@@ -620,6 +639,37 @@ void condstr2patt(string str, set<Pattern> &patterns) {
   subc->drop();
 }
 
+#if DECIDE
+void handle_pragma(string str, set<Pattern> &patterns) {
+  if (str.size() >= 10 && str.substr(0, 10) == string("REPLICATE ")) {
+    set<Pattern> patts;
+    condstr2patt(str.substr(10), patts);
+    set<Pattern>::const_iterator it = patts.begin();
+    for (; it != patts.end(); ++it) {
+      fix_pattern(REPLICATE, *it);
+    }
+    patterns.insert(patts.begin(), patts.end());
+  } else if (str.size() >= 10 && str.substr(0, 10) == string("ARBITRARY ")) {
+    set<Pattern> patts;
+    condstr2patt(str.substr(10), patts);
+    set<Pattern>::const_iterator it = patts.begin();
+    for (; it != patts.end(); ++it) {
+      print_clause(false, REPLICATE, *it);
+    }
+    patterns.insert(patts.begin(), patts.end());
+  } else if (str.size() >= 6 && str.substr(0, 6) == string("SPLIT ")) {
+    set<Pattern> patts;
+    condstr2patt(str.substr(6), patts);
+    set<Pattern>::const_iterator it = patts.begin();
+    for (; it != patts.end(); ++it) {
+      print_clause(false, REPLICATE, *it);
+    }
+    patterns.insert(patts.begin(), patts.end());
+  } else {
+    cerr << "[WARNING] Ignoring unrecognized pragma: " << str << endl;
+  }
+}
+#else
 void handle_pragma(string str, set<Pattern> &patterns) {
   if (str.size() >= 10 && str.substr(0, 10) == string("REPLICATE ")) {
     set<Pattern> patts;
@@ -649,6 +699,7 @@ void handle_pragma(string str, set<Pattern> &patterns) {
     cerr << "[WARNING] Ignoring unrecognized pragma: " << str << endl;
   }
 }
+#endif
 
 void read_rules(vector<RIFRule> &rules, set<Pattern> &patterns) {
   string line;
@@ -682,14 +733,14 @@ void force_nontrivial_solution(set<Pattern> &patterns) {
   patterns.insert(patt);
 }
 
-void generate_replication_clauses(const set<Pattern> &patts) {
+void generate_replication_clauses(const multiset<Pattern> &patts) {
   set<Pattern>::const_iterator it = patts.begin();
   for (; it != patts.end(); ++it) {
     print_clause(true, REPLICATE, *it);
   }
 }
 
-void generate_condition_based_clauses(const set<Pattern> &patts) {
+void generate_condition_based_clauses(const multiset<Pattern> &patts) {
   set<Pattern>::const_iterator it = patts.begin();
   for (; it != patts.end(); ++it) {
     set<Pattern>::const_iterator it2 = patts.begin();
@@ -702,7 +753,19 @@ void generate_condition_based_clauses(const set<Pattern> &patts) {
   }
 }
 
-void generate_action_based_clauses(const set<Pattern> &bpatts, const set<Pattern> &hpatts) {
+#if DECIDE
+void generate_action_based_clauses(const multiset<Pattern> &bpatts, const multiset<Pattern> &hpatts) {
+  set<Pattern>::const_iterator hit = hpatts.begin();
+  for (; hit != hpatts.end(); ++hit) {
+    set<Pattern>::const_iterator bit = bpatts.begin();
+    for (; bit != bpatts.end(); ++bit) {
+      print_clause(false, REPLICATE, *hit,
+                      true, REPLICATE, *bit);
+    }
+  }
+}
+#else
+void generate_action_based_clauses(const multiset<Pattern> &bpatts, const multiset<Pattern> &hpatts) {
   set<Pattern>::const_iterator hit = hpatts.begin();
   for (; hit != hpatts.end(); ++hit) {
     print_clause(false, SPLIT, *hit,
@@ -716,9 +779,10 @@ void generate_action_based_clauses(const set<Pattern> &bpatts, const set<Pattern
     }
   }
 }
+#endif
 
-void generate_rule_based_clauses(const set<Pattern> &cpatts, const set<Pattern> &apatts,
-                                 const set<Pattern> &npatts, const set<Pattern> &rpatts) {
+void generate_rule_based_clauses(const multiset<Pattern> &cpatts, const multiset<Pattern> &apatts,
+                                 const multiset<Pattern> &npatts, const multiset<Pattern> &rpatts) {
   generate_replication_clauses(npatts);
   generate_replication_clauses(rpatts);
   generate_condition_based_clauses(cpatts);
@@ -729,10 +793,27 @@ void generate_rule_based_clauses(const set<Pattern> &cpatts, const set<Pattern> 
   generate_action_based_clauses(npatts, rpatts);
 }
 
+#if DECIDE
 void generate_pattern_based_clauses(const set<Pattern> &patterns) {
   set<Pattern>::const_iterator it1 = patterns.begin();
   for (; it1 != patterns.end(); ++it1) {
-#if DECIDE
+    set<Pattern>::const_iterator it2 = patterns.begin();
+    for (; it2 != patterns.end(); ++it2) {
+      if (it1 != it2) {
+        if (it2->implies(*it1)) {
+          cerr << "[INFO] IMPLY? " << *it2 << ' ' << *it1 << endl;
+          print_clause(false, REPLICATE, *it1,
+                          true, REPLICATE, *it2);
+        }
+      }
+    }
+  }
+}
+#else
+void generate_pattern_based_clauses(const set<Pattern> &patterns) {
+  set<Pattern>::const_iterator it1 = patterns.begin();
+  for (; it1 != patterns.end(); ++it1) {
+#if NOPROBLEMS
     print_clause(false, PROBLEM, *it1);
 #endif
     print_clause(true, SPLIT, *it1,
@@ -770,6 +851,7 @@ void generate_pattern_based_clauses(const set<Pattern> &patterns) {
     }
   }
 }
+#endif
 
 void extract_restrictions(const RIFCondition &condition, NMap &restrictions) {
   try {
@@ -839,7 +921,7 @@ void extract_restrictions(const RIFCondition &condition, NMap &restrictions) {
   } JUST_RETHROW(TraceableException, "(rethrow)")
 }
 
-void extract_patterns(const RIFAtomic &atom, const NMap &restrictions, set<Pattern> &patts) {
+void extract_patterns(const RIFAtomic &atom, const NMap &restrictions, multiset<Pattern> &patts) {
   try {
     if (isFixed(atom)) {
       return;
@@ -861,7 +943,7 @@ void extract_patterns(const RIFAtomic &atom, const NMap &restrictions, set<Patte
 }
 
 void extract_patterns(const RIFCondition &condition, const NMap &restrictions,
-                      set<Pattern> &patts, set<Pattern> &npatts) {
+                      multiset<Pattern> &patts, multiset<Pattern> &npatts) {
   try {
     switch (condition.getType()) {
     case ATOMIC: {
@@ -891,7 +973,7 @@ void extract_patterns(const RIFCondition &condition, const NMap &restrictions,
 }
 
 void extract_patterns(const RIFActionBlock &actionblock, const NMap &restrictions,
-                      set<Pattern> &patts, set<Pattern> &rpatts) {
+                      multiset<Pattern> &patts, multiset<Pattern> &rpatts) {
   try {
     DPtr<RIFAction> *actions = actionblock.getActions();
     RIFAction *action = actions->dptr();
@@ -910,8 +992,8 @@ void extract_patterns(const RIFActionBlock &actionblock, const NMap &restriction
   } JUST_RETHROW(TraceableException, "(rethrow)")
 }
 
-void extract_patterns(const RIFRule &rule, set<Pattern> &cpatts, set<Pattern> &apatts,
-                                           set<Pattern> &npatts, set<Pattern> &rpatts) {
+void extract_patterns(const RIFRule &rule, multiset<Pattern> &cpatts, multiset<Pattern> &apatts,
+                                           multiset<Pattern> &npatts, multiset<Pattern> &rpatts) {
   try {
     NMap restrictions (RIFTerm::cmplt0);
     RIFCondition condition = rule.getCondition();
@@ -922,6 +1004,16 @@ void extract_patterns(const RIFRule &rule, set<Pattern> &cpatts, set<Pattern> &a
   } JUST_RETHROW(TraceableException, "(rethrow)")
 }
 
+#if DECIDE
+void print_cnf() {
+  size_t i;
+  for (i = 0; i < num2label.size(); ++i) {
+    cout << "c " << i+1 << " REPLICATE " << num2label[i] << endl;
+  }
+  cout << "p cnf " << num2label.size() << ' ' << numclauses << endl;
+  cout << sout.str();
+}
+#else
 void print_cnf() {
   size_t i;
   for (i = 0; i < num2label.size(); ++i) {
@@ -934,6 +1026,7 @@ void print_cnf() {
   cout << "p cnf " << 4*num2label.size() << ' ' << numclauses << endl;
   cout << sout.str();
 }
+#endif
 
 int prd2cnf(int argc, char **argv) {
   vector<RIFRule> rules;
@@ -945,7 +1038,7 @@ int prd2cnf(int argc, char **argv) {
 #endif
   vector<RIFRule>::const_iterator it = rules.begin();
   for (; it != rules.end(); ++it) {
-    set<Pattern> cpatts, apatts, npatts, rpatts;
+    multiset<Pattern> cpatts, apatts, npatts, rpatts;
     extract_patterns(*it, cpatts, apatts, npatts, rpatts);
     patterns.insert(cpatts.begin(), cpatts.end());
     patterns.insert(apatts.begin(), apatts.end());

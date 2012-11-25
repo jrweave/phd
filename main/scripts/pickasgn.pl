@@ -24,7 +24,7 @@ sub pickbest {
 $last_asgn = '';
 $cur_asgn = '';
 while (<STDIN>) {
-	if ($_ =~ m/^===== Solution \d+ =====$/) {
+	if ($_ =~ m/^=====\s*Solution\s*\d+ =====$/) {
 		if ($last_asgn eq '') {
 			$last_asgn = $cur_asgn;
 		} else {

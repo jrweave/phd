@@ -40,7 +40,7 @@ while (<STDIN>) {
 				}
 			}
 		}
-	} elsif ($_ =~ m/^c/) {
+	} elsif ($_ =~ m/^c|UNSAT/) {
 		print STDERR $_;
 	}
 }

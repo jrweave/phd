@@ -8,21 +8,17 @@ Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
  Prefix(dc   <http://purl.org/dc/terms/>)
  Prefix(mine <tag://weavej3@rpi.edu,2012:/>)
 
-#PRAGMA SPLIT And(?s[?p->?o])
+(* <#eq-ref> *)
+Forall ?p ?o ?s (
+   ?s[owl:sameAs->?s] :- ?s[?p->?o])
 
-#(* <#eq-ref> *)
-#Forall ?p ?o ?s (
-#   ?s[owl:sameAs->?s] :- ?s[?p->?o])
-#
-#(* <#eq-ref1> *)
-#Forall ?p ?o ?s (
-#   ?p[owl:sameAs->?p] :- ?s[?p->?o])
-#
-#(* <#eq-ref2> *)
-#Forall ?p ?o ?s (
-#   ?o[owl:sameAs->?o] :- ?s[?p->?o])
+(* <#eq-ref1> *)
+Forall ?p ?o ?s (
+   ?p[owl:sameAs->?p] :- ?s[?p->?o])
 
-##PRAGMA REPLICATE And(?y[owl:sameAs->?x])
+(* <#eq-ref2> *)
+Forall ?p ?o ?s (
+   ?o[owl:sameAs->?o] :- ?s[?p->?o])
 
 (* <#eq-sym> *)
 Forall ?x ?y (
@@ -82,7 +78,7 @@ Forall ?x ?y (
 (* <#prp-ap-incompatibleWith> *)
    owl:incompatibleWith[rdf:type->owl:AnnotationProperty]
 
-#PRAGMA REPLICATE And(?x[rdf:domain->?c])
+#PRAGMA REPLICATE And(?x[rdfs:domain->?c])
 
 (* <#prp-dom> *)
 Forall ?p ?c ?x ?y (
@@ -98,19 +94,23 @@ Forall ?p ?c ?x ?y (
        ?p[rdfs:range->?c]
        ?x[?p->?y]  ))
 
-#(* <#prp-fp> *)
-#Forall ?p ?y2 ?x ?y1 (
-#   ?y1[owl:sameAs->?y2] :- And(
-#       ?p[rdf:type->owl:FunctionalProperty]
-#       ?x[?p->?y1]
-#       ?x[?p->?y2]  ))
+#PRAGMA REPLICATE And(?p[rdf:type->owl:FunctionalProperty])
 
-#(* <#prp-ifp> *)
-#Forall ?p ?x1 ?x2 ?y (
-#   ?x1[owl:sameAs->?x2] :- And(
-#       ?p[rdf:type->owl:InverseFunctionalProperty]
-#       ?x1[?p->?y]
-#       ?x2[?p->?y]  ))
+(* <#prp-fp> *)
+Forall ?p ?y2 ?x ?y1 (
+   ?y1[owl:sameAs->?y2] :- And(
+       ?p[rdf:type->owl:FunctionalProperty]
+       ?x[?p->?y1]
+       ?x[?p->?y2]  ))
+
+#PRAGMA REPLICATE And(?p[rdf:type->owl:InverseFunctionalProperty])
+
+(* <#prp-ifp> *)
+Forall ?p ?x1 ?x2 ?y (
+   ?x1[owl:sameAs->?x2] :- And(
+       ?p[rdf:type->owl:InverseFunctionalProperty]
+       ?x1[?p->?y]
+       ?x2[?p->?y]  ))
 
 #PRAGMA REPLICATE And(?p[rdf:type->owl:IrreflexiveProperty])
 
@@ -128,19 +128,23 @@ Forall ?p ?x ?y (
        ?p[rdf:type->owl:SymmetricProperty]
        ?x[?p->?y]  ))
 
-#(* <#prp-asyp> *)
-#Forall ?p ?x ?y (
-#   rif:error() :- And(
-#       ?p[rdf:type->owl:AsymmetricProperty]
-#       ?x[?p->?y]
-#       ?y[?p->?x]  ))
+#PRAGMA REPLICATE And(?p[rdf:type->owl:AsymmetricProperty])
 
-#(* <#prp-trp> *)
-#Forall ?p ?x ?z ?y (
-#   ?x[?p->?z] :- And(
-#       ?p[rdf:type->owl:TransitiveProperty]
-#       ?x[?p->?y]
-#       ?y[?p->?z]  ))
+(* <#prp-asyp> *)
+Forall ?p ?x ?y (
+   rif:error() :- And(
+       ?p[rdf:type->owl:AsymmetricProperty]
+       ?x[?p->?y]
+       ?y[?p->?x]  ))
+
+#PRAGMA REPLICATE And(?p[rdf:type->owl:TransitiveProperty])
+
+(* <#prp-trp> *)
+Forall ?p ?x ?z ?y (
+   ?x[?p->?z] :- And(
+       ?p[rdf:type->owl:TransitiveProperty]
+       ?x[?p->?y]
+       ?y[?p->?z]  ))
 
 #PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf->?p2])
 
@@ -164,12 +168,14 @@ Forall ?x ?y ?p2 ?p1 (
        ?p1[owl:equivalentProperty->?p2]
        ?x[?p2->?y]  ))
 
-#(* <#prp-pdw> *)
-#Forall ?x ?y ?p2 ?p1 (
-#   rif:error() :- And(
-#       ?p1[owl:propertyDisjointWith->?p2]
-#       ?x[?p1->?y]
-#       ?x[?p2->?y]  ))
+#PRAGMA REPLICATE And(?p1[owl:propertyDisjointWith->?p2])
+
+(* <#prp-pdw> *)
+Forall ?x ?y ?p2 ?p1 (
+   rif:error() :- And(
+       ?p1[owl:propertyDisjointWith->?p2]
+       ?x[?p1->?y]
+       ?x[?p2->?y]  ))
 
 #PRAGMA REPLICATE And(?p1[owl:inverseOf->?p2])
 
@@ -185,6 +191,8 @@ Forall ?x ?y ?p2 ?p1 (
        ?p1[owl:inverseOf->?p2]
        ?x[?p2->?y]  ))
 
+#PRAGMA REPLICATE And(?c[rdf:type->owl:Class])
+
 (* <#cls-thing> *)
    owl:Thing[rdf:type->owl:Class]
 
@@ -195,16 +203,16 @@ Forall ?x ?y ?p2 ?p1 (
 Forall ?x (
    rif:error() :- ?x[rdf:type->owl:Nothing])
 
-#PRAGMA REPLICATE And(?x[owl:someValuesFrom->owl:Thing])
+#PRAGMA REPLICATE And(?x[owl:someValuesFrom->?y])
 #PRAGMA REPLICATE And(?x[owl:onProperty->?p])
 
-#(* <#cls-svf1> *)
-#Forall ?p ?v ?u ?x ?y (
-#   ?u[rdf:type->?x] :- And(
-#       ?x[owl:someValuesFrom->?y]
-#       ?x[owl:onProperty->?p]
-#       ?u[?p->?v]
-#       ?v[rdf:type->?y]  ))
+(* <#cls-svf1> *)
+Forall ?p ?v ?u ?x ?y (
+   ?u[rdf:type->?x] :- And(
+       ?x[owl:someValuesFrom->?y]
+       ?x[owl:onProperty->?p]
+       ?u[?p->?v]
+       ?v[rdf:type->?y]  ))
 
 (* <#cls-svf2> *)
 Forall ?p ?v ?u ?x (
@@ -215,13 +223,13 @@ Forall ?p ?v ?u ?x (
 
 #PRAGMA REPLICATE And(?x[owl:allValuesFrom->?y])
 
-#(* <#cls-avf> *)
-#Forall ?p ?v ?u ?x ?y (
-#   ?v[rdf:type->?y] :- And(
-#       ?x[owl:allValuesFrom->?y]
-#       ?x[owl:onProperty->?p]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?v]  ))
+(* <#cls-avf> *)
+Forall ?p ?v ?u ?x ?y (
+   ?v[rdf:type->?y] :- And(
+       ?x[owl:allValuesFrom->?y]
+       ?x[owl:onProperty->?p]
+       ?u[rdf:type->?x]
+       ?u[?p->?v]  ))
 
 #PRAGMA REPLICATE And(?x[owl:hasValue->?y])
 
@@ -240,67 +248,69 @@ Forall ?p ?u ?x ?y (
        ?u[?p->?y]  ))
 
 #PRAGMA REPLICATE And(?x[owl:maxCardinality->0])
+#PRAGMA REPLICATE And(?x[owl:maxCardinality->1])
 
-#(* <#cls-maxc1> *)
-#Forall ?p ?u ?x ?y (
-#   rif:error() :- And(
-#       ?x[owl:maxCardinality->0]
-#       ?x[owl:onProperty->?p]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y]  ))
+(* <#cls-maxc1> *)
+Forall ?p ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]  ))
 
-#(* <#cls-maxc2> *)
-#Forall ?p ?y2 ?u ?x ?y1 (
-#   ?y1[owl:sameAs->?y2] :- And(
-#       ?x[owl:maxCardinality->1]
-#       ?x[owl:onProperty->?p]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y1]
-#       ?u[?p->?y2]  ))
+(* <#cls-maxc2> *)
+Forall ?p ?y2 ?u ?x ?y1 (
+   ?y1[owl:sameAs->?y2] :- And(
+       ?x[owl:maxCardinality->1]
+       ?x[owl:onProperty->?p]
+       ?u[rdf:type->?x]
+       ?u[?p->?y1]
+       ?u[?p->?y2]  ))
 
 #PRAGMA REPLICATE And(?x[owl:maxQualifiedCardinality->0])
+#PRAGMA REPLICATE And(?x[owl:maxQualifiedCardinality->1])
 #PRAGMA REPLICATE And(?x[owl:onClass->?c])
 
-#(* <#cls-maxqc1> *)
-#Forall ?p ?c ?u ?x ?y (
-#   rif:error() :- And(
-#       ?x[owl:maxQualifiedCardinality->0]
-#       ?x[owl:onProperty->?p]
-#       ?x[owl:onClass->?c]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y]
-#       ?y[rdf:type->?c]  ))
-#
-#(* <#cls-maxqc2> *)
-#Forall ?p ?u ?x ?y (
-#   rif:error() :- And(
-#       ?x[owl:maxQualifiedCardinality->0]
-#       ?x[owl:onProperty->?p]
-#       ?x[owl:onClass->owl:Thing]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y]  ))
+(* <#cls-maxqc1> *)
+Forall ?p ?c ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxQualifiedCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->?c]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]
+       ?y[rdf:type->?c]  ))
 
-#(* <#cls-maxqc3> *)
-#Forall ?p ?y2 ?c ?u ?x ?y1 (
-#   ?y1[owl:sameAs->?y2] :- And(
-#       ?x[owl:maxQualifiedCardinality->1]
-#       ?x[owl:onProperty->?p]
-#       ?x[owl:onClass->?c]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y1]
-#       ?y1[rdf:type->?c]
-#       ?u[?p->?y2]
-#       ?y2[rdf:type->?c]  ))
+(* <#cls-maxqc2> *)
+Forall ?p ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxQualifiedCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->owl:Thing]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]  ))
 
-#(* <#cls-maxqc4> *)
-#Forall ?p ?y2 ?u ?x ?y1 (
-#   ?y1[owl:sameAs->?y2] :- And(
-#       ?x[owl:maxQualifiedCardinality->1]
-#       ?x[owl:onProperty->?p]
-#       ?x[owl:onClass->owl:Thing]
-#       ?u[rdf:type->?x]
-#       ?u[?p->?y1]
-#       ?u[?p->?y2]  ))
+(* <#cls-maxqc3> *)
+Forall ?p ?y2 ?c ?u ?x ?y1 (
+   ?y1[owl:sameAs->?y2] :- And(
+       ?x[owl:maxQualifiedCardinality->1]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->?c]
+       ?u[rdf:type->?x]
+       ?u[?p->?y1]
+       ?y1[rdf:type->?c]
+       ?u[?p->?y2]
+       ?y2[rdf:type->?c]  ))
+
+(* <#cls-maxqc4> *)
+Forall ?p ?y2 ?u ?x ?y1 (
+   ?y1[owl:sameAs->?y2] :- And(
+       ?x[owl:maxQualifiedCardinality->1]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->owl:Thing]
+       ?u[rdf:type->?x]
+       ?u[?p->?y1]
+       ?u[?p->?y2]  ))
 
 #PRAGMA REPLICATE And(?c1[rdfs:subClassOf->?c2])
 
@@ -326,12 +336,12 @@ Forall ?x ?c1 ?c2 (
 
 #PRAGMA REPLICATE And(?c1[owl:disjointWith->?c2])
 
-#(* <#cax-dw> *)
-#Forall ?x ?c1 ?c2 (
-#   rif:error() :- And(
-#       ?c1[owl:disjointWith->?c2]
-#       ?x[rdf:type->?c1]
-#       ?x[rdf:type->?c2]  ))
+(* <#cax-dw> *)
+Forall ?x ?c1 ?c2 (
+   rif:error() :- And(
+       ?c1[owl:disjointWith->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2]  ))
 
 (* <#scm-cls> *)
 Forall ?c (
@@ -369,6 +379,8 @@ Forall ?c1 ?c2 (
        ?c1[rdfs:subClassOf->?c2]
        ?c2[rdfs:subClassOf->?c1]  ))
 
+#PRAGMA REPLICATE And(?p[rdf:type->owl:ObjectProperty])
+
 (* <#scm-op> *)
 Forall ?p (
    ?p[rdfs:subPropertyOf->?p] :- ?p[rdf:type->owl:ObjectProperty])
@@ -376,6 +388,8 @@ Forall ?p (
 (* <#scm-op1> *)
 Forall ?p (
    ?p[owl:equivalentProperty->?p] :- ?p[rdf:type->owl:ObjectProperty])
+
+#PRAGMA REPLICATE And(?p[rdf:type->owl:DatatypeProperty])
 
 (* <#scm-dp> *)
 Forall ?p (
@@ -490,19 +504,21 @@ Forall ?x ?i ?p ?lt (
        ?x[owl:targetValue->?lt]
        ?i[?p->?lt] ))
 
-#(* <#cax-dw> *)
-#Forall ?c1 ?c2 ?x (
-#    rif:error() :- And(
-#       ?c1[owl:disjointWith->?c2]
-#       ?x[rdf:type->?c1]
-#       ?x[rdf:type->?c2] ))
+(* <#cax-dw> *)
+Forall ?c1 ?c2 ?x (
+    rif:error() :- And(
+       ?c1[owl:disjointWith->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2] ))
 
-#(* <#cls-com> *)
-#Forall ?c1 ?c2 ?x (
-#    rif:error() :- And(
-#       ?c1[owl:complementOf->?c2]
-#       ?x[rdf:type->?c1]
-#       ?x[rdf:type->?c2] ))
+#PRAGMA REPLICATE And(?c1[owl:complementOf->?c2])
+
+(* <#cls-com> *)
+Forall ?c1 ?c2 ?x (
+    rif:error() :- And(
+       ?c1[owl:complementOf->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2] ))
 
 (* mine:list-rule1 *)
 mine:list(rdf:nil List())

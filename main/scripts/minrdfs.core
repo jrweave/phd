@@ -11,7 +11,6 @@ Prefix(dc   <http://purl.org/dc/terms/>)
 #PRAGMA REPLICATE And(?p[rdfs:range -> ?c])
 #PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2])
 #PRAGMA REPLICATE And(?c1[rdfs:subClassOf -> ?c2])
-#PRAGMA SPLIT And(?s[?p->?o])
 
 (* <#prp-dom> *)
 Forall ?p ?c ?x ?y (
