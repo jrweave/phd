@@ -26,17 +26,52 @@
 #include "par/MPIPacketDistributor.h"
 #include "par/StringDistributor.h"
 #include "rdf/NTriplesReader.h"
-#include "rdf/RDFReader.h"
 #include "rdf/RDFDictionary.h"
+#include "rdf/RDFReader.h"
+#include "rdf/RDFTriple.h"
 
+#ifdef TESTFILE
+#ifndef NUMLINES
+#error "When specifying TESTFILE, must also specify NUMLINES."
+#endif
+#endif
+
+#ifdef NUMLINES
+#ifndef TESTFILE
+#error "When specifying NUMLINES, must also specify TESTFILE."
+#endif
+#endif
+
+#ifndef TESTFILE
+#define TESTFILE "foaf_50.nt"
+#define NUMLINES 50
+#endif
+
+#ifndef COORDEVERY
 #define COORDEVERY 100000
-#define NUMREQUESTS 4
-#define PACKETBYTES 128
-#define PAGEBYTES 4096
-#define IDBYTES 8
+#endif
 
-#define STORAGE deque
-#define INSERT push_back
+#ifndef NUMREQUESTS
+#define NUMREQUESTS 4
+#endif
+
+#ifndef PACKETBYTES
+#define PACKETBYTES 128
+#endif
+
+#ifndef PAGEBYTES
+#define PAGEBYTES 1
+#endif
+
+#ifndef IDBYTES
+#define IDBYTES 8
+#endif
+
+#define STORAGE set
+#define RDFSTORAGE set<RDFTriple, bool(*)(const RDFTriple &, const RDFTriple &)>
+#define DECLARE_RDFSTORAGE(s) RDFSTORAGE s(RDFTriple::cmplt0)
+#define INSERT(s,x) ((s).insert(x))
+#define CONTAINS(s,x) ((s).count(x) > 0)
 
 using namespace io;
 using namespace par;
@@ -72,10 +107,24 @@ public:
     memcpy(&(trip.pred), mark, IDBYTES);
     mark += IDBYTES;
     memcpy(&(trip.obj), mark, IDBYTES);
-    trips->INSERT(trip);
+    INSERT(*trips, trip);
     nwritten = buf->size();
   }
 };
+
+void load(const char *filename, RDFSTORAGE &store) {
+  InputStream *is;
+  NEW(is, MPIDelimFileInputStream, MPI::COMM_WORLD, filename,
+      MPI::MODE_RDONLY, MPI::INFO_NULL, PAGEBYTES, to_ascii('\n'));
+  RDFReader *rr;
+  NEW(rr, NTriplesReader, is);
+  RDFTriple triple;
+  while (rr->read(triple)) {
+    INSERT(store, triple);
+  }
+  rr->close();
+  DELETE(rr);
+}
 
 Dict *load(const char *filename, STORAGE<IDTrip> &store) {
   InputStream *is;
@@ -101,16 +150,33 @@ Dict *load(const char *filename, STORAGE<IDTrip> &store) {
 
 bool test() {
   try {
+    DECLARE_RDFSTORAGE(triples);
     STORAGE<IDTrip> trips;
-    Dict *dict = load("foaf-50.nt", trips);
+    load(TESTFILE, triples);
+    Dict *dict = load(TESTFILE, trips);
     STORAGE<IDTrip>::iterator it = trips.begin();
-    for (; it != trips.end(); ++it) {
-      cout << dict->decode(it->subj) << " " << dict->decode(it->pred) << " " << dict->decode(it->obj) << " ." << endl;
+    bool passing = true;
+    for (; passing && it != trips.end(); ++it) {
+      RDFTriple t (dict->decode(it->subj), dict->decode(it->pred), dict->decode(it->obj));
+      passing = CONTAINS(triples, t);
     }
+    PROG(passing);
+    RDFSTORAGE::iterator tit = triples.begin();
+    for (; passing && tit != triples.end(); ++tit) {
+      IDTrip t;
+      if (!dict->lookup(tit->getSubj(), t.subj) ||
+          !dict->lookup(tit->getPred(), t.pred) ||
+          !dict->lookup(tit->getObj(), t.obj)) {
+        passing = false;
+      } else {
+        passing = CONTAINS(trips, t);
+      }
+    }
+    PROG(passing);
     unsigned long sz = trips.size();
     unsigned long total_size;
     MPI::COMM_WORLD.Allreduce(&sz, &total_size, 1, MPI::INT, MPI::SUM);
-    PROG(total_size == 50);
+    PROG(total_size == NUMLINES);
     DELETE(dict);
   } catch(TraceableException &e) {
     cerr << e.what() << endl;
@@ -121,6 +187,9 @@ bool test() {
 
 int main (int argc, char **argv) {
   INIT(argc, argv);
+  if (MPI::COMM_WORLD.Get_rank() == 0) {
+    cerr << "[INFO] TESTFILE is " << TESTFILE << "; expecting " << NUMLINES << " lines." << endl;
+  }
   TEST(test);
   FINAL;
 }

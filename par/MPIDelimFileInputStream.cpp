@@ -106,11 +106,13 @@ void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
         for (; p != q && *p != this->delim; ++p) {
           // find first delimiter
         }
-        adjust += p - this->buffer->dptr();
+        this->offset = p - this->buffer->dptr();
+        adjust += this->offset;
         if (p != q) {
           found_delim = true;
+          this->offset = 0;
           this->length = q - p - 1;
-          memcpy(this->buffer->dptr(), p + 1, this->length * sizeof(uint8_t));
+          memmove(this->buffer->dptr(), p + 1, this->length * sizeof(uint8_t));
           ++adjust;
         }
         if (p == q || p + 1 == q) {
