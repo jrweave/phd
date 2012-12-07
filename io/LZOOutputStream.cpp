@@ -70,6 +70,9 @@ deque<uint64_t> *LZOOutputStream::getIndex() throw() {
 }
 
 void LZOOutputStream::close() THROWS(IOException) {
+  if (this->index != NULL) {
+    this->index->push_back(this->count);
+  }
   if (this->write_header && !this->header_written) {
     this->writeHeader();
     this->header_written = true;

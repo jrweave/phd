@@ -81,6 +81,33 @@ bool parse_args(const int argc, char **argv) {
   return true;
 }
 
+void write_index(OutputStream *xs, deque<uint64_t> *index, DPtr<uint8_t> *nump) {
+  if (is_big_endian()) {
+    deque<uint64_t>::iterator it = index->begin();
+    for (; it != index->end(); ++it) {
+      if (!nump->alone()) {
+        nump = nump->stand();
+      }
+      memcpy(nump->dptr(), &(*it), sizeof(uint64_t));
+      xs->write(nump);
+    }
+    deque<uint64_t> swapper;
+    index->swap(swapper);
+  } else {
+    deque<uint64_t>::iterator it = index->begin();
+    for (; it != index->end(); ++it) {
+      reverse_bytes(*it);
+      if (!nump->alone()) {
+        nump = nump->stand();
+      }
+      memcpy(nump->dptr(), &(*it), sizeof(uint64_t));
+      xs->write(nump);
+    }
+    deque<uint64_t> swapper;
+    index->swap(swapper);
+  }
+}
+
 int print_index() {
   InputStream *is;
   if (cmdargs.input == string("-")) {
@@ -164,47 +191,26 @@ int main(int argc, char **argv) {
       readp->drop();
       readp = is->read();
     }
+    is->close();
+    os->close();
+    DELETE(is);
+    DELETE(os);
   } else {
-    if (is_big_endian()) {
-      while (readp != NULL) {
-        os->write(readp);
-        readp->drop();
-        deque<uint64_t>::iterator it = index->begin();
-        for (; it != index->end(); ++it) {
-          if (!nump->alone()) {
-            nump = nump->stand();
-          }
-          memcpy(nump->dptr(), &(*it), sizeof(uint64_t));
-          xs->write(nump);
-        }
-        deque<uint64_t> swapper;
-        index->swap(swapper);
-        readp = is->read();
+    while (readp != NULL) {
+      os->write(readp);
+      readp->drop();
+      if ((index->size() << 3) >= cmdargs.page_size) {
+        write_index(xs, index, nump);
       }
-    } else {
-      while (readp != NULL) {
-        os->write(readp);
-        readp->drop();
-        deque<uint64_t>::iterator it = index->begin();
-        for (; it != index->end(); ++it) {
-          reverse_bytes(*it);
-          if (!nump->alone()) {
-            nump = nump->stand();
-          }
-          memcpy(nump->dptr(), &(*it), sizeof(uint64_t));
-          xs->write(nump);
-        }
-        deque<uint64_t> swapper;
-        index->swap(swapper);
-        readp = is->read();
-      }
+      readp = is->read();
     }
-    xs->close();
-    DELETE(xs);
+    is->close();
+    os->close();
+    write_index(xs, index, nump);
     nump->drop();
+    xs->close();
+    DELETE(is);
+    DELETE(os);
+    DELETE(xs);
   }
-  is->close();
-  os->close();
-  DELETE(is);
-  DELETE(os);
 }
