@@ -82,5 +82,5 @@ refine_rules : refine_rules.cpp
 	$(CC) $(CFLAGS) -o refine_rules refine_rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 
 lzo : lzo.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)

@@ -588,6 +588,10 @@ DPtr<uint8_t> *RDFTerm::toUTF8String() const throw(BadAllocException) {
     return str;
   }
   }
+  // This should never happen, but just in case, do SOMETHING.
+  // Note that this not really indicative of a bad allocation;
+  // more like an illegal state exception.
+  THROW(BadAllocException, 0);
 }
 
 RDFTerm &RDFTerm::normalize() throw(BadAllocException, TraceableException) {
@@ -723,6 +727,7 @@ RDFTerm &RDFTerm::operator=(const RDFTerm &rhs) throw(BadAllocException) {
   }
   this->type = rhs.type;
   this->normalized = rhs.normalized;
+  return *this;
 }
 
 } // end namespace rdf

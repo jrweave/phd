@@ -12,7 +12,7 @@
 #    implied. See the License for the specific language governing
 #    permissions and limitations under the License.
 
-USE_3RD_LZO		=
+USE_3RD_LZO		= yes
 USE_PAR_MPI		= yes
 
 ifeq ($(USE_PAR_MPI), yes)
@@ -34,7 +34,7 @@ RUN				= mpirun
 
 LZO_3RD_OBJS =
 ifeq ($(USE_3RD_LZO), yes)
-LZO_3RD_OBJS += ../3rd/lzo/src/lzo1x_1.o ../3rd/lzo/src/lzo_util.o ../3rd/lzo/src/lzo_init.o ../3rd/lzo/src/lzo1x_d2.c
+LZO_3RD_OBJS += ../3rd/lzo/src/lzo1x_1.o ../3rd/lzo/src/lzo_util.o ../3rd/lzo/src/lzo_init.o ../3rd/lzo/src/lzo1x_d2.o
 endif
 
 EX_OBJS		= ../ex/TraceableException.o

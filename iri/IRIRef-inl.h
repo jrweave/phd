@@ -723,6 +723,7 @@ IRIRef &IRIRef::operator=(const IRIRef &rhs) throw() {
   this->utf8str->hold();
   this->normalized = rhs.normalized;
   this->urified = rhs.urified;
+  return *this;
 }
 
 }
