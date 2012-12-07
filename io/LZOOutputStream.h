@@ -34,7 +34,7 @@ private:
   DPtr<uint8_t> *work_memory;
   DPtr<uint8_t> *output;
   uint64_t count;
-  size_t max_block_size;
+  lzo_uint max_block_size;
   uint32_t flags;
   uint32_t checksum;
   bool write_header;

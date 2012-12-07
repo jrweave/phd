@@ -34,7 +34,7 @@ private:
   DPtr<uint8_t> *buffer;
   size_t offset;
   size_t length;
-  size_t max_block_size;
+  lzo_uint max_block_size;
   uint64_t count;
   uint32_t flags;
   uint32_t checksum;

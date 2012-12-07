@@ -115,15 +115,15 @@ void LZOOutputStream::write(DPtr<uint8_t> *buf, size_t &nwritten)
   if (this->flags & 1) {
     this->checksum = lzo_adler32(this->checksum, buf->dptr(), buf->size());
   }
-  uint32_t uncompressed_size = (uint32_t) buf->size();
-  size_t compressed_size = this->output->size();
+  lzo_uint uncompressed_size = (lzo_uint) buf->size();
+  lzo_uint compressed_size = (lzo_uint) this->output->size();
   uint8_t *outp = this->output->dptr() + (sizeof(uint32_t) << 1);
   int ok = lzo1x_1_compress(buf->dptr(), uncompressed_size, outp,
                             &compressed_size, this->work_memory->dptr());
   if (ok != LZO_E_OK || compressed_size > uncompressed_size + (uncompressed_size >> 4) + 67) {
     THROW(IOException, "Problem performing LZO compression.");
   }
-  uint32_t sz = uncompressed_size;
+  uint32_t sz = (uint32_t) uncompressed_size;
   if (is_little_endian()) {
     reverse_bytes(sz);
   } else if (!is_big_endian()) {
@@ -183,7 +183,7 @@ void LZOOutputStream::writeHeader() THROWS(IOException) {
   ++write_to;
   *write_to = UINT8_C(1);
   ++write_to;
-  u32 = this->max_block_size;
+  u32 = (uint32_t)this->max_block_size;
   if (is_little_endian()) {
     reverse_bytes(u32);
   } else if (!is_big_endian()) {

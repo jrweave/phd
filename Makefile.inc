@@ -13,7 +13,7 @@
 #    permissions and limitations under the License.
 
 USE_3RD_LZO		= yes
-USE_PAR_MPI		= yes
+USE_PAR_MPI		=
 
 ifeq ($(USE_PAR_MPI), yes)
 CC        = mpicxx

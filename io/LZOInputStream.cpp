@@ -114,7 +114,7 @@ DPtr<uint8_t> *LZOInputStream::read() THROWS(IOException, BadAllocException) {
     THROW(IOException, "Sanity check failed.  Internal error.");
   }
   if (compressed_size < uncompressed_size) {
-    size_t new_size = (size_t) uncompressed_size;
+    lzo_uint new_size = (lzo_uint) uncompressed_size;
     int ok = lzo1x_decompress_safe(
                 this->buffer->dptr() + this->offset,
                 compressed_size,
@@ -207,7 +207,7 @@ void LZOInputStream::readHeader(const uint8_t first_flag_byte)
     THROW(IOException,
           "Strange endianness (neither big nor little) is unsupported.");
   }
-  this->max_block_size = u32;
+  this->max_block_size = (lzo_uint)u32;
   len = u32 + (u32 >> 4) + 64 + 3;
   if (this->buffer != NULL) { // this will always be true, but just in case
     this->buffer->drop();
