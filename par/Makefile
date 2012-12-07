@@ -18,7 +18,7 @@ SUBDIR	= par
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
 OBJS		= DistException.o StringDistributor.o DistComputation.o
 ifeq ($(USE_PAR_MPI), yes)
-OBJS		+= MPIFileInputStream.o MPIDelimFileInputStream.o MPIPacketDistributor.o MPIFileOutputStream.o MPIDistPtrFileOutputStream.o
+OBJS		+= MPIFileInputStream.o MPIDelimFileInputStream.o MPIPacketDistributor.o MPIFileOutputStream.o MPIDistPtrFileOutputStream.o MPIPartialFileInputStream.o
 endif
 
 all : build __tests__
@@ -80,3 +80,7 @@ MPIDistPtrFileOutputStream.o : MPIDistPtrFileOutputStream.h MPIDistPtrFileOutput
 DistComputation.o : DistComputation.h DistComputation.cpp
 	$(ECHO) $(CC) $(CFLAGS) -c -o DistComputation.o DistComputation.cpp
 	$(CC) $(CFLAGS) -c -o DistComputation.o DistComputation.cpp
+
+MPIPartialFileInputStream.o : MPIPartialFileInputStream.h MPIPartialFileInputStream.cpp
+	$(ECHO) $(CC) $(CFLAGS) -c -o MPIPartialFileInputStream.o MPIPartialFileInputStream.cpp
+	$(CC) $(CFLAGS) -c -o MPIPartialFileInputStream.o MPIPartialFileInputStream.cpp

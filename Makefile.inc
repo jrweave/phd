@@ -12,8 +12,8 @@
 #    implied. See the License for the specific language governing
 #    permissions and limitations under the License.
 
-USE_3RD_LZO		= yes
-USE_PAR_MPI		=
+USE_3RD_LZO		=
+USE_PAR_MPI		= yes
 
 ifeq ($(USE_PAR_MPI), yes)
 CC        = mpicxx

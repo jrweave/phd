@@ -29,7 +29,6 @@ private:
   MPI::Offset marker;
   DPtr<uint8_t> *asyncbuf;
   const uint8_t delim;
-  bool marked;
   void initialize(const MPI::Intracomm &comm, const size_t page_size);
 protected:
   virtual void fillBuffer() throw(IOException);

@@ -18,7 +18,7 @@ SUBDIR	= par/__tests__
 CFLAGS	= $(PRJCFLAGS) -I../..
 TESTS		=
 ifeq ($(USE_PAR_MPI), yes)
-TESTS		+= testMPIDelimFileInputStream testMPIPacketDistributor testStringDistributor testMPIDistPtrFileOutputStream testDistRDFDictEncode
+TESTS		+= testMPIDelimFileInputStream testMPIPacketDistributor testStringDistributor testMPIDistPtrFileOutputStream testDistRDFDictEncode testMPIPartialFileInputStream
 endif
 
 all :
@@ -43,6 +43,13 @@ testMPIDelimFileInputStream : testMPIDelimFileInputStream.cpp ../MPIDelimFileInp
 	$(CC) $(CFLAGS) -o testMPIDelimFileInputStream testMPIDelimFileInputStream.cpp ../MPIDelimFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../MPIFileInputStream.o ../../io/IOException.o ../../io/InputStream.o
 	$(ECHO) [TEST] ./testMPIDelimFileInputStream _test_
 	$(RUN) -np 4 ./testMPIDelimFileInputStream _test_
+
+testMPIPartialFileInputStream : testMPIPartialFileInputStream.cpp ../MPIPartialFileInputStream.o
+	$(ECHO) running test $(SUBDIR)/testMPIPartialFileInputStream
+	$(ECHO) $(CC) $(CFLAGS) -o testMPIPartialFileInputStream testMPIPartialFileInputStream.cpp ../MPIPartialFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../MPIFileInputStream.o ../../io/IOException.o ../../io/InputStream.o
+	$(CC) $(CFLAGS) -o testMPIPartialFileInputStream testMPIPartialFileInputStream.cpp ../MPIPartialFileInputStream.o ../../ptr/BadAllocException.o ../../ptr/Ptr.o ../../ptr/alloc.o ../../ex/TraceableException.o ../MPIFileInputStream.o ../../io/IOException.o ../../io/InputStream.o
+	$(ECHO) [TEST] ./testMPIPartialFileInputStream `pwd`/foaf.nt `pwd`/foaf-1000-11000.txt
+	$(RUN) -np 4 ./testMPIPartialFileInputStream `pwd`/foaf.nt `pwd`/foaf-1000-11000.txt
 
 testMPIPacketDistributor : testMPIPacketDistributor.cpp ../MPIPacketDistributor.o
 	$(ECHO) running test $(SUBDIR)/testMPIPacketDistributor

@@ -25,6 +25,7 @@ MPIDelimFileInputStream::MPIDelimFileInputStream(const MPI::Intracomm &comm,
     throw(BadAllocException, TraceableException)
     : MPIFileInputStream(f, page_size), delim(delimiter) {
   this->initialize(comm, page_size);
+  this->marker = this->begin;
 }
 
 MPIDelimFileInputStream::MPIDelimFileInputStream(const MPI::Intracomm &comm,
@@ -32,8 +33,9 @@ MPIDelimFileInputStream::MPIDelimFileInputStream(const MPI::Intracomm &comm,
     const size_t page_size, const uint8_t delimiter)
     throw(IOException, BadAllocException, TraceableException)
     : MPIFileInputStream(comm, filename, amode, info, page_size),
-      marked(false), delim(delimiter) {
+      delim(delimiter) {
   this->initialize(comm, page_size);
+  this->marker = this->begin;
 }
 
 void MPIDelimFileInputStream::initialize(const MPI::Intracomm &comm,
