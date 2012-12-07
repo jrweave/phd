@@ -54,6 +54,16 @@ int RIFConst::cmp(const RIFConst &rc1, const RIFConst &rc2) throw() {
   if (&rc1 == &rc2) {
     return 0;
   }
+  if (rc1.lex->size() != rc2.lex->size()) {
+    return rc1.lex->size() < rc2.lex->size() ? -1 : 1;
+  }
+  int cmp = memcmp(rc1.lex->dptr(), rc2.lex->dptr(),
+                   rc1.lex->size() * sizeof(uint8_t));
+  if (cmp != 0) {
+    return cmp;
+  }
+  return IRIRef::cmp(rc1.datatype, rc2.datatype);
+#if 0
   int cmp = IRIRef::cmp(rc1.datatype, rc2.datatype);
   if (cmp != 0) {
     return cmp;
@@ -65,6 +75,7 @@ int RIFConst::cmp(const RIFConst &rc1, const RIFConst &rc2) throw() {
   }
   return rc1.lex->size() < rc2.lex->size() ? -1 :
          rc1.lex->size() > rc2.lex->size() ?  1 : 0;
+#endif
 }
 
 DPtr<uint8_t> *RIFConst::escape(DPtr<uint8_t> *lex)

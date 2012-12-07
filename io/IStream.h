@@ -49,7 +49,6 @@ public:
   virtual void close() throw(IOException);
   virtual bool mark(const int64_t read_limit) throw(IOException);
   virtual bool markSupported() const throw();
-  //virtual DPtr<uint8_t> *read() throw(IOException, BadAllocException);
   virtual DPtr<uint8_t> *read(const int64_t amount)
       throw(IOException, BadAllocException);
   virtual void reset() throw(IOException);
@@ -74,7 +73,6 @@ public:
   virtual void close() throw(IOException);
   virtual bool mark(const int64_t read_limit) throw(IOException);
   virtual bool markSupported() const throw();
-  //virtual DPtr<uint8_t> *read() throw(IOException, BadAllocException);
   virtual DPtr<uint8_t> *read(const int64_t amount)
       throw(IOException, BadAllocException);
   virtual void reset() throw(IOException);

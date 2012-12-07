@@ -1,39 +1,40 @@
 #!/usr/bin/perl
 
 sub pickbest {
-	$last = shift;
-	$cur = shift;
-	$lastnum =()= $last =~ m/REPLICATE/gi;
-	$curnum =()= $cur =~ m/REPLICATE/gi;
-	if ($curnum != $lastnum) {
-		return $curnum < $lastnum ? $cur : $last;
+	if ($last[0] == 0) {
+	  @last = @cur;
+	} elsif ($last[1] != $cur[1]) {
+		if ($cur[1] < $last[1]) {
+			@last = @cur;
+		}
+	} elsif ($last[2] != $cur[2]) {
+		if ($cur[2] < $last[2]) {
+			@last = @cur;
+		}
+	} elsif ($last[3] != $cur[3]) {
+		if ($cur[3] > $last[3]) {
+			@last = @cur;
+		}
+	} else {
+		print STDERR "[TIE] " . $last[0] . " " . $cur[0] . "\n";
 	}
-	$lastnum =()= $last =~ m/PROBLEM/gi;
-	$curnum =()= $cur =~ m/PROBLEM/gi;
-	if ($curnum != $lastnum) {
-		return $curnum < $lastnum ? $cur : $last;
-	}
-	$lastnum =()= $last =~ m/SPLIT/gi;
-	$curnum =()= $cur =~ m/SPLIT/gi;
-	if ($curnum != $lastnum) {
-		return $curnum < $lastnum ? $cur : $last;
-	}
-	return $cur;
 }
 
-$last_asgn = '';
-$cur_asgn = '';
+@last = (0, 0, 0, 0);
+@cur = (0, 0, 0, 0);
 while (<STDIN>) {
-	if ($_ =~ m/^=====\s*Solution\s*\d+ =====$/) {
-		if ($last_asgn eq '') {
-			$last_asgn = $cur_asgn;
-		} else {
-			$last_asgn = &pickbest($last_asgn, $cur_asgn);
+	if ($_ =~ m/^=====\s*Solution\s*(\d+):?\s*=====$/) {
+		if ($cur[0] != 0) {
+			&pickbest();
 		}
-		$cur_asgn = '';
-	} else {
-		$cur_asgn = $cur_asgn . $_;
+		@cur = ($1, 0, 0, 0);
+	} elsif ($_ =~ m/REPLICATE/) {
+		++$cur[1];
+	} elsif ($_ =~ m/ABANDON/) {
+		++$cur[2];
+	} elsif ($_ =~ m/ARBITRARY/) {
+		++$cur[3];
 	}
 }
-$last_asgn = &pickbest($last_asgn, $cur_asgn);
-print $last_asgn;
+&pickbest();
+print "@last\n";

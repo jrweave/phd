@@ -42,5 +42,7 @@ clean :
 	-$(RM) -vfr *.dSYM
 	#cd __tests__; $(MAKE) $(MFLAGS) clean
 
+distclean : clean
+
 force_look :
 	true

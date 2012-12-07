@@ -7,6 +7,8 @@ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
 Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
 Prefix(dc   <http://purl.org/dc/terms/>)
 
+#PRAGMA NOT REPLICATE And(?s[?p -> ?o])
+#PRAGMA ARBITRARY And(?s[rdf:type -> ?o])
 #PRAGMA REPLICATE And(?p[rdfs:domain -> ?c])
 #PRAGMA REPLICATE And(?p[rdfs:range -> ?c])
 #PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2])

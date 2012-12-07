@@ -814,11 +814,9 @@ bool RIFAtomic::isGround() const throw() {
 }
 
 void RIFAtomic::getVars(VarSet &vars) const throw() {
-  // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
   switch (this->type) {
   case ATOM:
   case EXTERNAL: {
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     atom_state *a = (atom_state*) this->state;
     if (a->args != NULL) {
       RIFTerm *mark = a->args->dptr();
@@ -827,35 +825,24 @@ void RIFAtomic::getVars(VarSet &vars) const throw() {
         mark->getVars(vars);
       }
     }
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
   }
   case EQUALITY:
   case MEMBERSHIP:
   case SUBCLASS: {
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     pair<RIFTerm, RIFTerm> *p = (pair<RIFTerm, RIFTerm>*) this->state;
     p->first.getVars(vars);
     p->second.getVars(vars);
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
   }
   case FRAME: {
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     frame_state *f = (frame_state*) this->state;
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     f->object.getVars(vars);
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     SlotMap::const_iterator it = f->slots.begin();
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     for (; it != f->slots.end(); ++it) {
-      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       it->first.getVars(vars);
-      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
       it->second.getVars(vars);
-      // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     }
-    // cerr << "[DEBUG] " << __FILE__ << ":" << __LINE__ << endl;
     return;
   }
   default: {

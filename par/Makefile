@@ -16,7 +16,10 @@ include ../Makefile.inc
 
 SUBDIR	= par
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= MPIFileInputStream.o MPIDelimFileInputStream.o DistException.o MPIPacketDistributor.o StringDistributor.o MPIFileOutputStream.o MPIDistPtrFileOutputStream.o DistComputation.o
+OBJS		= DistException.o StringDistributor.o DistComputation.o
+ifeq ($(USE_PAR_MPI), yes)
+OBJS		+= MPIFileInputStream.o MPIDelimFileInputStream.o MPIPacketDistributor.o MPIFileOutputStream.o MPIDistPtrFileOutputStream.o
+endif
 
 all : build __tests__
 
@@ -40,6 +43,8 @@ clean :
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
 	cd __tests__; $(MAKE) $(MFLAGS) clean
+
+distclean : clean
 
 force_look :
 	true

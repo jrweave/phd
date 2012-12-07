@@ -313,7 +313,7 @@ public:
     }
     return false;
   }
-  Pattern &Pattern::operator=(const Pattern &rhs) {
+  Pattern &operator=(const Pattern &rhs) {
     NMap nm(rhs.neqs);
     this->atom = rhs.atom;
     this->neqs.swap(nm);

@@ -39,8 +39,9 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	-$(RM) -vf rdf_constants.*
 	cd __tests__; $(MAKE) $(MFLAGS) clean
+
+distclean : clean
 
 force_look :
 	true

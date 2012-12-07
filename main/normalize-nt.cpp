@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include <mpi.h>
 #include <string>
 #include "iri/IRIRef.h"
 #include "io/IStream.h"

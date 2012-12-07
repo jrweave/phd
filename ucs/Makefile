@@ -39,8 +39,10 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	-$(RM) -vf ucs_arrays.*
 	cd __tests__; $(MAKE) $(MFLAGS) clean
+
+distclean : clean
+	-$(RM) -vf ucs_arrays.*
 
 force_look :
 	true

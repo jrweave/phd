@@ -94,6 +94,7 @@ int main(int argc, char **argv) {
       if (check_preservation_condition(cpatts, apatts, repls)) {
         refined.push_back(*it);
       } else {
+        // TODO should actually refine from the body toward the head
         pruned.push_back(*it);
       }
     } else {

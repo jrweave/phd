@@ -18,6 +18,10 @@ the following exceptions.
 * Possibly lang/scripts/language-subtag-registry, which was retrieved from
   http://www.iana.org/assignments/language-subtag-registry .  See
   lang/scripts/README for more details.
+* ANYTHING under the 3rd/ directory.  See 3rd/README for more details.
+
+All the source code herein -- except for the bulleted exceptions above --
+is referred to as the Primary Source Code.
 
 A complete copy of the Apache 2.0 license is given in LICENSE.
 

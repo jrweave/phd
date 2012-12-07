@@ -25,11 +25,16 @@ do
 	mv $base-refined.prd $base.prd
 	./prd2cnf < $base.prd > $base.cnf 2>> $base.err
 
-	#relsat -#a $base.cnf | perl decode.pl $base.cnf > $base.asgn
+	#relsat -#a $base.cnf | perl scripts/decode.pl $base.cnf > $base.asgn
 	#perl scripts/pickasgn.pl < $base.asgn > $base-picked.asgn
 	echo "ccccc Iteration $n ccccc" >> $base-relsat-notes.txt
-	#relsat -p 3 -#a $base.cnf | perl decode.pl $base.cnf 2>> $base-relsat-notes.txt | perl scripts/pickasgn.pl > $base-picked.asgn
+	#relsat -p 3 -#a $base.cnf | perl scripts/decode.pl $base.cnf 2>> $base-relsat-notes.txt | perl scripts/pickasgn.pl > $base-picked.asgn
 	relsat -p 3 -t n -#a $base.cnf | perl scripts/picknasgn.pl $base.cnf > $base-picked.asgn 2>> $base-relsat-notes.txt
+	unsat=`tail -n 1 $base-relsat-notes.txt`
+	if [ "$unsat" == "UNSAT" ]; then
+		echo "BAD NEWS... IT'S UNSATISFIABLE."
+		exit
+	fi
 
 	perl scripts/curies.pl < $base-picked.asgn
   ./refine $base-picked.asgn < $base.prd > $base-refined-$n.prd 2>> $base.err

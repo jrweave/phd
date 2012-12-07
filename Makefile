@@ -15,7 +15,7 @@
 include Makefile.inc
 
 # When adding a new subdirectory, make sure to modify DIRS
-DIRS      = test sys util ex ptr ucs iri lang rdf rif io par main
+DIRS      = 3rd test sys util ex ptr ucs iri lang rdf rif io par main
 EXE       = exec
 OBJS      =
 OBJLIBS		=
@@ -44,6 +44,12 @@ clean :
 	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
 	-$(RM) -vfr *.dSYM
 	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) clean; $(MAKE) $(MFLAGS) clean); done
+
+distclean :
+	$(ECHO) distcleaning up
+	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
+	-$(RM) -vfr *.dSYM
+	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) clean; $(MAKE) $(MFLAGS) distclean); done
 
 force_look :
 	true
@@ -101,3 +107,7 @@ io : ptr force_look
 par : io force_look
 	$(ECHO) looking into par : $(MAKE) $(MFLAGS)
 	cd par; $(MAKE) $(MFLAGS)
+
+3rd : force_look
+	$(ECHO) looking into 3rd : $(MAKE) $(MFLAGS)
+	cd 3rd; $(MAKE) $(MFLAGS)

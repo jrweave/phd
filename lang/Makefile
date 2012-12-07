@@ -39,8 +39,11 @@ clean :
 	$(ECHO) cleaning up in $(SUBDIR)
 	-$(RM) -vf $(OBJS) 
 	-$(RM) -vfr *.dSYM
-	-$(RM) -vf lang_arrays.*
 	cd __tests__; $(MAKE) $(MFLAGS) clean
+
+distclean : clean
+	$(ECHO) distcleaning up in $(SUBDIR)
+	-$(RM) -vf lang_arrays.*
 
 force_look :
 	true

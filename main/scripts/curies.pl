@@ -8,6 +8,7 @@ while (<STDIN>) {
 	$line =~ s/\Q"http:\/\/www.w3.org\/2007\/rif-builtin-predicate#\E([^\s]*?)\Q"^^<http:\/\/www.w3.org\/2007\/rif#iri>\E/pred:$1/g;
 	$line =~ s/\Q"http:\/\/www.w3.org\/2007\/rif-builtin-function#\E([^\s]*?)\Q"^^<http:\/\/www.w3.org\/2007\/rif#iri>\E/func:$1/g;
 	$line =~ s/\Q"http:\/\/www.w3.org\/2007\/rif#\E([^\s]*?)\Q"^^<http:\/\/www.w3.org\/2007\/rif#iri>\E/rif:$1/g;
+	$line =~ s/"tag:\/\/weavej3\@rpi\.edu,2012:\/([^\s]*?)\Q"^^<http:\/\/www.w3.org\/2007\/rif#iri>\E/mine:$1/g;
 	$line =~ s/\Q"\E(-?\d+)\Q"^^<http:\/\/www.w3.org\/2001\/XMLSchema#integer>\E/$1/g;
 	print $line;
 }
