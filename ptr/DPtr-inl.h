@@ -130,7 +130,15 @@ DPtr<ptr_type> *DPtr<ptr_type>::sub(size_t offset, size_t len) throw() {
 
 template<typename ptr_type>
 inline
-DPtr<ptr_type> *DPtr<ptr_type>::stand() throw(BadAllocException) {
+DPtr<ptr_type> *DPtr<ptr_type>::stand()
+    throw(BadAllocException) {
+  return this->stand(true);
+}
+
+template<typename ptr_type>
+inline
+DPtr<ptr_type> *DPtr<ptr_type>::stand(const bool copy)
+    throw(BadAllocException) {
   return this->alone() ? this : NULL;
 }
 

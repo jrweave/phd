@@ -39,6 +39,7 @@ public:
   virtual DPtr<obj_type> *sub(size_t offset) throw();
   virtual DPtr<obj_type> *sub(size_t offset, size_t len) throw();
   virtual DPtr<obj_type> *stand() throw(BadAllocException);
+  virtual DPtr<obj_type> *stand(const bool copy) throw(BadAllocException);
   virtual bool standable() const throw();
 
   // Operators

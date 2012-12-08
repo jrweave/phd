@@ -98,6 +98,13 @@ DPtr<obj_type> *OPtr<obj_type>::sub(size_t offset, size_t len) throw() {
 template<typename obj_type>
 inline
 DPtr<obj_type> *OPtr<obj_type>::stand() throw(BadAllocException) {
+  return this->stand(true);
+}
+
+template<typename obj_type>
+inline
+DPtr<obj_type> *OPtr<obj_type>::stand(const bool copydata)
+    throw(BadAllocException) {
   if (this->alone()) {
     return this;
   }
@@ -106,6 +113,7 @@ DPtr<obj_type> *OPtr<obj_type>::stand() throw(BadAllocException) {
   // usefulness of this class to such objects, we simply return NULL.
   // In the future, it is conceivable to subclass OPtr to something
   // that will use the copy constructor or assignment operator.
+  // If copydata == false, then the default constructor could be used instead.
   return NULL;
 }
 

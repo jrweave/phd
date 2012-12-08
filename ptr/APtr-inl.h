@@ -116,7 +116,14 @@ DPtr<arr_type> *APtr<arr_type>::sub(size_t offset, size_t len) throw() {
 }
 
 template<typename arr_type>
+inline
 DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
+  return this->stand(true);
+}
+
+template<typename arr_type>
+DPtr<arr_type> *APtr<arr_type>::stand(const bool copydata)
+    throw(BadAllocException) {
   if (!this->sizeKnown()) {
     return NULL;
   }
@@ -127,7 +134,9 @@ DPtr<arr_type> *APtr<arr_type>::stand() throw(BadAllocException) {
   try {
     NEW_ARRAY(arr, arr_type, this->size());
   } RETHROW_BAD_ALLOC
-  copy(this->dptr(), this->dptr() + this->size(), arr);
+  if (copydata) {
+    copy(this->dptr(), this->dptr() + this->size(), arr);
+  }
   if (this->localRefs() > 1) {
     DPtr<arr_type> *d;
     try {

@@ -43,6 +43,7 @@ public:
   virtual DPtr<arr_type> *sub(size_t offset) throw();
   virtual DPtr<arr_type> *sub(size_t offset, size_t len) throw();
   virtual DPtr<arr_type> *stand() throw(BadAllocException);
+  virtual DPtr<arr_type> *stand(const bool copy) throw(BadAllocException);
   virtual bool standable() const throw();
 
   // Operators

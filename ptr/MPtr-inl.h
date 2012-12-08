@@ -119,13 +119,22 @@ size_t MPtr<ptr_type>::sizeInBytes() const throw() {
 }
 
 template<typename ptr_type>
+inline
 DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
+  return this->stand(true);
+}
+
+template<typename ptr_type>
+DPtr<ptr_type> *MPtr<ptr_type>::stand(const bool copydata)
+    throw(BadAllocException) {
   if (!this->sizeKnown()) {
     return NULL;
   }
   if (this->alone()) {
     if (this->offset > 0) {
-      memmove(this->p, this->dptr(), this->num * sizeof(ptr_type));
+      if (copydata) {
+        memmove(this->p, this->dptr(), this->num * sizeof(ptr_type));
+      }
       this->offset = 0;
     }
     ptr_type *pt = this->dptr();
@@ -138,7 +147,9 @@ DPtr<ptr_type> *MPtr<ptr_type>::stand() throw(BadAllocException) {
   if (!alloc(p, this->size())) {
     THROW(BadAllocException, this->size() * sizeof(ptr_type));
   }
-  copy(this->dptr(), this->dptr() + this->size(), p);
+  if (copydata) {
+    copy(this->dptr(), this->dptr() + this->size(), p);
+  }
   if (this->localRefs() > 1) {
     DPtr<ptr_type> *d;
     NEW(d, MPtr<ptr_type>, p, this->size());

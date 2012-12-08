@@ -132,7 +132,7 @@ bool NTriplesReader::read(RDFTriple &triple) {
     if (!triplestr->standable()) {
       THROW(TraceableException, "CANNOT STAND POINTER!");
     }
-    triplestr->stand();
+    triplestr = triplestr->stand();
     len += triplestr->size();
     parts.push_back((void*) triplestr);
   } while (p == end);

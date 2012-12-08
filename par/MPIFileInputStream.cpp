@@ -73,7 +73,7 @@ DPtr<uint8_t> *MPIFileInputStream::read(const int64_t amount)
   DPtr<uint8_t> *part = this->buffer->sub(this->offset, actual);
   if (actual == avail) {
     try {
-      part->stand();
+      part = part->stand();
     } JUST_RETHROW(BadAllocException, "(rethrow)")
     try {
       this->fillBuffer();
