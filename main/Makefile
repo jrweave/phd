@@ -19,6 +19,9 @@ CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
 OBJS		= normalize-nt prd2cnf refine refine-all refine_rules
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
+ifeq ($(USE_PAR_MPI), yes)
+OBJS		+= lzo-mpi
+endif
 endif
 ifeq ($(USE_PAR_MPI), yes)
 OBJS		+= infer normalize-nt-mpi
@@ -84,3 +87,7 @@ refine_rules : refine_rules.cpp
 lzo : lzo.cpp
 	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+
+lzo-mpi : lzo-mpi.cpp
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)

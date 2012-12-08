@@ -32,6 +32,7 @@ private:
 protected:
   virtual void fillBuffer() throw(IOException);
 public:
+  // setting argument /end/ to a negative number means read to end of file
   MPIPartialFileInputStream(const MPI::File &f, const size_t page_size,
                             const MPI::Offset begin, const MPI::Offset end)
       throw(BadAllocException, TraceableException);

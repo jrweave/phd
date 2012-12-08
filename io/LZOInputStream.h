@@ -39,6 +39,8 @@ private:
   uint32_t flags;
   uint32_t checksum;
   bool header_read;
+  bool no_header;
+  bool ignore_checksum;
   void readHeader(const uint8_t first_flag_byte) throw(IOException);
   bool readu32(uint32_t &num) throw(IOException);
   bool readBlock(const uint32_t len) throw(IOException);
@@ -46,6 +48,9 @@ private:
   void readFooter() throw(IOException);
 public:
   LZOInputStream(InputStream *is, deque<uint64_t> *index)
+      throw(BaseException<void*>, TraceableException);
+  LZOInputStream(InputStream *is, deque<uint64_t> *index, const bool no_header,
+                 const bool ignore_checksum)
       throw(BaseException<void*>, TraceableException);
   virtual ~LZOInputStream() throw(IOException);
   virtual void close() throw(IOException);

@@ -50,7 +50,7 @@ LANG_OBJS		= ../lang/MalformedLangTagException.o ../lang/LangTag.o ../lang/Malfo
 
 PAR_OBJS		= ../par/DistException.o ../par/StringDistributor.o ../par/DistComputation.o
 ifeq ($(USE_PAR_MPI), yes)
-PAR_OBJS		+= ../par/MPIFileInputStream.o ../par/MPIDelimFileInputStream.o ../par/MPIPacketDistributor.o ../par/MPIFileOutputStream.o ../par/MPIDistPtrFileOutputStream.o
+PAR_OBJS		+= ../par/MPIFileInputStream.o ../par/MPIDelimFileInputStream.o ../par/MPIPacketDistributor.o ../par/MPIFileOutputStream.o ../par/MPIDistPtrFileOutputStream.o ../par/MPIPartialFileInputStream.o
 endif
 
 PTR_OBJS		= ../ptr/alloc.o ../ptr/BadAllocException.o ../ptr/Ptr.o ../ptr/SizeUnknownException.o

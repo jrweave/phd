@@ -29,7 +29,23 @@ LZOInputStream::LZOInputStream(InputStream *is, deque<uint64_t> *index)
     throw(BaseException<void*>, TraceableException)
     : input_stream(is), index(index), buffer(NULL), offset(0), length(0),
       max_block_size(0), count(UINT64_C(0)), flags(UINT32_C(1)),
-      header_read(false) {
+      header_read(false), no_header(false), ignore_checksum(false) {
+  if (is == NULL) {
+    THROW(BaseException<void*>, NULL, "is must not be NULL.");
+  }
+  if (lzo_init() != LZO_E_OK) {
+    THROW(TraceableException, "Couldn't initialize LZO!");
+  }
+  this->checksum = lzo_adler32(0, NULL, 0);
+}
+
+LZOInputStream::LZOInputStream(InputStream *is, deque<uint64_t> *index,
+    const bool no_header, const bool ignore_checksum)
+    throw(BaseException<void*>, TraceableException)
+    : input_stream(is), index(index), buffer(NULL), offset(0), length(0),
+      max_block_size(0), count(UINT64_C(0)), flags(UINT32_C(1)),
+      header_read(no_header), no_header(no_header),
+      ignore_checksum(ignore_checksum) {
   if (is == NULL) {
     THROW(BaseException<void*>, NULL, "is must not be NULL.");
   }
@@ -129,7 +145,7 @@ DPtr<uint8_t> *LZOInputStream::read() THROWS(IOException, BadAllocException) {
     this->offset = 0;
     this->length = new_size;
   }
-  if (this->flags & 1) {
+  if (!this->ignore_checksum && (this->flags & 1)) {
     this->checksum = lzo_adler32(this->checksum,
                                  this->buffer->dptr() + this->offset,
                                  uncompressed_size);
@@ -168,9 +184,9 @@ void LZOInputStream::reset() THROWS(IOException) {
   this->length = 0;
   this->count = 0;
   this->max_block_size = 0;
-  this->flags = UINT32_C(0);
-  this->checksum = UINT32_C(0);
-  this->header_read = false;
+  this->flags = UINT32_C(1);
+  this->checksum = lzo_adler32(0, NULL, 0);
+  this->header_read = this->no_header;
 }
 TRACE(IOException, "Problem resetting LZOInputStream.")
 
@@ -305,7 +321,7 @@ TRACE(IOException, "Problem reading block in LZOInputStream.")
 void LZOInputStream::readFooter() THROWS(IOException) {
   uint32_t chsum;
   if (this->readu32(chsum)) {
-    if (this->checksum != chsum) {
+    if (!this->ignore_checksum && this->checksum != chsum) {
       THROW(IOException, "Checksums do not match!  LZO data corrupted!");
     }
   }

@@ -48,6 +48,9 @@ MPIPartialFileInputStream::MPIPartialFileInputStream(
 }
 
 void MPIPartialFileInputStream::initialize(const size_t page_size) {
+  if (this->end < 0) {
+    this->end = this->file.Get_size();
+  }
   if (this->begin > this->end) {
     THROW(TraceableException, "begin must be <= end.");
   }
@@ -69,9 +72,13 @@ void MPIPartialFileInputStream::initialize(const size_t page_size) {
 
 MPIPartialFileInputStream::~MPIPartialFileInputStream() throw(IOException) {
   if (this->at < this->end) {
-    this->req.Cancel();
-    while (!this->req.Test()) {
-      // wait for async comm to complete or cancel
+    try {
+      this->req.Cancel();
+      while (!this->req.Test()) {
+        // wait for async comm to complete or cancel
+      }
+    } catch (MPI::Exception &e) {
+      THROW(IOException, e.Get_error_string());
     }
   }
   this->asyncbuf->drop();
