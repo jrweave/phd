@@ -13,6 +13,14 @@
  *    permissions and limitations under the License.
  */
 
+// TODO There are four things left to be supported in this program, which for
+// now are going neglected because they are unnecessary for thesis progress.
+//   1. Produce the index for single output nt.lzo.
+//   2. Single input der.
+//   3. Single output der.
+//   4. Single input nt.lzo with triples split across compressed blocks.
+
+#include <cmath>
 #include <deque>
 #include <mpi.h>
 #include <string>
@@ -24,9 +32,12 @@
 #include "io/LZOOutputStream.h"
 #include "io/OFStream.h"
 #include "io/OutputStream.h"
+#include "par/DistRDFDictEncode.h"
 #include "par/MPIDelimFileInputStream.h"
 #include "par/MPIDistPtrFileOutputStream.h"
+#include "par/MPIPacketDistributor.h"
 #include "par/MPIPartialFileInputStream.h"
+#include "par/StringDistributor.h"
 #include "rdf/RDFDictEncReader.h"
 #include "rdf/RDFDictEncWriter.h"
 #include "rdf/RDFDictionary.h"
@@ -62,6 +73,9 @@ struct cmdargs_t {
   string output_index;
   size_t page_size;
   size_t block_size;
+  size_t packet_size;
+  size_t num_requests;
+  size_t check_every;
   bool single_input;
   bool single_output;
   bool global_dict;
@@ -76,6 +90,9 @@ struct cmdargs_t {
   /* output_index   */  string(""),
   /* page_size      */  0,
   /* block_size     */  0,
+  /* packet_size    */  0,
+  /* num_requests   */  0,
+  /* check_every    */  0,
   /* single_input   */  false,
   /* single_output  */  false,
   /* global_dict    */  false,
@@ -151,6 +168,9 @@ bool parse_args(int argc, char **argv) {
     else CMDARG(argv[i], "--output-index", "-ox", output_index, string(""), string(argv[++i]))
     else CMDARG(argv[i], "--page-size", "-p", page_size, 0, parse_size_t(argv[++i]))
     else CMDARG(argv[i], "--block-size", "-b", block_size, 0, parse_size_t(argv[++i]))
+    else CMDARG(argv[i], "--packet-size", "-pack", packet_size, 0, parse_size_t(argv[++i]))
+    else CMDARG(argv[i], "--num-requests", "-nreq", num_requests, 0, parse_size_t(argv[++i]))
+    else CMDARG(argv[i], "--check-every", "-check", check_every, 0, parse_size_t(argv[++i]))
     else CMDARG(argv[i], "--single-input", "-si", single_input, false, true)
     else CMDARG(argv[i], "--single-output", "-so", single_output, false, true)
     else CMDARG(argv[i], "--global-dict", "-gd", global_dict, false, true)
@@ -167,6 +187,9 @@ bool parse_args(int argc, char **argv) {
   CONDITIONALVAL(true, output_format, string("der"), output_dict, "--output-dict", "-od", string(""))
   DEFAULTVAL(page_size, 0, 4096)
   DEFAULTVAL(block_size, 0, 4096)
+  DEFAULTVAL(packet_size, 0, 1024)
+  DEFAULTVAL(num_requests, 0, (size_t)(1.1f + log((float)commsize)/log(2.0f)));
+  DEFAULTVAL(check_every, 0, 10000);
   return (insert_processor_rank(!cmdargs.single_input, cmdargs.input) &
           insert_processor_rank(!cmdargs.single_input, cmdargs.input_dict) &
           insert_processor_rank(!cmdargs.single_input, cmdargs.input_index) &
@@ -195,7 +218,7 @@ RDFReader *makeRDFReader() {
     }
   } else if (cmdargs.input_format == string("nt.lzo")) {
     if (cmdargs.single_input && commsize > 1) {
-      // TODO
+      // TODO handle the case when triples are split across compressed blocks.
       if (commrank == 0) cerr << "[WARNING] Input nt.lzo must not have triples split across compressed blocks." << endl;
       MPI::File index_file = MPI::File::Open(MPI::COMM_WORLD, cmdargs.input_index.c_str(), MPI::MODE_RDONLY, MPI::INFO_NULL);
       MPI::Offset index_file_size = index_file.Get_size();
@@ -315,7 +338,28 @@ RDFWriter *makeRDFWriter(RDFDictionary<ID, ENC> *dict, deque<uint64_t> *index) {
 
 int dictionary_encode() {
   int commrank = MPI::COMM_WORLD.Get_rank();
-  if (commrank == 0) cerr << "[ERROR] Dictionary encoding with any global context (including --global-dict) is currently unsupported." << endl;
+  int commsize = MPI::COMM_WORLD.Get_size();
+  if (!cmdargs.single_output) {
+    RDFReader *rr = makeRDFReader();
+    OutputStream *os = NULL;
+    NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
+    Distributor *dist = NULL;
+    NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, cmdargs.packet_size, cmdargs.num_requests, cmdargs.check_every, 111);
+    NEW(dist, StringDistributor, commrank, cmdargs.packet_size, dist);
+    DistRDFDictEncode<NBYTES, ID, ENC> *distcomp = NULL;
+    NEW(distcomp, WHOLE(DistRDFDictEncode<NBYTES, ID, ENC>), commrank, commsize, rr, dist, os);
+    distcomp->exec();
+    RDFDictionary<ID, ENC> *dict = distcomp->getDictionary();
+    DELETE(distcomp);
+    NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_dict.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
+    RDFDictEncWriter<ID, ENC>::writeDictionary(os, dict);
+    os->close();
+    DELETE(os);
+    DELETE(dict);
+    return 0;
+  }
+  // TODO need to support single output der
+  if (commrank == 0) cerr << "[ERROR] Dictionary encoding to a single output is currently unsupported." << endl;
   return -1;
 }
 
@@ -324,10 +368,11 @@ int main(int argc, char **argv) {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
   if (!parse_args(argc, argv)) {
+    ASSERTNPTR(0);
     MPI::Finalize();
     return -1;
   }
-#if 1
+#if 0
   cerr << "[" << commrank << "] Input: " << cmdargs.input << endl;
   cerr << "[" << commrank << "] Input format: " << cmdargs.input_format << endl;
   cerr << "[" << commrank << "] Input dict: " << cmdargs.input_dict << endl;
@@ -345,6 +390,7 @@ int main(int argc, char **argv) {
   if (cmdargs.output_format == string("der") && commsize > 1 &&
       (cmdargs.global_dict || cmdargs.single_output)) {
     int ret = dictionary_encode();
+    ASSERTNPTR(0);
     MPI::Finalize();
     return ret;
   }
@@ -367,11 +413,8 @@ int main(int argc, char **argv) {
     while (rr->read(triple)) {
       rw->write(triple);
     }
-    cerr << "[" << commrank << "] Closing writer." << endl;
     rw->close();
-    cerr << "[" << commrank << "] Closing reader." << endl;
     rr->close();
-    cerr << "[" << commrank << "] Both closed." << endl;
     DELETE(rw);
     DELETE(rr);
     if (index != NULL) {

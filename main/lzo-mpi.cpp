@@ -370,11 +370,13 @@ int main(int argc, char **argv) {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
   if (!parse_args(argc, argv)) {
+    ASSERTNPTR(0);
     MPI::Finalize();
     return -1;
   }
   if (cmdargs.print_index) {
     int r = print_index();
+    ASSERTNPTR(0);
     MPI::Finalize();
     return r;
   }
@@ -416,5 +418,7 @@ int main(int argc, char **argv) {
     DELETE(os);
     DELETE(xs);
   }
+  ASSERTNPTR(0);
   MPI::Finalize();
+  return 0;
 }

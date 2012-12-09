@@ -164,10 +164,13 @@ int print_index() {
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) {
+    ASSERTNPTR(0);
     return -1;
   }
   if (cmdargs.print_index) {
-    return print_index();
+    int r = print_index();
+    ASSERTNPTR(0);
+    return r;
   }
   DPtr<uint8_t> *nump = NULL;
   deque<uint64_t> *index = NULL;
@@ -248,4 +251,6 @@ int main(int argc, char **argv) {
     DELETE(os);
     DELETE(xs);
   }
+  ASSERTNPTR(0);
+  return 0;
 }

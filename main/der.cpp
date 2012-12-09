@@ -118,10 +118,13 @@ int print_index() {
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) {
+    ASSERTNPTR(0);
     return -1;
   }
   if (cmdargs.print_index) {
-    return print_index();
+    int r = print_index();
+    ASSERTNPTR(0);
+    return r;
   }
   RDFDictionary<ID, ENC> *dict;
   NEW(dict, WHOLE(RDFDictionary<ID, ENC>));
