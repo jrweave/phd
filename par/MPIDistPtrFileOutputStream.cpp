@@ -17,6 +17,8 @@
 
 #include "ptr/MPtr.h"
 
+#define PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG 0
+
 namespace par {
 
 MPIDistPtrFileOutputStream::MPIDistPtrFileOutputStream(
@@ -63,7 +65,7 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
   } catch (MPI::Exception &e) {
     THROW(IOException, e.Get_error_string());
   }
-  while (flen != this->last_file_length) {
+  while (!this->started || flen != this->last_file_length) {
     unsigned long len = (unsigned long) this->length;
     unsigned long offset;
     try {
@@ -75,12 +77,18 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
     if (this->started) {
       MPI::Status stat;
       try {
+#if PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG
+        cerr << __FILE__ << ':' << __LINE__ << " [" << MPI::COMM_WORLD.Get_rank() << "] Write_at_all_end(" << (void*)this->asyncbuf->dptr() << ", stat)" << endl;
+#endif
         this->file.Write_at_all_end(this->asyncbuf->dptr(), stat);
       } catch (MPI::Exception &e) {
         THROW(IOException, e.Get_error_string());
       }
     }
     try {
+#if PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG
+      cerr << __FILE__ << ':' << __LINE__ << " [" << MPI::COMM_WORLD.Get_rank() << "] Write_at_all_begin("  << (MPI::Offset)(this->last_file_length + offset) << ", " << (void*)this->asyncbuf->dptr() << ", " << this->length << ", MPI::BYTE)" << endl;
+#endif
       this->file.Write_at_all_begin(
           (MPI::Offset)(this->last_file_length + offset), this->asyncbuf->dptr(),
           this->length, MPI::BYTE);
@@ -99,6 +107,9 @@ void MPIDistPtrFileOutputStream::close() throw(IOException) {
   }
   try {
     MPI::Status stat;
+#if PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG
+    cerr << __FILE__ << ':' << __LINE__ << " [" << MPI::COMM_WORLD.Get_rank() << "] Write_at_all_end(" << (void*)this->asyncbuf->dptr() << ", stat)" << endl;
+#endif
     this->file.Write_at_all_end(this->asyncbuf->dptr(), stat);
   } catch (MPI::Exception &e) {
     THROW(IOException, e.Get_error_string());
@@ -126,6 +137,9 @@ size_t MPIDistPtrFileOutputStream::writeBuffer() throw(IOException) {
   if (this->started) {
     MPI::Status stat;
     try {
+#if PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG
+      cerr << __FILE__ << ':' << __LINE__ << " [" << MPI::COMM_WORLD.Get_rank() << "] Write_at_all_end(" << (void*)this->asyncbuf->dptr() << ", stat)" << endl;
+#endif
       this->file.Write_at_all_end(this->asyncbuf->dptr(), stat);
     } catch (MPI::Exception &e) {
       THROW(IOException, e.Get_error_string());
@@ -133,6 +147,9 @@ size_t MPIDistPtrFileOutputStream::writeBuffer() throw(IOException) {
   }
   swap(this->buffer, this->asyncbuf);
   try {
+#if PAR_MPI_DIST_PTR_FILE_OUTPUT_STREAM_DEBUG
+    cerr << __FILE__ << ':' << __LINE__ << " [" << MPI::COMM_WORLD.Get_rank() << "] Write_at_all_begin(" << (MPI::Offset)(this->last_file_length + offset) << ", " << (void*)this->asyncbuf->dptr() << ", " << this->length << ", MPI::BYTE)" << endl;
+#endif
     this->file.Write_at_all_begin(
         (MPI::Offset)(this->last_file_length + offset), this->asyncbuf->dptr(),
         this->length, MPI::BYTE);

@@ -256,6 +256,7 @@ RDFReader *makeRDFReader() {
       return rr;
     }
   }
+  if (commrank == 0) cerr << "[ERROR] Unsupported input format: " << cmdargs.input_format << endl;
   return NULL;
 }
 
@@ -308,6 +309,7 @@ RDFWriter *makeRDFWriter(RDFDictionary<ID, ENC> *dict, deque<uint64_t> *index) {
       return rw;
     }
   }
+  if (commrank == 0) cerr << "[ERROR] Unsupported output format: " << cmdargs.output_format << endl;
   return NULL;
 }
 
@@ -326,19 +328,19 @@ int main(int argc, char **argv) {
     return -1;
   }
 #if 1
-  cerr << "Input: " << cmdargs.input << endl;
-  cerr << "Input format: " << cmdargs.input_format << endl;
-  cerr << "Input dict: " << cmdargs.input_dict << endl;
-  cerr << "Input index: " << cmdargs.input_index << endl;
-  cerr << "Output: " << cmdargs.output << endl;
-  cerr << "Output format: " << cmdargs.output_format << endl;
-  cerr << "Output dict: " << cmdargs.output_dict << endl;
-  cerr << "Output index: " << cmdargs.output_index << endl;
-  cerr << "Page size: " << cmdargs.page_size << endl;
-  cerr << "Block size: " << cmdargs.block_size << endl;
-  cerr << "Single input: " << cmdargs.single_input << endl;
-  cerr << "Single output: " << cmdargs.single_output << endl;
-  cerr << "Global dict: " << cmdargs.global_dict << endl;
+  cerr << "[" << commrank << "] Input: " << cmdargs.input << endl;
+  cerr << "[" << commrank << "] Input format: " << cmdargs.input_format << endl;
+  cerr << "[" << commrank << "] Input dict: " << cmdargs.input_dict << endl;
+  cerr << "[" << commrank << "] Input index: " << cmdargs.input_index << endl;
+  cerr << "[" << commrank << "] Output: " << cmdargs.output << endl;
+  cerr << "[" << commrank << "] Output format: " << cmdargs.output_format << endl;
+  cerr << "[" << commrank << "] Output dict: " << cmdargs.output_dict << endl;
+  cerr << "[" << commrank << "] Output index: " << cmdargs.output_index << endl;
+  cerr << "[" << commrank << "] Page size: " << cmdargs.page_size << endl;
+  cerr << "[" << commrank << "] Block size: " << cmdargs.block_size << endl;
+  cerr << "[" << commrank << "] Single input: " << cmdargs.single_input << endl;
+  cerr << "[" << commrank << "] Single output: " << cmdargs.single_output << endl;
+  cerr << "[" << commrank << "] Global dict: " << cmdargs.global_dict << endl;
 #endif
   if (cmdargs.output_format == string("der") && commsize > 1 &&
       (cmdargs.global_dict || cmdargs.single_output)) {
@@ -365,11 +367,13 @@ int main(int argc, char **argv) {
     while (rr->read(triple)) {
       rw->write(triple);
     }
-    triple = RDFTriple();
-    rr->close();
+    cerr << "[" << commrank << "] Closing writer." << endl;
     rw->close();
-    DELETE(rr);
+    cerr << "[" << commrank << "] Closing reader." << endl;
+    rr->close();
+    cerr << "[" << commrank << "] Both closed." << endl;
     DELETE(rw);
+    DELETE(rr);
     if (index != NULL) {
       unsigned long partial = index->back();
       if (commrank < commsize - 1) {
@@ -409,8 +413,8 @@ int main(int argc, char **argv) {
         index->swap(swapper);
       }
     }
-    rr->close();
     rw->close();
+    rr->close();
     deque<uint64_t>::iterator it = index->begin();
     for (; it != index->end(); ++it) {
       if (is_little_endian()) {
@@ -420,8 +424,8 @@ int main(int argc, char **argv) {
       xs->write(nump);
     }
     xs->close();
-    DELETE(rr);
     DELETE(rw);
+    DELETE(rr);
     DELETE(xs);
     DELETE(index);
   }

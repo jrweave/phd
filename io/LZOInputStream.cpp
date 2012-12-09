@@ -67,6 +67,9 @@ LZOInputStream::~LZOInputStream() THROWS(IOException) {
 TRACE(IOException, "Problem deconstructing LZOInputStream.")
 
 void LZOInputStream::close() THROWS(IOException) {
+  if (this->index != NULL) {
+    this->index->push_back(this->count);
+  }
   this->input_stream->close();
 }
 TRACE(IOException, "Problem closing LZOInputStream.")

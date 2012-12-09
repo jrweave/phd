@@ -39,13 +39,15 @@ struct cmdargs_t {
   string index;
   size_t block_size;
   size_t page_size;
+  size_t first_block;
+  size_t last_block;
   bool include_header;
   bool include_footer;
   bool include_checksum;
   bool decompress;
   bool allow_splitting;
   bool print_index;
-} cmdargs = { string("-"), string("-"), string(""), 4096, 0, true, true, true, false, true, false };
+} cmdargs = { string("-"), string("-"), string(""), 4096, 0, 1, 0, true, true, true, false, true, false };
 
 bool parse_args(const int argc, char **argv) {
   int i;
@@ -86,6 +88,14 @@ bool parse_args(const int argc, char **argv) {
       ss >> cmdargs.page_size;
     } else if (string(argv[i]) == string("--print-index")) {
       cmdargs.print_index = true;
+    } else if (string(argv[i]) == string("-fb")) {
+      stringstream ss (stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> cmdargs.first_block;
+    } else if (string(argv[i]) == string("-lb")) {
+      stringstream ss (stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> cmdargs.last_block;
     } else if (cmdargs.input != string("-")) {
       cerr << "[ERROR] Only one input file can be specified." << endl;
       return false;
@@ -203,9 +213,13 @@ int main(int argc, char **argv) {
         cmdargs.allow_splitting);
   }
   DPtr<uint8_t> *readp = is->read();
+  size_t block_count = 0;
   if (xs == NULL) {
     while (readp != NULL) {
-      os->write(readp);
+      if (++block_count >= cmdargs.first_block &&
+          (cmdargs.last_block <= 0 || block_count <= cmdargs.last_block)) {
+        os->write(readp);
+      }
       readp->drop();
       readp = is->read();
     }
@@ -215,7 +229,10 @@ int main(int argc, char **argv) {
     DELETE(os);
   } else {
     while (readp != NULL) {
-      os->write(readp);
+      if (++block_count >= cmdargs.first_block &&
+          (cmdargs.last_block <= 0 || block_count <= cmdargs.last_block)) {
+        os->write(readp);
+      }
       readp->drop();
       if ((index->size() << 3) >= cmdargs.page_size) {
         write_index(xs, index, nump);
