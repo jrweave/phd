@@ -22,6 +22,7 @@ namespace rdf {
 
 class RDFWriter {
 public:
+  virtual ~RDFWriter() {}
   virtual void write(const RDFTriple &triple) = 0;
   virtual void close() = 0;
 };

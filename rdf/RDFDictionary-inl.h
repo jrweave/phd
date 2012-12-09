@@ -129,12 +129,43 @@ bool RDFDictionary<ID, ENC>::lookup(const ID &id, RDFTerm &term) {
   if (myid((ID::size() << 3) - 1, false)) {
     return this->encoder(myid, term);
   }
-  typename ID2TermMap::const_iterator it = this->id2term.find(myid);
+  typename ID2TermMap::const_iterator it = this->id2term.find(id);
   if (it != this->id2term.end()) {
     term = it->second;
     return true;
   }
   return false;
+}
+
+template<typename ID, typename ENC>
+bool RDFDictionary<ID, ENC>::force(const ID &id, RDFTerm &term) {
+  ID myid = id;
+  if (myid((ID::size() << 3) - 1, false)) {
+    return false;
+  }
+  typename ID2TermMap::const_iterator it = this->id2term.find(id);
+  if (it != this->id2term.end()) {
+    return term.equals(it->second);
+  }
+  this->id2term.insert(pair<ID, RDFTerm>(id, term));
+  this->term2id.insert(pair<RDFTerm, ID>(term, id));
+  if (this->counter <= id) {
+    this->counter = id;
+    ++this->counter;
+  }
+  return true;
+}
+
+template<typename ID, typename ENC>
+inline
+typename RDFDictionary<ID, ENC>::const_iterator RDFDictionary<ID, ENC>::begin() {
+  return this->id2term.begin();
+}
+
+template<typename ID, typename ENC>
+inline
+typename RDFDictionary<ID, ENC>::const_iterator RDFDictionary<ID, ENC>::end() {
+  return this->id2term.end();
 }
 
 }

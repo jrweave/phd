@@ -27,10 +27,11 @@ using namespace std;
 
 template<typename ID=RDFID<8>, typename ENC=RDFEncoder<ID> >
 class RDFDictionary {
+public:
+  typedef map<ID, RDFTerm> ID2TermMap;
 protected:
   typedef map<RDFTerm, ID, bool(*)(const RDFTerm &, const RDFTerm &)>
       Term2IDMap;
-  typedef map<ID, RDFTerm> ID2TermMap;
   Term2IDMap term2id;
   ID2TermMap id2term;
   ID counter;
@@ -49,6 +50,12 @@ public:
   virtual bool lookup(const RDFTerm &term, ID &id);
   virtual bool lookup(const ID &id);
   virtual bool lookup(const ID &id, RDFTerm &term);
+  virtual bool force(const ID &id, RDFTerm &term);
+
+  typedef typename ID2TermMap::const_iterator const_iterator;
+
+  const_iterator begin();
+  const_iterator end();
 };
 
 }

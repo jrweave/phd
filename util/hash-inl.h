@@ -17,7 +17,6 @@
 
 namespace util {
 
-inline
 uint32_t hash_jenkins_one_at_a_time(const uint8_t *begin, const uint8_t *end)
     throw() {
   uint32_t h = UINT32_C(0);

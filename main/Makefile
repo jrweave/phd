@@ -1,22 +1,22 @@
 # Copyright 2012 Jesse Weaver
 # 
-#    Licensed under the Apache License, Version 2.0 (the "License");
+#    Licensed unlzo the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 # 
 #        http://www.apache.org/licenses/LICENSE-2.0
 # 
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
+#    distributed unlzo the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 #    implied. See the License for the specific language governing
-#    permissions and limitations under the License.
+#    permissions and limitations unlzo the License.
 
 include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= normalize-nt prd2cnf refine refine-all refine_rules
+OBJS		= normalize-nt prd2cnf refine refine-all refine_rules der
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
 ifeq ($(USE_PAR_MPI), yes)
@@ -91,3 +91,7 @@ lzo : lzo.cpp
 lzo-mpi : lzo-mpi.cpp
 	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+
+der : der.cpp
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/der/include -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/der/include -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)

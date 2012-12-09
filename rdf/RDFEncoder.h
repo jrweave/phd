@@ -18,12 +18,16 @@
 
 #include "ex/TraceableException.h"
 #include "rdf/RDFTerm.h"
+#include "sys/endian.h"
 #include "sys/ints.h"
+#include "util/funcs.h"
 
 namespace rdf {
 
 using namespace ex;
 using namespace std;
+using namespace sys;
+using namespace util;
 
 template<size_t N>
 class RDFID {
@@ -32,7 +36,13 @@ private:
 public:
   RDFID() {}
   RDFID(const int init) {
-    memcpy(this->bytes + N - sizeof(int), &init, sizeof(int));
+    if (is_big_endian()) {
+      memcpy(this->bytes + N - sizeof(int), &init, sizeof(int));
+    } else {
+      int i = init;
+      reverse_bytes(i);
+      memcpy(this->bytes + N - sizeof(int), &i, sizeof(int));
+    }
     memset(this->bytes, 0, N - sizeof(int));
   }
   RDFID(const RDFID<N> &copy) {
