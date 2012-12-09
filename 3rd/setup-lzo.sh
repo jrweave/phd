@@ -1,11 +1,11 @@
 #!/bin/sh
 
 echo '+-------------------+'
-echo '| X     ZZZZZ  OOO  |'
-echo '| X        Z  O   O |'
-echo '| X       Z   O   O |'
-echo '| X      Z    O   O |'
-echo '| XXXXX ZZZZZ  OOO  |'
+echo '| X     XXXXX  XXX  |'
+echo '| X        X  X   X |'
+echo '| X       X   X   X |'
+echo '| X      X    X   X |'
+echo '| XXXXX XXXXX  XXX  |'
 echo '+-------------------+'
 echo
 if [ -d "lzo" ]; then

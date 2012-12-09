@@ -15,9 +15,12 @@
 
 #include "rdf/RDFDictEncWriter.h"
 
+#include <algorithm>
 #include "ptr/MPtr.h"
 
 namespace rdf {
+
+using namespace std;
 
 template<typename ID, typename ENC>
 RDFDictEncWriter<ID, ENC>::RDFDictEncWriter(OutputStream *os,
@@ -53,15 +56,11 @@ void RDFDictEncWriter<ID, ENC>::writeDictionary(OutputStream *os,
     RDFDictionary<ID, ENC> *dict) {
   DPtr<uint8_t> *p;
   try {
-    NEW(p, MPtr<uint8_t>, ID::size() + sizeof(uint32_t));
+    NEW(p, MPtr<uint8_t>, max((int)(ID::size() + sizeof(uint32_t)), 1024));
   } RETHROW_BAD_ALLOC
   typename RDFDictionary<ID, ENC>::const_iterator it = dict->begin();
   typename RDFDictionary<ID, ENC>::const_iterator end = dict->end();
   for (; it != end; ++it) {
-    if (!p->alone()) {
-      p = p->stand(false);
-    }
-    memcpy(p->dptr(), it->first.ptr(), ID::size());
     DPtr<uint8_t> *str = it->second.toUTF8String();
     if (str->size() > (size_t) UINT32_MAX) {
       p->drop();
@@ -69,14 +68,30 @@ void RDFDictEncWriter<ID, ENC>::writeDictionary(OutputStream *os,
       THROW(TraceableException,
             "RDFTerm too long to write in dictionary file.");
     }
+    if (p->size() < ID::size() + sizeof(uint32_t) + str->size()) {
+      p->drop();
+      try {
+        NEW(p, MPtr<uint8_t>, ID::size() + sizeof(uint32_t) + str->size());
+      } RETHROW_BAD_ALLOC
+    } else if (!p->alone()) {
+      p = p->stand(false);
+    }
+    memcpy(p->dptr(), it->first.ptr(), ID::size());
     uint32_t len = (uint32_t) str->size();
     if (is_little_endian()) {
       reverse_bytes(len);
     }
     memcpy(p->dptr() + ID::size(), &len, sizeof(uint32_t));
-    os->write(p);
-    os->write(str);
+    // I could just write p with the header and the str afterward,
+    // but then there would be two calls to the underlying OutputStream.
+    // This can make a difference if splitting is prevented in a parallel
+    // context.  I shouldn't have to account for that here, but doing so
+    // saves me some time... for now.
+    memcpy(p->dptr() + ID::size() + sizeof(uint32_t), str->dptr(), str->size());
+    DPtr<uint8_t> *subp = p->sub(0, ID::size() + sizeof(uint32_t) + str->size());
     str->drop();
+    os->write(subp);
+    subp->drop();
   }
   p->drop();
 }

@@ -151,8 +151,7 @@ bool RDFDictEncReader<ID, ENC>::readID(ID &id) {
   uint8_t *p = id.ptr();
   uint8_t *end = p + ID::size();
   while (this->buffer != NULL && p != end) {
-    size_t amount = min(this->buffer->size() - this->offset,
-                        ID::size());
+    size_t amount = min(this->buffer->size() - this->offset, (size_t)(end - p));
     memcpy(p, this->buffer->dptr() + this->offset, amount);
     p += amount;
     this->offset += amount;

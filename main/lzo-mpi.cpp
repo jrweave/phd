@@ -304,7 +304,7 @@ InputStream *makeInputStream(deque<uint64_t> *index) {
     }
     mybegin *= sizeof(uint64_t);
     myend *= sizeof(uint64_t);
-    uint64_t newbegin, newend;;
+    uint64_t newbegin, newend;
     index_file.Read_at(mybegin, &newbegin, sizeof(uint64_t), MPI::BYTE);
     index_file.Read_at(myend, &newend, sizeof(uint64_t), MPI::BYTE);
     if (is_little_endian()) {

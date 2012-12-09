@@ -35,7 +35,34 @@ LZOOutputStream::LZOOutputStream(OutputStream *os, deque<uint64_t> *index,
     : output_stream(os), index(index), count(0),
       max_block_size(max_block_size), flags(do_checksum ? 1 : 0),
       write_header(write_header), write_footer(write_footer),
-      header_written(false) {
+      header_written(false), own_index(true) {
+  if (os == NULL) {
+    THROW(BaseException<void*>, NULL, "os must not be NULL.");
+  }
+  if (lzo_init() != LZO_E_OK) {
+    THROW(TraceableException, "Unable to initialize LZO!");
+  }
+  size_t outsize = max_block_size + (max_block_size >> 4) + 67
+                   + (sizeof(uint32_t) << 1);
+  try {
+    NEW(this->output, MPtr<uint8_t>, outsize);
+  } RETHROW_BAD_ALLOC
+  try {
+    NEW(this->work_memory, MPtr<uint8_t>, LZO1X_1_MEM_COMPRESS);
+  } RETHROW_BAD_ALLOC
+  if (this->flags & 1) {
+    this->checksum = lzo_adler32(0, NULL, 0);
+  }
+}
+
+LZOOutputStream::LZOOutputStream(OutputStream *os, deque<uint64_t> *index,
+    const size_t max_block_size, const bool write_header,
+    const bool write_footer, const bool do_checksum, const bool own_index)
+    throw(BaseException<void*>, BadAllocException, TraceableException)
+    : output_stream(os), index(index), count(0),
+      max_block_size(max_block_size), flags(do_checksum ? 1 : 0),
+      write_header(write_header), write_footer(write_footer),
+      header_written(false), own_index(own_index) {
   if (os == NULL) {
     THROW(BaseException<void*>, NULL, "os must not be NULL.");
   }
@@ -57,7 +84,7 @@ LZOOutputStream::LZOOutputStream(OutputStream *os, deque<uint64_t> *index,
 
 LZOOutputStream::~LZOOutputStream() THROWS(IOException) {
   DELETE(this->output_stream);
-  if (this->index != NULL) {
+  if (this->index != NULL && this->own_index) {
     DELETE(this->index);
   }
   this->work_memory->drop();

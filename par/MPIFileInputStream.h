@@ -46,6 +46,7 @@ public:
   virtual DPtr<uint8_t> *read(const int64_t amount)
       throw(IOException, BadAllocException);
   virtual int64_t skip(const int64_t n) throw(IOException);
+  MPI::Offset getFileSize() throw(IOException);
 };
 
 }

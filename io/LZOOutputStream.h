@@ -40,12 +40,17 @@ private:
   bool write_header;
   bool write_footer;
   bool header_written;
+  bool own_index;
   void writeHeader() throw(IOException);
   void writeFooter() throw(IOException);
 public:
   LZOOutputStream(OutputStream *os, deque<uint64_t> *index,
       const size_t max_block_size, const bool write_header,
       const bool write_footer, const bool do_checksum)
+    throw(BaseException<void*>, BadAllocException, TraceableException);
+  LZOOutputStream(OutputStream *os, deque<uint64_t> *index,
+      const size_t max_block_size, const bool write_header,
+      const bool write_footer, const bool do_checksum, const bool own_index)
     throw(BaseException<void*>, BadAllocException, TraceableException);
   virtual ~LZOOutputStream() throw(IOException);
   virtual deque<uint64_t> *getIndex() throw();

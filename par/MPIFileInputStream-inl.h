@@ -36,4 +36,13 @@ void MPIFileInputStream::close() throw(IOException) {
   }
 }
 
+inline
+MPI::Offset MPIFileInputStream::getFileSize() throw(IOException) {
+  try {
+    return this->file.Get_size();
+  } catch (MPI::Exception &e) {
+    THROW(IOException, e.Get_error_string());
+  }
+}
+
 }
