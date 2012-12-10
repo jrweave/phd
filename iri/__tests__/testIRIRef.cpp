@@ -107,7 +107,6 @@ bool equiv(IRIRef *iriref, DPtr<uint8_t> *scheme, DPtr<uint8_t> *user_info,
     PROG(iriref->getPart(HOST) == NULL);
   } else {
     DPtr<uint8_t> *part = iriref->getPart(HOST);
-    cerr << "part->size() == " << part->size() << " " << (char)**part << endl;
     PROG(host->size() == part->size());
     PROG(equal(part->dptr(), part->dptr() + part->size(),
         host->dptr()));
@@ -138,7 +137,6 @@ bool equiv(IRIRef *iriref, DPtr<uint8_t> *scheme, DPtr<uint8_t> *user_info,
     PROG(iriref->getPart(QUERY) == NULL);
   } else {
     DPtr<uint8_t> *part = iriref->getPart(QUERY);
-    cerr << "part == " << (void*)part << endl;
     PROG(query->size() == part->size());
     PROG(equal(part->dptr(), part->dptr() + part->size(),
         query->dptr()));
@@ -193,6 +191,10 @@ int main (int argc, char **argv) {
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9"),
       str2ptr("eXAMPLE"), NULL, str2ptr("a"), NULL,
       str2ptr("/./b/../b/%63/%7bfoo%7d/ros%C3%A9"), NULL, NULL);
+  TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml"), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml"), NULL, NULL);
+  TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), NULL, NULL);
+  TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml")->normalize(), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), NULL, NULL);
+  TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml")->normalize(), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml"), NULL, NULL);
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9")->resolve(NULL),
       str2ptr("eXAMPLE"), NULL, str2ptr("a"), NULL,
       str2ptr("/b/%63/%7bfoo%7d/ros%C3%A9"), NULL, NULL);

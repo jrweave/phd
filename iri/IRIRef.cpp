@@ -281,34 +281,56 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException, TraceableException) {
     if (markj == end) {
       break;
     }
-    size_t i;
-    for (i = 0; bits > UINT8_C(0x7F) && i < sz; ++i) {
-      bits <<= 1;
-    }
-    // decode percent-encoding
-    uint8_t n = (((uint8_t) IRI_HEX_VALUE(markj[1])) << 4)
-        | (uint8_t) IRI_HEX_VALUE(markj[2]);
-    if (bits > UINT8_C(0x7F) || IRIRef::isIUnreserved(n)) {
-      if (bits > UINT8_C(0x7F)) {
-        bits <<= 1;
-      } else if (n > UINT8_C(0x7F)) {
-        bits = n << 1;
+
+    uint8_t enc[4] = { UINT8_C(0xFF), UINT8_C(0xFF),
+                       UINT8_C(0xFF), UINT8_C(0xFF) };
+    enc[0] = (((uint8_t) IRI_HEX_VALUE(markj[1])) << 4)
+             | (uint8_t) IRI_HEX_VALUE(markj[2]);
+    if (enc[0] <= UINT8_C(0x7F)) {
+      if (IRIRef::isIUnreserved(enc[0])) {
+        *markk = enc[0];
+        ++markk;
+      } else {
+        markk[0] = markj[0];
+        markk[1] = to_upper(markj[1]);
+        markk[2] = to_upper(markj[2]);
+        markk += 3;
       }
-      *markk = n;
-      ++markk;
       markj += 3;
-      if (this->urified && IRIRef::isUCSChar(n)) {
+      continue;
+    }
+
+    uint8_t *markl = markj + 3;
+    int i = 1;
+    uint8_t bits;
+    for (bits = enc[0] << 1; markl != end && *markl == to_ascii('%') &&
+                             bits > UINT8_C(0x7F); bits <<= 1) {
+      enc[i] = (((uint8_t) IRI_HEX_VALUE(markl[1])) << 4)
+               | (uint8_t) IRI_HEX_VALUE(markl[2]);
+      markl += 3;
+      ++i;
+    }
+    try {
+      uint32_t codepoint = utf8char(enc);
+      if (IRIRef::isIUnreserved(codepoint)) {
+        memmove(markk, enc, i * sizeof(uint8_t));
+        markk += i;
+        markj = markl;
         this->urified = false;
+      } else {
+        for (; markj != markl; markj += 3) {
+          markk[0] = markj[0];
+          markk[1] = to_upper(markj[1]);
+          markk[2] = to_upper(markj[2]);
+          markk += 3;
+        }
       }
-    } else {
-      if (bits > UINT8_C(0x7F)) {
-        bits <<= 1;
-      }
+    } catch (InvalidEncodingException &e) {
       markk[0] = markj[0];
       markk[1] = to_upper(markj[1]);
       markk[2] = to_upper(markj[2]);
-      markj += 3;
       markk += 3;
+      markj += 3;
     }
   }
   if (markk != end) {

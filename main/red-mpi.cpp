@@ -363,13 +363,11 @@ int dictionary_encode() {
   return -1;
 }
 
-int main(int argc, char **argv) {
-  MPI::Init(argc, argv);
+int doit(int argc, char **argv) {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
   if (!parse_args(argc, argv)) {
     ASSERTNPTR(0);
-    MPI::Finalize();
     return -1;
   }
 #if 0
@@ -391,7 +389,6 @@ int main(int argc, char **argv) {
       (cmdargs.global_dict || cmdargs.single_output)) {
     int ret = dictionary_encode();
     ASSERTNPTR(0);
-    MPI::Finalize();
     return ret;
   }
   deque<uint64_t> *index = NULL;
@@ -480,6 +477,17 @@ int main(int argc, char **argv) {
     DELETE(dict);
   }
   ASSERTNPTR(0);
-  MPI::Finalize();
   return 0;
+}
+
+int main(int argc, char **argv) {
+  try {
+    MPI::Init(argc, argv);
+    int r = doit(argc, argv);
+    MPI::Finalize();
+    return r;
+  } catch (TraceableException &e) {
+    cerr << e.what();
+    throw(e);
+  }
 }
