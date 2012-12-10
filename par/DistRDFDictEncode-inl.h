@@ -15,6 +15,8 @@
 
 #include "par/DistRDFDictEncode.h"
 
+#include "sys/endian.h"
+#include "util/funcs.h"
 #include "util/hash.h"
 
 #define DIST_RDF_DICT_ENCODE_DEBUG 0
@@ -35,10 +37,17 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank)
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
   }
-  memcpy(this->counter.ptr(), &rank, sizeof(int));
-  if (rank == 0) {
-    ++this->counter;
+  if (is_big_endian()) {
+    memcpy(this->counter.ptr(), &rank, sizeof(int));
+  } else {
+    int r = rank;
+    reverse_bytes(r);
+    memcpy(this->counter.ptr(), &r, sizeof(int));
   }
+  // TODO double check that this is no longer necessary.
+  //if (rank == 0) {
+  //  ++this->counter;
+  //}
 }
 
 template<size_t N, typename ID, typename ENC>
@@ -48,10 +57,17 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(
   if (N <= sizeof(int)) {
     THROW(TraceableException, "N must be > sizeof(int).");
   }
-  memcpy(this->counter.ptr(), &rank, sizeof(int));
-  if (rank == 0) {
-    ++this->counter;
+  if (is_big_endian()) {
+    memcpy(this->counter.ptr(), &rank, sizeof(int));
+  } else {
+    int r = rank;
+    reverse_bytes(r);
+    memcpy(this->counter.ptr(), &r, sizeof(int));
   }
+  // TODO double check that this is no longer necessary.
+  //if (rank == 0) {
+  //  ++this->counter;
+  //}
 }
 
 template<size_t N, typename ID, typename ENC>
@@ -63,6 +79,9 @@ template<size_t N, typename ID, typename ENC>
 bool DistRDFDictionary<N, ID, ENC>::nextID(ID &id) {
   int proc;
   memcpy(&proc, this->counter.ptr(), sizeof(int));
+  if (is_little_endian()) {
+    reverse_bytes(proc);
+  }
   if (proc != this->rank) {
     return false;
   }
@@ -179,7 +198,7 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
     cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
-    const uint8_t *b = &resp.id;
+    const uint8_t *b = resp.id.ptr();
     const uint8_t *e = b + ID::size();
     for (; b != e; ++b) {
       cerr << (const int)*b << ":";
@@ -338,7 +357,7 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
     cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
-    const uint8_t *b = &resp.id;
+    const uint8_t *b = resp.id.ptr();
     const uint8_t *e = b + ID::size();
     for (; b != e; ++b) {
       cerr << (const int)*b << ":";
@@ -354,7 +373,7 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
   cerr << "send_to=" << this->dict->rank << " n=" << resp.n << " id=" << hex;
-  const uint8_t *b = &resp.id;
+  const uint8_t *b = resp.id.ptr();
   const uint8_t *e = b + ID::size();
   for (; b != e; ++b) {
     cerr << (const int)*b << ":";
