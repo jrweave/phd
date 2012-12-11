@@ -191,6 +191,8 @@ int main (int argc, char **argv) {
   TEST(equiv, str2iri("eXAMPLE://a/./b/../b/%63/%7bfoo%7d/ros%C3%A9"),
       str2ptr("eXAMPLE"), NULL, str2ptr("a"), NULL,
       str2ptr("/./b/../b/%63/%7bfoo%7d/ros%C3%A9"), NULL, NULL);
+  TEST(equiv, str2iri("http://lexvo.org/id/term/gmy/%F0%90%80%A9%F0%90%80%80"), str2ptr("http"), NULL, str2ptr("lexvo.org"), NULL, str2ptr("/id/term/gmy/%F0%90%80%A9%F0%90%80%80"), NULL, NULL);
+  TEST(equiv, str2iri("http://lexvo.org/id/term/gmy/%F0%90%80%A9%F0%90%80%80")->normalize(), str2ptr("http"), NULL, str2ptr("lexvo.org"), NULL, str2ptr("/id/term/gmy/\xF0\x90\x80\xA9\xF0\x90\x80\x80"), NULL, NULL);
   TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml"), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%C2%961968).xml"), NULL, NULL);
   TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), NULL, NULL);
   TEST(equiv, str2iri("http://dbpedia.org/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml")->normalize(), str2ptr("http"), NULL, str2ptr("dbpedia.org"), NULL, str2ptr("/data/African-American_Civil%20Rights%20Movement%20(1955%961968).xml"), NULL, NULL);

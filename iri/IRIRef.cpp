@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include "iri/MalformedIRIRefException.h"
@@ -304,15 +305,17 @@ IRIRef *IRIRef::normalize() THROWS(BadAllocException, TraceableException) {
     int i = 1;
     uint8_t bits;
     for (bits = enc[0] << 1; markl != end && *markl == to_ascii('%') &&
-                             bits > UINT8_C(0x7F); bits <<= 1) {
+                             bits > UINT8_C(0x7F) && i < 4; bits <<= 1) {
       enc[i] = (((uint8_t) IRI_HEX_VALUE(markl[1])) << 4)
                | (uint8_t) IRI_HEX_VALUE(markl[2]);
       markl += 3;
       ++i;
     }
     try {
-      uint32_t codepoint = utf8char(enc);
+      const uint8_t *endenc;
+      uint32_t codepoint = utf8char(enc, &endenc);
       if (IRIRef::isIUnreserved(codepoint)) {
+        i = endenc - enc; // should already be equal, but just in case
         memmove(markk, enc, i * sizeof(uint8_t));
         markk += i;
         markj = markl;

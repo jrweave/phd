@@ -48,7 +48,7 @@ size_t utf8len(const uint32_t codepoint, uint8_t *utf8val)
           | UINT8_C(0x80);
     }
     return 2;
-  } else if (codepoint <= UINT32_C(0x10000)) {
+  } else if (codepoint <= UINT32_C(0xFFFF)) {
     if (utf8val != NULL) {
       utf8val[0] = (((uint8_t)(codepoint >> 12)) & UINT8_C(0x0F))
           | UINT8_C(0xE0);
