@@ -105,7 +105,7 @@ bool parse_args(const int argc, char **argv) {
         p->drop();
         CustomRDFEncoder::dict.encode(term);
       } catch (TraceableException &e) {
-        cerr << "[ERROR] The following error occurred when trying to parsse a value for --force.\n" << e.what() << endl;
+        cerr << "[ERROR] The following error occurred when trying to parse a value for --force.\n" << e.what() << endl;
         return false;
       }
     } else if (cmdargs.input != string("-")) {

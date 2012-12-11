@@ -60,7 +60,29 @@ using namespace util;
 #endif
 
 typedef RDFID<NBYTES> ID;
-typedef RDFEncoder<ID> ENC;
+
+// HACK: This is a bit like cheating, but it works.
+// This way, I can force some RDF terms to be encoded even if they
+// do not appear in the data.  It also enforces the same encoding
+// of these terms to all processors, prior to distributed dictionary
+// encoding of terms in the data.
+class CustomRDFEncoder {
+public:
+  static RDFDictionary<ID> dict;
+  bool operator()(const RDFTerm &term, ID &id) {
+    return dict.lookup(term, id);
+  }
+  bool operator()(const ID &id, RDFTerm &term) {
+    if (dict.lookup(id, term)) {
+      return true;
+    }
+    return dict.force(id, term);
+  }
+};
+
+RDFDictionary<ID> CustomRDFEncoder::dict = RDFDictionary<ID>();
+
+typedef CustomRDFEncoder ENC;
 
 struct cmdargs_t {
   string input;
@@ -174,7 +196,23 @@ bool parse_args(int argc, char **argv) {
     else CMDARG(argv[i], "--single-input", "-si", single_input, false, true)
     else CMDARG(argv[i], "--single-output", "-so", single_output, false, true)
     else CMDARG(argv[i], "--global-dict", "-gd", global_dict, false, true)
-    else { cerr << "[ERROR] Unrecognized flag: " << argv[i] << endl; return false; }
+    else if (strcmp(argv[i], "--force") == 0) {
+      try {
+        string termstr(argv[++i]);
+        DPtr<uint8_t> *p;
+        NEW(p, MPtr<uint8_t>, termstr.size());
+        ascii_strcpy(p->dptr(), termstr.c_str());
+        RDFTerm term = RDFTerm::parse(p);
+        p->drop();
+        CustomRDFEncoder::dict.encode(term);
+      } catch (TraceableException &e) {
+        if (rank == 0) cerr << "[ERROR] The following error occurred when trying to parse a value for --force.\n" << e.what() << endl;
+        return false;
+      }
+    } else {
+      cerr << "[ERROR] Unrecognized flag: " << argv[i] << endl;
+      return false;
+    }
   }
   REQUIREDVAL(input, "--input", "-i", string(""))
   DEFAULTVAL(input_format, string(""), string("nt"))
@@ -336,6 +374,12 @@ RDFWriter *makeRDFWriter(RDFDictionary<ID, ENC> *dict, deque<uint64_t> *index) {
   return NULL;
 }
 
+void write_replicated_dictionary(OutputStream *os) {
+  ID bitflip(0);
+  bitflip((ID::size() << 3) - 1, true);
+  RDFDictEncWriter<ID>::writeDictionary(os, &CustomRDFEncoder::dict, bitflip);
+}
+
 int dictionary_encode() {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
@@ -353,6 +397,7 @@ int dictionary_encode() {
     DELETE(distcomp);
     NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_dict.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
     RDFDictEncWriter<ID, ENC>::writeDictionary(os, dict);
+    write_replicated_dictionary(os);
     os->close();
     DELETE(os);
     DELETE(dict);
@@ -367,7 +412,6 @@ int doit(int argc, char **argv) {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
   if (!parse_args(argc, argv)) {
-    ASSERTNPTR(0);
     return -1;
   }
 #if 0
@@ -388,7 +432,6 @@ int doit(int argc, char **argv) {
   if (cmdargs.output_format == string("der") && commsize > 1 &&
       (cmdargs.global_dict || cmdargs.single_output)) {
     int ret = dictionary_encode();
-    ASSERTNPTR(0);
     return ret;
   }
   deque<uint64_t> *index = NULL;
@@ -472,11 +515,11 @@ int doit(int argc, char **argv) {
   if (dict != NULL) {
     NEW(xs, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_dict.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
     RDFDictEncWriter<ID, ENC>::writeDictionary(xs, dict);
+    write_replicated_dictionary(xs);
     xs->close();
     DELETE(xs);
     DELETE(dict);
   }
-  ASSERTNPTR(0);
   return 0;
 }
 
@@ -485,6 +528,8 @@ int main(int argc, char **argv) {
     MPI::Init(argc, argv);
     int r = doit(argc, argv);
     MPI::Finalize();
+    CustomRDFEncoder::dict.clear();
+    ASSERTNPTR(0);
     return r;
   } catch (TraceableException &e) {
     cerr << e.what();
