@@ -56,6 +56,8 @@ public:
 
   const_iterator begin();
   const_iterator end();
+
+  void clear();
 };
 
 }

@@ -65,12 +65,15 @@ bool RDFDictionary<ID, ENC>::nextID(ID &id) {
 
 template<typename ID, typename ENC>
 ID RDFDictionary<ID, ENC>::encode(const RDFTerm &term) {
+  ID id;
+  if (this->encoder(term, id) && !id((ID::size() << 3) - 1, true)) {
+    return id;
+  }
   pair<typename Term2IDMap::iterator, typename Term2IDMap::iterator> range =
       this->term2id.equal_range(term);
   if (range.first != range.second) {
     return range.first->second;
   }
-  ID id;
   if (!this->nextID(id)) {
     THROW(TraceableException, "Ran out of identifiers!");
   }
@@ -141,7 +144,7 @@ template<typename ID, typename ENC>
 bool RDFDictionary<ID, ENC>::force(const ID &id, RDFTerm &term) {
   ID myid = id;
   if (myid((ID::size() << 3) - 1, false)) {
-    return false;
+    return this->encoder(myid, term);
   }
   typename ID2TermMap::const_iterator it = this->id2term.find(id);
   if (it != this->id2term.end()) {
@@ -166,6 +169,18 @@ template<typename ID, typename ENC>
 inline
 typename RDFDictionary<ID, ENC>::const_iterator RDFDictionary<ID, ENC>::end() {
   return this->id2term.end();
+}
+
+template<typename ID, typename ENC>
+inline
+void RDFDictionary<ID, ENC>::clear() {
+  if (!this->id2term.empty()) {
+    this->counter = this->id2term.begin()->first;
+  }
+  Term2IDMap newt2i(RDFTerm::cmplt0);
+  ID2TermMap newi2t;
+  this->term2id.swap(newt2i);
+  this->id2term.swap(newi2t);
 }
 
 }

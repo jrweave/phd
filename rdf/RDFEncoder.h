@@ -64,14 +64,14 @@ public:
   }
   static size_t size() { return N; }
   bool operator[](const size_t i) const {
-    return ((this->bytes[N - (i >> 3) - 1] >> (i & 0x7)) & 0x1) != 0;
+    return ((this->bytes[N - (i >> 3) - 1] >> (i & UINT8_C(7))) & UINT8_C(1)) != UINT8_C(0);
   }
   bool operator()(const size_t i, const bool v) {
     size_t byteoff = N - (i >> 3) - 1;
-    size_t bitoff = i & 0x7;
-    bool oldv = (this->bytes[byteoff] >> bitoff) != 0;
+    size_t bitoff = i & UINT8_C(7);
+    bool oldv = ((this->bytes[byteoff] >> bitoff) & UINT8_C(1)) != UINT8_C(0);
     if (oldv ^ v) {
-      this->bytes[byteoff] ^= (1 << bitoff);
+      this->bytes[byteoff] ^= (UINT8_C(1) << bitoff);
     }
     return oldv;
   }

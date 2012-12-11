@@ -41,7 +41,27 @@ using namespace sys;
 using namespace util;
 
 typedef RDFID<NBYTES> ID;
-typedef RDFEncoder<ID> ENC;
+
+// HACK: This is a bit like cheating, but it works.
+// This way, I can force some RDF terms to be encoded even if they
+// do not appear in the data.
+class CustomRDFEncoder {
+public:
+  static RDFDictionary<ID> dict;
+  bool operator()(const RDFTerm &term, ID &id) {
+    return dict.lookup(term, id);
+  }
+  bool operator()(const ID &id, RDFTerm &term) {
+    if (dict.lookup(id, term)) {
+      return true;
+    }
+    return dict.force(id, term);
+  }
+};
+
+RDFDictionary<ID> CustomRDFEncoder::dict = RDFDictionary<ID>();
+
+typedef CustomRDFEncoder ENC;
 
 struct cmdargs_t {
   string input;
@@ -75,6 +95,19 @@ bool parse_args(const int argc, char **argv) {
       ss >> cmdargs.page_size;
     } else if (string(argv[i]) == string("--print-index")) {
       cmdargs.print_index = true;
+    } else if (string(argv[i]) == string("--force")) {
+      try {
+        string termstr(argv[++i]);
+        DPtr<uint8_t> *p;
+        NEW(p, MPtr<uint8_t>, termstr.size());
+        ascii_strcpy(p->dptr(), termstr.c_str());
+        RDFTerm term = RDFTerm::parse(p);
+        p->drop();
+        CustomRDFEncoder::dict.encode(term);
+      } catch (TraceableException &e) {
+        cerr << "[ERROR] The following error occurred when trying to parsse a value for --force.\n" << e.what() << endl;
+        return false;
+      }
     } else if (cmdargs.input != string("-")) {
       cerr << "[ERROR] Only one input file can be specified." << endl;
       return false;
@@ -113,16 +146,29 @@ int print_index() {
     cout << setw(1) << dec << ' ' << it->second << endl;
   }
   DELETE(dict);
+  RDFDictionary<ID>::const_iterator it2 = CustomRDFEncoder::dict.begin();
+  RDFDictionary<ID>::const_iterator end2 = CustomRDFEncoder::dict.end();
+  for (; it2 != end2; ++it2) {
+    const uint8_t *p = it2->first.ptr();
+    const uint8_t *pend = p + ID::size();
+    cout << setw(2) << hex << (int)((*p) ^ UINT8_C(0x80));
+    for (++p; p != pend; ++p) {
+      cout << setw(2) << hex << (int)*p;
+    }
+    cout << setw(1) << dec << ' ' << it2->second << endl;
+  }
   return 0;
 }
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) {
+    CustomRDFEncoder::dict.clear();
     ASSERTNPTR(0);
     return -1;
   }
   if (cmdargs.print_index) {
     int r = print_index();
+    CustomRDFEncoder::dict.clear();
     ASSERTNPTR(0);
     return r;
   }
@@ -191,10 +237,14 @@ int main(int argc, char **argv) {
       NEW(os, BufferedOutputStream, os, cmdargs.page_size, true);
     }
     RDFDictEncWriter<ID, ENC>::writeDictionary(os, dict);
+    ID bitflip(0);
+    bitflip((ID::size() << 3) - 1, true);
+    RDFDictEncWriter<ID>::writeDictionary(os, &CustomRDFEncoder::dict, bitflip);
     os->close();
     DELETE(os);
   }
   DELETE(dict);
+  CustomRDFEncoder::dict.clear();
   ASSERTNPTR(0);
   return 0;
 }

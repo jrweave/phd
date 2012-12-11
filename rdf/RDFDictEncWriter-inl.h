@@ -54,6 +54,13 @@ TRACE(IOException, "Trouble deconstructing RDFDictEncWriter.")
 template<typename ID, typename ENC>
 void RDFDictEncWriter<ID, ENC>::writeDictionary(OutputStream *os,
     RDFDictionary<ID, ENC> *dict) {
+  ID noflip(0);
+  RDFDictEncWriter<ID, ENC>::writeDictionary(os, dict, noflip);
+}
+
+template<typename ID, typename ENC>
+void RDFDictEncWriter<ID, ENC>::writeDictionary(OutputStream *os,
+    RDFDictionary<ID, ENC> *dict, const ID &bitflip) {
   DPtr<uint8_t> *p;
   try {
     NEW(p, MPtr<uint8_t>, max((int)(ID::size() + sizeof(uint32_t)), 1024));
@@ -76,7 +83,9 @@ void RDFDictEncWriter<ID, ENC>::writeDictionary(OutputStream *os,
     } else if (!p->alone()) {
       p = p->stand(false);
     }
-    memcpy(p->dptr(), it->first.ptr(), ID::size());
+    ID flipped(it->first);
+    flipped ^= bitflip;
+    memcpy(p->dptr(), flipped.ptr(), ID::size());
     uint32_t len = (uint32_t) str->size();
     if (is_little_endian()) {
       reverse_bytes(len);

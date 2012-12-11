@@ -43,6 +43,8 @@ public:
   virtual ~RDFDictEncWriter() throw(IOException);
 
   static void writeDictionary(OutputStream *os, RDFDictionary<ID, ENC> *dict);
+  static void writeDictionary(OutputStream *os, RDFDictionary<ID, ENC> *dict,
+                              const ID &bitflip);
 
   void write(const RDFTriple &triple);
   void close();
