@@ -77,6 +77,10 @@ public:
   // NEGATION, EXISTENTIAL
   RIFCondition getSubformula() const throw(BaseException<enum RIFCondType>);
 
+  // EXISTENTIAL
+  DPtr<RIFVar> *getQuantifiedVars() const
+      throw(BaseException<enum RIFCondType>);
+
   RIFCondition &operator=(const RIFCondition &rhs) throw(BadAllocException);
 };
 

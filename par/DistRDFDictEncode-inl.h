@@ -44,10 +44,6 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(const int rank)
     reverse_bytes(r);
     memcpy(this->counter.ptr(), &r, sizeof(int));
   }
-  // TODO double check that this is no longer necessary.
-  //if (rank == 0) {
-  //  ++this->counter;
-  //}
 }
 
 template<size_t N, typename ID, typename ENC>
@@ -64,10 +60,6 @@ DistRDFDictionary<N, ID, ENC>::DistRDFDictionary(
     reverse_bytes(r);
     memcpy(this->counter.ptr(), &r, sizeof(int));
   }
-  // TODO double check that this is no longer necessary.
-  //if (rank == 0) {
-  //  ++this->counter;
-  //}
 }
 
 template<size_t N, typename ID, typename ENC>

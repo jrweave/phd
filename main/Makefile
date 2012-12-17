@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include
-OBJS		= normalize-nt prd2cnf refine refine-all refine_rules der
+OBJS		= normalize-nt prd2cnf refine refine-all refine_rules der encode-rules infer-rules
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
 ifeq ($(USE_PAR_MPI), yes)
@@ -24,7 +24,7 @@ OBJS		+= lzo-mpi red-mpi
 endif
 endif
 ifeq ($(USE_PAR_MPI), yes)
-OBJS		+= infer normalize-nt-mpi
+OBJS		+= infer normalize-nt-mpi infer-rules-mpi
 endif
 
 all : build __tests__
@@ -52,6 +52,7 @@ clean :
 	#cd __tests__; $(MAKE) $(MFLAGS) clean
 
 distclean : clean
+	-$(RM) -vf *.der *.lzo *.idx *.dct *.prd *.enc script/*.der scripts/*.lzo scripts/*.idx scripts/*.dct scripts/*.prd scripts/*.enc *.frc scripts/*.frc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testsfiles/*.prd testfiles/*.enc testfiles/*.frc
 
 force_look :
 	true
@@ -99,3 +100,15 @@ der : der.cpp
 red-mpi : red-mpi.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 	$(CC) $(CFLAGS) -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+
+encode-rules : encode-rules.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+
+infer-rules : infer-rules.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o infer-rules infer-rules.cpp
+	$(CC) $(CFLAGS) -o infer-rules infer-rules.cpp
+
+infer-rules-mpi : infer-rules-mpi.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS)
+	$(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS)

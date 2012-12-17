@@ -13,8 +13,8 @@
  *    permissions and limitations under the License.
  */
 
-#include <deque>
 #include <iomanip>
+#include <set>
 #include <string>
 #include "io/BufferedInputStream.h"
 #include "io/BufferedOutputStream.h"
@@ -64,13 +64,14 @@ RDFDictionary<ID> CustomRDFEncoder::dict = RDFDictionary<ID>();
 typedef CustomRDFEncoder ENC;
 
 struct cmdargs_t {
+  set<string> lookups;
   string input;
   string output;
   string index;
   size_t page_size;
   bool decompress;
   bool print_index;
-} cmdargs = { string("-"), string("-"), string(""), 0, false, false };
+} cmdargs = { set<string>(), string("-"), string("-"), string(""), 0, false, false };
 
 bool parse_args(const int argc, char **argv) {
   int i;
@@ -95,6 +96,8 @@ bool parse_args(const int argc, char **argv) {
       ss >> cmdargs.page_size;
     } else if (string(argv[i]) == string("--print-index")) {
       cmdargs.print_index = true;
+    } else if (string(argv[i]) == string("--lookup") || string(argv[i]) == string("-l")) {
+      cmdargs.lookups.insert(string(argv[++i]));
     } else if (string(argv[i]) == string("--force")) {
       try {
         string termstr(argv[++i]);
@@ -122,6 +125,33 @@ bool parse_args(const int argc, char **argv) {
   return true;
 }
 
+void print(const ID &id, const RDFTerm &term) {
+  if (!cmdargs.print_index) {
+    cout.write((const char *)id.ptr(), ID::size());
+    DPtr<uint8_t> *p = term.toUTF8String();
+    if (p->size() > (size_t)UINT32_MAX) {
+      p->drop();
+      cerr << "[ERROR] Length of string is too long to be represented in uint32_t.  Aborting." << endl;
+      return;
+    }
+    uint32_t size = (uint32_t)p->size();
+    if (is_little_endian()) {
+      reverse_bytes(size);
+    }
+    cout.write((const char*)&size, sizeof(uint32_t));
+    cout.write((const char*)p->dptr(), p->size());
+    p->drop();
+    return;
+  }
+  cout << setfill('0');
+  const uint8_t *p = id.ptr();
+  const uint8_t *end = p + ID::size();
+  for (; p != end; ++p) {
+    cout << setw(2) << hex << (int)*p;
+  }
+  cout << setw(1) << dec << ' ' << term << endl;
+}
+
 int print_index() {
   InputStream *is;
   if (cmdargs.input == string("-")) {
@@ -134,29 +164,38 @@ int print_index() {
   RDFDictEncReader<ID, ENC>::readDictionary(is, dict);
   is->close();
   DELETE(is);
-  cout << setfill('0');
-  RDFDictionary<ID, ENC>::const_iterator it = dict->begin();
-  RDFDictionary<ID, ENC>::const_iterator end = dict->end();
-  for (; it != end; ++it) {
-    const uint8_t *p = it->first.ptr();
-    const uint8_t *pend = p + ID::size();
-    for (; p != pend; ++p) {
-      cout << setw(2) << hex << (int)*p;
+  if (!cmdargs.lookups.empty()) {
+    set<string>::iterator it = cmdargs.lookups.begin();
+    for (; it != cmdargs.lookups.end(); ++it) {
+      DPtr<uint8_t> *p;
+      size_t len = it->size();
+      NEW(p, MPtr<uint8_t>, len);;
+      ascii_strncpy(p->dptr(), it->c_str(), len);
+      RDFTerm term = RDFTerm::parse(p);
+      p->drop();
+      ID id;
+      if (dict->lookup(term, id)) {
+        print(id, term);
+      } else {
+        cerr << "[INFO] No entry for " << *it << endl;
+      }
     }
-    cout << setw(1) << dec << ' ' << it->second << endl;
+  } else {
+    RDFDictionary<ID, ENC>::const_iterator it = dict->begin();
+    RDFDictionary<ID, ENC>::const_iterator end = dict->end();
+    for (; it != end; ++it) {
+      print(it->first, it->second);
+    }
+    RDFDictionary<ID>::const_iterator it2 = CustomRDFEncoder::dict.begin();
+    RDFDictionary<ID>::const_iterator end2 = CustomRDFEncoder::dict.end();
+    ID mostsig (1);
+    mostsig <<= (ID::size() << 3) - 1;
+    for (; it2 != end2; ++it2) {
+      ID id = it2->first | mostsig;
+      print(id, it2->second);
+    }
   }
   DELETE(dict);
-  RDFDictionary<ID>::const_iterator it2 = CustomRDFEncoder::dict.begin();
-  RDFDictionary<ID>::const_iterator end2 = CustomRDFEncoder::dict.end();
-  for (; it2 != end2; ++it2) {
-    const uint8_t *p = it2->first.ptr();
-    const uint8_t *pend = p + ID::size();
-    cout << setw(2) << hex << (int)((*p) ^ UINT8_C(0x80));
-    for (++p; p != pend; ++p) {
-      cout << setw(2) << hex << (int)*p;
-    }
-    cout << setw(1) << dec << ' ' << it2->second << endl;
-  }
   return 0;
 }
 
@@ -166,7 +205,7 @@ int main(int argc, char **argv) {
     ASSERTNPTR(0);
     return -1;
   }
-  if (cmdargs.print_index) {
+  if (cmdargs.print_index || !cmdargs.lookups.empty()) {
     int r = print_index();
     CustomRDFEncoder::dict.clear();
     ASSERTNPTR(0);

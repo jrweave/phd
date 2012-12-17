@@ -1,0 +1,9 @@
+@prefix : <tag:weavej3@rpi.edu,2012:/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+_:key owl:hasKey (:key1 :key2 :key3) .
+_:x a _:key; :key1 _:a; :key2 _:b; :key3 _:c .
+_:y a _:key; :key1 _:a; :key2 _:b; :key3 _:c .
+_:z a _:key; :key1 _:c; :key2 _:b; :key3 _:c .
+
+# should infer only that _:x owl:sameAs _:y

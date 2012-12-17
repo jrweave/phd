@@ -44,10 +44,10 @@ void DistComputation::exec()
   try {
     this->start();
 
-    NEW(buffer, MPtr<uint8_t>, 1024);
+    size_t len = 1024;
+    NEW(buffer, MPtr<uint8_t>, len);
     this->dist->init();
 
-    size_t len;
     int send_to;
     do {
       send_to  = this->pickup(buffer, len);

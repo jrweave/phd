@@ -32,6 +32,7 @@
 #include "io/LZOOutputStream.h"
 #include "io/OFStream.h"
 #include "io/OutputStream.h"
+#include "par/DistRDFDictDecode.h"
 #include "par/DistRDFDictEncode.h"
 #include "par/MPIDelimFileInputStream.h"
 #include "par/MPIDistPtrFileOutputStream.h"
@@ -351,6 +352,7 @@ RDFWriter *makeRDFWriter(RDFDictionary<ID, ENC> *dict, deque<uint64_t> *index) {
       OutputStream *os;
       NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
       NEW(os, LZOOutputStream, os, index, cmdargs.block_size, true, true, true, false);
+      NEW(os, BufferedOutputStream, os, cmdargs.block_size, false);
       RDFWriter *rw;
       NEW(rw, NTriplesWriter, os);
       return rw;
@@ -378,6 +380,42 @@ void write_replicated_dictionary(OutputStream *os) {
   ID bitflip(0);
   bitflip((ID::size() << 3) - 1, true);
   RDFDictEncWriter<ID>::writeDictionary(os, &CustomRDFEncoder::dict, bitflip);
+}
+
+int dictionary_decode() {
+  int commrank = MPI::COMM_WORLD.Get_rank();
+  int commsize = MPI::COMM_WORLD.Get_size();
+  if (!cmdargs.single_input) {
+    if (cmdargs.single_output) {
+      if (commrank == 0) cerr << "[ERROR] Dictionary decoding with global dictionary does not work with single output." << endl;
+      return -1;
+    }
+    if (cmdargs.output_format == string("nt.lzo") && cmdargs.output_index.size() > 0) {
+      if (commrank == 0) cerr << "[WARNING] No index file will be produced for nt.lzo output when dictionary decoding with global dictionary." << endl;
+    }
+    if (cmdargs.output_format == string("der") && cmdargs.output_dict.size() > 0) {
+      if (commrank == 0) cerr << "[WARNING] No dictionary file will be produced for der output when dictionary decoding with global dictionary." << endl;
+    }
+    InputStream *is = NULL;
+    NEW(is, MPIPartialFileInputStream, MPI::COMM_SELF, cmdargs.input_dict.c_str(), MPI::MODE_RDONLY, MPI::INFO_NULL, cmdargs.page_size, 0, -1);
+    RDFDictionary<ID, ENC> *dict = RDFDictEncReader<ID, ENC>::readDictionary(is, NULL);
+    is->close();
+    DELETE(is);
+    NEW(is, MPIPartialFileInputStream, MPI::COMM_SELF, cmdargs.input.c_str(), MPI::MODE_RDONLY, MPI::INFO_NULL, cmdargs.page_size, 0, -1);
+    NEW(is, BufferedInputStream, is, 3*NBYTES);
+    RDFWriter *rw = makeRDFWriter(NULL, NULL);
+    Distributor *dist = NULL;
+    NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, cmdargs.packet_size, cmdargs.num_requests, cmdargs.check_every, 111);
+    NEW(dist, StringDistributor, commrank, cmdargs.packet_size, dist);
+    DistRDFDictDecode<NBYTES, ID, ENC> *distcomp = NULL;
+    NEW(distcomp, WHOLE(DistRDFDictDecode<NBYTES, ID, ENC>), commrank, commsize, rw, dist, is, dict, true);
+    distcomp->exec();
+    DELETE(distcomp);
+    return 0;
+  }
+  // TODO need to support single input der
+  if (commrank == 0) cerr << "[ERROR] Dictionary decoding from a single input is currently unsupported." << endl;
+  return -1;
 }
 
 int dictionary_encode() {
@@ -429,10 +467,19 @@ int doit(int argc, char **argv) {
   cerr << "[" << commrank << "] Single output: " << cmdargs.single_output << endl;
   cerr << "[" << commrank << "] Global dict: " << cmdargs.global_dict << endl;
 #endif
+  if (cmdargs.input_format == string("der") && commsize > 1 &&
+      cmdargs.global_dict) {
+    if (cmdargs.output_format == string("der")) {
+      if (commrank == 0) {
+        cerr << "[ERROR] No support for der-to-der with global dictionary (but why do want to do that anyway?)." << endl;
+      }
+      return -1;
+    }
+    return dictionary_decode();
+  }
   if (cmdargs.output_format == string("der") && commsize > 1 &&
       (cmdargs.global_dict || cmdargs.single_output)) {
-    int ret = dictionary_encode();
-    return ret;
+    return dictionary_encode();
   }
   deque<uint64_t> *index = NULL;
   OutputStream *xs = NULL;

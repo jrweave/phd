@@ -224,7 +224,11 @@ int main(int argc, char **argv) {
         os->write(readp);
       }
       readp->drop();
-      readp = is->read();
+      if (cmdargs.last_block > 0 && block_count > cmdargs.last_block) {
+        readp = NULL;
+      } else {
+        readp = is->read();
+      }
     }
     is->close();
     os->close();
@@ -240,7 +244,11 @@ int main(int argc, char **argv) {
       if ((index->size() << 3) >= cmdargs.page_size) {
         write_index(xs, index, nump);
       }
-      readp = is->read();
+      if (cmdargs.last_block > 0 && block_count > cmdargs.last_block) {
+        readp = NULL;
+      } else {
+        readp = is->read();
+      }
     }
     is->close();
     os->close();

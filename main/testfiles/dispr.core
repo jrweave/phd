@@ -1,0 +1,33 @@
+
+ Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+ Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+ Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+ Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+ Prefix(rif  <http://www.w3.org/2007/rif#>)
+ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+ Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+ Prefix(dc   <http://purl.org/dc/terms/>)
+
+(* <#prp-adp> *)
+ Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
+   rif:error() :- And (
+       ?r[rdf:type -> owl:AllDisjointProperties]
+			 _checkDisjointProperties(?r ?l1)
+			 _checkDisjointProperties(?r ?l2)
+			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[?x->?v]
+			 ?o[?y->?v] ))
+
+ Forall ?r ?l (
+	 _checkDisjointProperties(?r ?l) :- And (
+		 ?r[rdf:type->owl:AllDisjointProperties]
+		 ?r[owl:members -> ?l] ))
+
+ Forall ?r ?l ?x (
+	 _checkDisjointProperties(?r ?l) :- And (
+		 _checkDisjointProperties(?r ?x)
+		 ?x[rdf:rest->?l]
+		 Not(?l = rdf:nil) ))
+

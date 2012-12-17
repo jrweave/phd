@@ -1,0 +1,38 @@
+Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+Prefix(rif  <http://www.w3.org/2007/rif#>)
+Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+Prefix(dc   <http://purl.org/dc/terms/>)
+Prefix(prof <http://www.cs.rpi.edu/~weavej3/foaf.rdf#>)
+Prefix(foaf <http://xmlns.com/foaf/0.1/>)
+#PRAGMA NOT REPLICATE And(?s[?p -> ?o])
+#PRAGMA ARBITRARY And(?s[rdf:type -> ?o])
+#PRAGMA REPLICATE And(?p[rdfs:domain -> ?c])
+#PRAGMA REPLICATE And(?p[rdfs:range -> ?c])
+#PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2])
+#PRAGMA REPLICATE And(?c1[rdfs:subClassOf -> ?c2])
+
+Forall ?s ?o (
+	?s[prof:chosen->?o] :- And(
+			?s[rdf:type->?o]
+			?s = prof:me ))
+
+Forall ?s ?p ?o (
+	?s[prof:inlist->?o] :- And(
+			?s[?p->?o]
+			External(pred:list-contains(List(foaf:name foaf:firstName foaf:surname) ?p))
+			Not(External(pred:list-contains(List(foaf:name foaf:firstName) ?p))) ))
+
+Forall ?s ?p ?o (
+	?s[prof:val_is_lang_literal->?o] :- And(
+			?s[?p->"Shangguan@en"^^rdf:PlainLiteral]
+			?o = "Shangguan@en"^^rdf:PlainLiteral ))
+
+Forall ?s ?p ?o (
+	?s[prof:val_is_plain_literal->?o] :- And(
+			?s[?p->"Jesse"^^xsd:string]
+			?o = "Jesse"^^xsd:string ))
+

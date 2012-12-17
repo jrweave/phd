@@ -1,0 +1,9 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+_:c owl:unionOf (_:c1 _:c2 _:c3) .
+#--> _:c1 rdfs:subClassOf _:c .
+#--> _:c2 rdfs:subClassOf _:c .
+#--> _:c3 rdfs:subClassOf _:c .
+
+_:y a _:c1 .
+#--> _:y a _:c .

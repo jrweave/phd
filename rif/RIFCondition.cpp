@@ -696,6 +696,17 @@ RIFCondition RIFCondition::getSubformula() const
   return *((RIFCondition*)this->state);
 }
 
+DPtr<RIFVar> *RIFCondition::getQuantifiedVars() const
+    throw(BaseException<enum RIFCondType>) {
+  if (this->type != EXISTENTIAL) {
+    THROW(BaseException<enum RIFCondType>, this->type,
+          "Type must be EXISTENTIAL to call getQuantifiedVars().");
+  }
+  DPtr<RIFVar> *vars = ((exist_state*)this->state)->vars;
+  vars->hold();
+  return vars;
+}
+
 RIFCondition &RIFCondition::operator=(const RIFCondition &rhs)
     THROWS(BadAllocException) {
   if (this == &rhs) {

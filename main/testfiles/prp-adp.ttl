@@ -1,0 +1,7 @@
+@prefix : <tag:weavej3@rpi.edu,2012:/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+_:r a owl:AllDisjointProperties ; owl:members (:p1 :p2 :p3) .
+
+_:o :p1 _:x ; :p2 _:x .
+#INCONSISTENT

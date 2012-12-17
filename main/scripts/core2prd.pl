@@ -14,17 +14,21 @@ while (<STDIN>) {
 				$newrule =~ s/\b(\d+)\b/"$1"^^xsd:integer/g;
 				$newrule =~ s/\b(\w*):([\w-]+)\b/"$prefix{$1}$2"^^<http:\/\/www.w3.org\/2007\/rif#iri>/g;
 				$newrule =~ s/\^\^"([^"]*)"\^\^<[^\s]+>/^^<$1>/g;
+				$newrule =~ s/\b_(\w+)\(/"$1"^^<http:\/\/www.w3.org\/2007\/rif#local>(/g;
 				print $newrule . "\n";
 			} else {
-				die "Unexpected implication: " . $impl . "\n";
+				die "[ERROR] Unexpected implication: " . $impl . "\n";
 			}
 		} elsif ($rule eq "") {
 			# ignore
+		} elsif ($rule =~ m/^\s*Forall/) {
+			die "[ERROR] Cannot parse: " . $rule . "\n";
 		} else {
 			$newrule = "If And() Then Do(Assert(" . $rule . "))";
 			$newrule =~ s/\b(\d+)\b/"$1"^^xsd:integer/g;
 			$newrule =~ s/\b(\w*):([\w-]+)\b/"$prefix{$1}$2"^^<http:\/\/www.w3.org\/2007\/rif#iri>/g;
 			$newrule =~ s/\^\^"([^"]*)"\^\^<[^\s]+>/^^<$1>/g;
+			$newrule =~ s/\b_(\w+)\(/"$1"^^<http:\/\/www.w3.org\/2007\/rif#local>(/g;
 			print $newrule . "\n";
 		}
 		$rule = "";
@@ -35,6 +39,7 @@ while (<STDIN>) {
 		$p =~ s/\b(\d+)\b/"$1"^^xsd:integer/g;
 		$p =~ s/\b(\w*):([\w-]+)\b/"$prefix{$1}$2"^^<http:\/\/www.w3.org\/2007\/rif#iri>/g;
 		$p =~ s/\^\^"([^"]*)"\^\^<[^\s]+>/^^<$1>/g;
+		$p =~ s/\b_(\w+)\(/"$1"^^<http:\/\/www.w3.org\/2007\/rif#local>(/g;
 		print $p . "\n"; # pass on expanded pragma
 	} elsif ($line =~ m/^\s*(#.*)$/) {
 		print $1 . "\n"; # pass comment through

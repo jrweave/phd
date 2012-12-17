@@ -1,0 +1,13 @@
+@prefix : <tag:weavej3@rpi.edu,2012:/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+_:c owl:intersectionOf (_:c1 _:c2 _:c3) .
+#--> _:c rdfs:subClassOf _:c1, _:c2, _:c3 .
+
+_:x a _:c1, _:c2, _:c3 .
+#--> _:x rdf:type _:c .
+
+_:y a _:c .
+#--> _:y rdf:type _:c1, _:c2, _:c3 .
+
+_:z a _:d .

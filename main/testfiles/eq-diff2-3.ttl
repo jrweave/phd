@@ -1,0 +1,8 @@
+@prefix : <tag:weavej3@rpi.edu,2012:/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+_:x a owl:AllDifferent ; owl:members (_:y1 _:y2 _:y3) .
+
+_:y1 owl:sameAs _:y2 .
+
+#INCONSISTENT

@@ -1,0 +1,7 @@
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+_:c owl:oneOf (_:y1 _:y2 _:y3) .
+#--> _:y1 rdf:type _:c .
+#--> _:y2 rdf:type _:c .
+#--> _:y3 rdf:type _:c .

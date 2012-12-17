@@ -1,0 +1,8 @@
+@prefix : <tag:weavej3@rpi.edu,2012:/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+:chain owl:propertyChainAxiom (:chain1 :chain2 :chain3) .
+_:a :chain1 [ :chain2 [ :chain3 _:b ] ] .
+_:b :chain1 [ :chain2 [ :chain1 _:c ] ] .
+
+# should infer _:a :chain _:b

@@ -28,7 +28,7 @@
 #include "sat/SATFormula.h"
 #include "util/timing.h"
 
-#define OPTPICK
+#define SAFEPICK
 
 /* QUICKVERIFY checks to see if the fixed replication scheme and given rules
  * meet the conditions.  QUICKCHECK is sufficient, but not necessary, for
@@ -72,7 +72,7 @@
 #ifdef SAFEPICK
 #define KEEP_SAFE 1
 #define KEEP_RISKY 0
-#define TRASH_RISKY 1
+#define TRASH_RISKY 0
 #define PARTITION_RISKY 1
 #define PARTITION_PATTERNS 0
 #endif
@@ -1871,6 +1871,24 @@ void terminate_clause() {
   ++numclauses;
 }
 
+// Simplifies the CNF data, returning false if determined that it is unsatisfiable.
+// Returning true makes no determination.
+bool simplify_cnfdata() {
+#if 0 // needs work, but maybe not necessary?
+  typedef pair<multimap<size_t, size_t>::const_iterator, multimap<size_t, size_t>::const_iterator> const_eqrng_t;
+  multimap<size_t, size_t> pos_clause_index;
+  multimap<size_t, size_t> neg_clause_index;
+  size_t i;
+  for (i = 0; i < cnfdata.size(); ++i) {
+    size_t n = cnfdata[i].second;
+    if (n != 0) {
+      index.insert(pair<size_t, size_t>(n, i));
+    }
+  }
+#endif
+  return true;
+}
+
 #define OLDWAY 0
 
 void print_cnf(const set<Rule> &saferules, const set<Rule> &riskyrules, const set<Pattern> &repls, const set<Pattern> &norepls, const set<Pattern> &arbs, const set<Pattern> &noarbs) {
@@ -2080,6 +2098,15 @@ void print_cnf(const set<Rule> &saferules, const set<Rule> &riskyrules, const se
       }
     }
   }
+
+  if (!simplify_cnfdata()) {
+    cout << "c UNSATISFIABLE" << endl;
+    cout << "p cnf 1 2" << endl;
+    cout << "1 0" << endl;
+    cout << "-1 0" << endl;
+    return;
+  }
+
   size_t n;
   for (n = 0; n < num2var.size(); ++n) {
     cout << "c " << (n+1) << ' ' << num2var[n] << endl;
@@ -2087,14 +2114,14 @@ void print_cnf(const set<Rule> &saferules, const set<Rule> &riskyrules, const se
   cout << "p cnf " << num2var.size() << ' ' << numclauses << endl;
   deque<pair<bool, size_t> >::const_iterator cit, prev;
   for (cit = cnfdata.begin(); cit != cnfdata.end(); ++cit) {
-    if (cit != cnfdata.begin() && prev->second != 0) {
+    if (cit != cnfdata.begin() && (!prev->first || prev->second != 0)) {
       cout << ' ';
     }
     if (!cit->first) {
       cout << '-';
     }
     cout << cit->second;
-    if (cit->second == 0) {
+    if (cit->first && cit->second == 0) {
       cout << endl;
     }
     prev = cit;
