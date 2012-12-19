@@ -52,7 +52,7 @@ clean :
 	#cd __tests__; $(MAKE) $(MFLAGS) clean
 
 distclean : clean
-	-$(RM) -vf *.der *.lzo *.idx *.dct *.prd *.enc script/*.der scripts/*.lzo scripts/*.idx scripts/*.dct scripts/*.prd scripts/*.enc *.frc scripts/*.frc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testsfiles/*.prd testfiles/*.enc testfiles/*.frc
+	-$(RM) -vfr *.der *.lzo *.idx *.dct *.prd *.enc script/*.der scripts/*.lzo scripts/*.idx scripts/*.dct scripts/*.prd scripts/*.enc *.frc scripts/*.frc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testsfiles/*.prd testfiles/*.enc testfiles/*.frc ccni/jobs/*
 
 force_look :
 	true
@@ -98,8 +98,8 @@ der : der.cpp
 	$(CC) $(CFLAGS) -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 
 red-mpi : red-mpi.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 
 encode-rules : encode-rules.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)

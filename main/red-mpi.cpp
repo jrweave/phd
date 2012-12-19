@@ -23,6 +23,7 @@
 #include <cmath>
 #include <deque>
 #include <mpi.h>
+#include <sstream>
 #include <string>
 #include "io/BufferedInputStream.h"
 #include "io/BufferedOutputStream.h"
@@ -59,6 +60,12 @@ using namespace util;
 #ifndef NBYTES
 #define NBYTES 8
 #endif
+
+#ifdef DEBUG
+#undef DEBUG
+#endif
+//#define DEBUG(...) cerr << (((stringstream*)&(stringstream(stringstream::in|stringstream::out) << "[DEBUG:" << __FILE__ << ":" << __LINE__ << ":" << MPI::COMM_WORLD.Get_rank() << "] " << __VA_ARGS__ << endl))->str());
+#define DEBUG(...)
 
 typedef RDFID<NBYTES> ID;
 
@@ -259,7 +266,9 @@ RDFReader *makeRDFReader() {
     if (cmdargs.single_input && commsize > 1) {
       // TODO handle the case when triples are split across compressed blocks.
       if (commrank == 0) cerr << "[WARNING] Input nt.lzo must not have triples split across compressed blocks." << endl;
+      DEBUG("Opening index file" << cmdargs.input_index)
       MPI::File index_file = MPI::File::Open(MPI::COMM_WORLD, cmdargs.input_index.c_str(), MPI::MODE_RDONLY, MPI::INFO_NULL);
+      DEBUG("Opened")
       MPI::Offset index_file_size = index_file.Get_size();
       MPI::Offset num_integers = index_file_size / sizeof(uint64_t);
       MPI::Offset num_chunks = num_integers - 1;
@@ -277,20 +286,28 @@ RDFReader *makeRDFReader() {
       mybegin *= sizeof(uint64_t);
       myend *= sizeof(uint64_t);
       uint64_t newbegin, newend;
-      index_file.Read_at(mybegin, &newbegin, sizeof(uint64_t), MPI::BYTE);
-      index_file.Read_at(myend, &newend, sizeof(uint64_t), MPI::BYTE);
-      if (is_little_endian()) {
-        reverse_bytes(newbegin);
-        reverse_bytes(newend);
+      if (mybegin != myend) {
+        DEBUG("Reading at bytes " << (int)mybegin << " and " << (int)myend)
+        index_file.Read_at(mybegin, &newbegin, sizeof(uint64_t), MPI::BYTE);
+        index_file.Read_at(myend, &newend, sizeof(uint64_t), MPI::BYTE);
+        if (is_little_endian()) {
+          reverse_bytes(newbegin);
+          reverse_bytes(newend);
+        }
+      } else {
+        DEBUG("Not reading at bytes " << (int)mybegin << " and " << (int)myend)
+        newbegin = newend = 0;
       }
       index_file.Close();
       mybegin = newbegin;
       myend = newend;
       InputStream *is;
+      DEBUG("Opening single input LZO file " << cmdargs.input)
       NEW(is, MPIPartialFileInputStream, MPI::COMM_WORLD, cmdargs.input.c_str(), MPI::MODE_RDONLY, MPI::INFO_NULL, cmdargs.page_size, mybegin, myend);
       NEW(is, LZOInputStream, is, NULL, commrank != 0, true);
       RDFReader *rr;
       NEW(rr, NTriplesReader, is);
+      DEBUG("Returning RDF reader.")
       return rr;
     } else {
       InputStream *is;
@@ -422,20 +439,29 @@ int dictionary_encode() {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
   if (!cmdargs.single_output) {
+    DEBUG("Making RDF reader.")
     RDFReader *rr = makeRDFReader();
     OutputStream *os = NULL;
+    DEBUG("Making output stream.")
     NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
     Distributor *dist = NULL;
+    DEBUG("Making distributor.")
     NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, cmdargs.packet_size, cmdargs.num_requests, cmdargs.check_every, 111);
     NEW(dist, StringDistributor, commrank, cmdargs.packet_size, dist);
     DistRDFDictEncode<NBYTES, ID, ENC> *distcomp = NULL;
+    DEBUG("Making distributed computation.")
     NEW(distcomp, WHOLE(DistRDFDictEncode<NBYTES, ID, ENC>), commrank, commsize, rr, dist, os);
+    DEBUG("Performing dictionary encoding.")
     distcomp->exec();
+    DEBUG("Finished dictionary encoding.")
     RDFDictionary<ID, ENC> *dict = distcomp->getDictionary();
     DELETE(distcomp);
+    DEBUG("Creating output stream to write dictionary.")
     NEW(os, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_dict.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
+    DEBUG("Writing the dictionary.")
     RDFDictEncWriter<ID, ENC>::writeDictionary(os, dict);
     write_replicated_dictionary(os);
+    DEBUG("Done writing the dictionary.")
     os->close();
     DELETE(os);
     DELETE(dict);
@@ -449,6 +475,7 @@ int dictionary_encode() {
 int doit(int argc, char **argv) {
   int commrank = MPI::COMM_WORLD.Get_rank();
   int commsize = MPI::COMM_WORLD.Get_size();
+  DEBUG("Parsing arguments")
   if (!parse_args(argc, argv)) {
     return -1;
   }
@@ -573,7 +600,9 @@ int doit(int argc, char **argv) {
 int main(int argc, char **argv) {
   try {
     MPI::Init(argc, argv);
+    DEBUG("Started")
     int r = doit(argc, argv);
+    DEBUG("Finalize")
     MPI::Finalize();
     CustomRDFEncoder::dict.clear();
     ASSERTNPTR(0);

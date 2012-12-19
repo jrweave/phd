@@ -20,10 +20,12 @@
 #include "util/hash.h"
 
 #define DIST_RDF_DICT_ENCODE_DEBUG 0
+#define DIST_RDF_DICT_DECODE_DEBUG 0
 
 namespace par {
 
-#if DIST_RDF_DICT_ENCODE_DEBUG
+#if DIST_RDF_DICT_ENCODE_DEBUG || DIST_RDF_DICT_DECODE_DEBUG
+stringstream _debugss (stringstream::in | stringstream::out);
 size_t DEBUG_READ = 0;
 size_t DEBUG_SENT = 0;
 size_t DEBUG_RECV = 0;
@@ -189,13 +191,15 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     const pending_response resp = this->pending_responses.front();
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
     const uint8_t *b = resp.id.ptr();
     const uint8_t *e = b + ID::size();
     for (; b != e; ++b) {
-      cerr << (const int)*b << ":";
+      _debugss << (const int)*b << ":";
     }
-    cerr << dec << " 4. RESPONDING " << this->dict->rank << endl;
+    _debugss << dec << " 4. RESPONDING " << this->dict->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
 #endif
 
     uint8_t *write_to = buffer->dptr();
@@ -290,7 +294,9 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
   }
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-  cerr << "send_to=" << this->dict->rank << " n=" << this->count << " astr=" << term << " 1. REQUESTING LOOKUP " << this->dict->rank << endl;
+  _debugss << "send_to=" << this->dict->rank << " n=" << this->count << " astr=" << term << " 1. REQUESTING LOOKUP " << this->dict->rank << endl;
+  cerr << _debugss.str();
+  _debugss.str(string(""));
 #endif
 
   pending_position pend;
@@ -341,20 +347,24 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
     termstr->drop();
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " astr=" << term << " 2. RECEIVED LOOKUP REQUEST " << this->dict->rank << endl;
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " astr=" << term << " 2. RECEIVED LOOKUP REQUEST " << this->dict->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
 #endif
 
     resp.id = this->dict->locallyEncode(term);
     this->pending_responses.push_back(resp);
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-    cerr << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
     const uint8_t *b = resp.id.ptr();
     const uint8_t *e = b + ID::size();
     for (; b != e; ++b) {
-      cerr << (const int)*b << ":";
+      _debugss << (const int)*b << ":";
     }
-    cerr << dec << " 3. PENDING RESPONSE " << this->dict->rank << endl;
+    _debugss << dec << " 3. PENDING RESPONSE " << this->dict->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
 #endif
     
     return;
@@ -364,13 +374,15 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
   memcpy(&resp.id, read_from, N);
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-  cerr << "send_to=" << this->dict->rank << " n=" << resp.n << " id=" << hex;
+  _debugss << "send_to=" << this->dict->rank << " n=" << resp.n << " id=" << hex;
   const uint8_t *b = resp.id.ptr();
   const uint8_t *e = b + ID::size();
   for (; b != e; ++b) {
-    cerr << (const int)*b << ":";
+    _debugss << (const int)*b << ":";
   }
-  cerr << dec << " 5. RECEIVED RESPONSE " << this->dict->rank << endl;
+  _debugss << dec << " 5. RECEIVED RESPONSE " << this->dict->rank << endl;
+  cerr << _debugss.str();
+  _debugss.str(string(""));
 #endif
 
   pair<typename multimap<uint32_t, pending_position>::iterator,

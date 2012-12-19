@@ -743,7 +743,7 @@ public:
     return partitions.size() - old_size;
   }
 #if !PARTITION_RISKY
-#warning Warning: calling partition when PARTITION_RISKY is not set doesn't exactly partition the patterns.
+#warning "Warning: calling partition when PARTITION_RISKY is not set doesn't exactly partition the patterns."
 #endif
   static bool partition(set<Pattern> &patterns) {
     if (patterns.size() <= 1) {

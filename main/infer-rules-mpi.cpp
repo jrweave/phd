@@ -18,21 +18,11 @@
 #include "ptr/DPtr.h"
 #include "ptr/MPtr.h"
 
-#ifndef PAGESIZE
-#define PAGESIZE (4*1024*1024)
-#endif
-
-#ifndef RANDOMIZE
-#define RANDOMIZE true
-#endif
-
-#ifndef NUMREQUESTS
-#define NUMREQUESTS ((size_t)(1.1f + log((float)MPI::COMM_WORLD.Get_size())/log(2.0f)))
-#endif
-
-#ifndef COORDEVERY
-#define COORDEVERY 10000
-#endif
+bool RANDOMIZE = false;
+int PAGESIZE = 4*1024*1024;
+int NUMREQUESTS = 100;
+int COORDEVERY = 100;
+int PACKETSIZE = 128;
 
 #ifdef DEBUG
 #undef DEBUG
@@ -686,7 +676,7 @@ const uint8_t *build_rule(const uint8_t *begin, const uint8_t *end, Rule &rule) 
 uint8_t *read_all(const char *filename, size_t &len) {
   MPI::File file = MPI::File::Open(MPI::COMM_WORLD, filename,
       MPI::MODE_RDONLY, MPI::INFO_NULL);
-  file.Seek(0, MPI::SEEK_SET);
+  file.Seek(0, MPI_SEEK_SET);
   MPI::Offset filesize = file.Get_size();
   MPI::Offset bytesread = 0;
   uint8_t *buffer = (uint8_t*)malloc(filesize);
@@ -801,7 +791,7 @@ void load_data(const char *filename) {
   }
   MPI::File file = MPI::File::Open(MPI::COMM_SELF, fnamestr.c_str(),
       MPI::MODE_RDONLY, MPI::INFO_NULL);
-  file.Seek(0, MPI::SEEK_SET);
+  file.Seek(0, MPI_SEEK_SET);
   MPI::Offset filesize = file.Get_size();
   if (filesize <= 0) {
     file.Close();
@@ -1522,6 +1512,78 @@ void infer(vector<Rule> &rules) {
 
 ///// IO AND DISTRIBUTION /////
 
+class DistUniq : public DistComputation {
+private:
+  int rank, nproc;
+  Index::const_iterator it;
+  Index::const_iterator end;
+public:
+  Index newindex;
+  DistUniq(Distributor *dist) throw(BaseException<void*>)
+      : DistComputation(dist), rank(MPI::COMM_WORLD.Get_rank()),
+        nproc(MPI::COMM_WORLD.Get_size()), it(idxspo.begin()),
+        end(idxspo.end()), newindex(Index(Order(0,1,2))) {
+    // do nothing
+  }
+  virtual ~DistUniq() throw(DistException) {
+    // do nothing
+  }
+  void start() throw(TraceableException) {}
+  void finish() throw(TraceableException) {}
+  void fail() throw() {
+    cerr << "[ERROR] Processor " << this->rank << " experienced a failure when attempting to redistributed the data in preparation for decoding." << endl;
+  }
+  int pickup(DPtr<uint8_t> *&buffer, size_t &len)
+      throw(BadAllocException, TraceableException) {
+    if (this->it == this->end) {
+      return -2;
+    }
+    uint32_t send_to = 0;
+    size_t i;
+    const Tuple &tuple = *this->it;
+    ++this->it;
+    for (i = 0; i < sizeof(uint32_t); ++i) {
+      send_to = (send_to << 8) | ((tuple[0] >> ((sizeof(constint_t)-i-1) << 3)) & 0xFF);
+    }
+    if (send_to >= this->nproc) {
+      // This can happen for replicated encodings with most sig bit set to 1.
+      send_to = 0;
+      for (i = 0; i < sizeof(uint32_t); ++i) {
+        send_to = (send_to << 8) | ((tuple[0] >> ((sizeof(uint32_t)-i-1) << 3)) & 0xFF);
+      }
+      send_to = send_to % this->nproc;
+    }
+    if (this->rank == send_to) {
+      this->newindex.insert(tuple);
+      return -1;
+    }
+    len = (sizeof(constint_t) << 1) + sizeof(constint_t); // 3*sizeof(constint_t)
+    if (buffer->size() < len) {
+      buffer->drop();
+      try {
+        NEW(buffer, MPtr<uint8_t>, len);
+      } RETHROW_BAD_ALLOC
+    }
+    uint8_t *write_to = buffer->dptr();
+    memcpy(write_to, &tuple[0], sizeof(constint_t));
+    write_to += sizeof(constint_t);
+    memcpy(write_to, &tuple[1], sizeof(constint_t));
+    write_to += sizeof(constint_t);
+    memcpy(write_to, &tuple[2], sizeof(constint_t));
+    return (int)send_to;
+  }
+  void dropoff(DPtr<uint8_t> *msg) throw(TraceableException) {
+    Tuple triple(3);
+    const uint8_t *read_from = msg->dptr();
+    memcpy(&triple[0], read_from, sizeof(constint_t));
+    read_from += sizeof(constint_t);
+    memcpy(&triple[1], read_from, sizeof(constint_t));
+    read_from += sizeof(constint_t);
+    memcpy(&triple[2], read_from, sizeof(constint_t));
+    this->newindex.insert(triple);
+  }
+};
+
 class Redistributor : public DistComputation {
 private:
   int rank, nproc, repl_count;
@@ -1572,7 +1634,7 @@ public:
     int send_to;
     if (this->randomize && this->repl_count <= 0 &&
         this->replications.count(*(this->it)) <= 0) {
-      send_to = rand() % this->nproc;
+      send_to = random() % this->nproc;
       ++this->it;
     } else {
       send_to = (this->rank + this->repl_count) % this->nproc;
@@ -1648,14 +1710,37 @@ void redistribute_data(const char *filename) {
   redist->randomize = RANDOMIZE;
   redist->replications.swap(repls);
   redist->exec();
+  if (RANDOMIZE) {
+    idxspo.swap(redist->newindex);
+    DELETE(redist);
+    Index newpos(Order(1,2,0));
+    Index newosp(Order(2,0,1));
+    newpos.insert(idxspo.begin(), idxspo.end());
+    newosp.insert(idxspo.begin(), idxspo.end());
+    idxpos.swap(newpos);
+    idxosp.swap(newosp);
+  } else {
+    idxspo.insert(redist->newindex.begin(), redist->newindex.end());
+    idxpos.insert(redist->newindex.begin(), redist->newindex.end());
+    idxosp.insert(redist->newindex.begin(), redist->newindex.end());
+    DELETE(redist);
+  }
+}
+
+void uniq() {
+  if (MPI::COMM_WORLD.Get_size() <= 1) {
+    return;
+  }
+  Distributor *dist;
+  NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, 3*sizeof(constint_t),
+      NUMREQUESTS, COORDEVERY, 382);
+  DistUniq *redist;
+  NEW(redist, DistUniq, dist);
+  redist->exec();
   idxspo.swap(redist->newindex);
   DELETE(redist);
-  Index newpos(Order(1,2,0));
-  Index newosp(Order(2,0,1));
-  newpos.insert(idxspo.begin(), idxspo.end());
-  newosp.insert(idxspo.begin(), idxspo.end());
-  idxpos.swap(newpos);
-  idxosp.swap(newosp);
+  // NOTE intentionally not modifying other indexes because I know this is
+  // a last step before output data from idxspo.
 }
 
 void write_data(const char *filename) {
@@ -1684,7 +1769,7 @@ void write_data(const char *filename) {
   MPI::Request req;
   MPI::File file = MPI::File::Open(MPI::COMM_SELF, fnamestr.c_str(),
       MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL);
-  file.Seek(0, MPI::SEEK_SET);
+  file.Seek(0, MPI_SEEK_SET);
   Index::iterator it = idxspo.begin();
   for (; it != idxspo.end(); ++it) {
     Tuple::const_iterator tit = it->begin();
@@ -1765,16 +1850,59 @@ int main(int argc, char **argv) {
     MPI::Finalize();
     return 0;
   }
+
+  bool uniquify = false;
+
+  srandom(MPI::COMM_WORLD.Get_rank());
+  int i, j;
+  j = 0;
+  for (i = 4; i < argc; ++i) {
+    if (strcmp(argv[i], "--packet-size") == 0) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> PACKETSIZE; // currently unused
+    } else if (strcmp(argv[i], "--num-requests") == 0) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> NUMREQUESTS;
+    } else if (strcmp(argv[i], "--check-every") == 0) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> COORDEVERY;
+    } else if (strcmp(argv[i], "--uniq") == 0 || strcmp(argv[i], "-u") == 0) {
+      uniquify = true;
+    } else if (strcmp(argv[i], "--page-size") == 0) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << argv[++i];
+      ss >> PAGESIZE;
+    } else if (strcmp(argv[i], "--randomize") == 0) {
+      RANDOMIZE = true;
+    }
+  }
+
+  ZEROSAY("[INFO] PACKETSIZE: " << PACKETSIZE << endl);
+  ZEROSAY("[INFO] NUMREQUESTS: " << NUMREQUESTS << endl);
+  ZEROSAY("[INFO] COORDEVERY: " << COORDEVERY << endl);
+  ZEROSAY("[INFO] UNIQUIFY: " << uniquify << endl);
+  ZEROSAY("[INFO] PAGESIZE: " << PAGESIZE << endl);
+  ZEROSAY("[INFO] RANDOMIZE: " << RANDOMIZE << endl);
+
   vector<Rule> rules;
   ZEROSAY("[INFO] Loading rules from " << argv[1] << endl);
   load_rules(argv[1], rules);
   //print_rules(rules);
   ZEROSAY("[INFO] Loading data from " << argv[1] << endl);
   load_data(argv[2]);
-  ZEROSAY("[INFO] Redistributing data according to " << (argc <= 4 ? "(nothing)" : argv[4]) << endl);
-  redistribute_data(argc > 4 ? argv[4] : NULL);
+  if (RANDOMIZE || argc > 4) {
+    ZEROSAY("[INFO] Redistributing data according to " << (argc <= 4 ? "(nothing)" : argv[4]) << endl);
+    redistribute_data(argc > 4 ? argv[4] : NULL);
+  }
   ZEROSAY("[INFO] Inferring..." << endl);
   infer(rules);
+  if (uniquify) {
+    ZEROSAY("[INFO] Deduplicating data." << endl);
+    uniq();
+  }
   ZEROSAY("[INFO] Writing output to " << argv[3] << endl);
   write_data(argv[3]);
   MPI::Finalize();

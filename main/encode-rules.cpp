@@ -765,6 +765,9 @@ void print_constants() {
 }
 
 int doit(int argc, char **argv) THROWS(TraceableException) {
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   ofstream fout;
   string filename;
   bool do_print_constants = false;
@@ -776,9 +779,15 @@ int doit(int argc, char **argv) THROWS(TraceableException) {
       filename = argv[i];
     }
   }
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   if (filename.size() > 0) {
     fout.open(filename.c_str());
   }
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   while (cin.good()) {
     string line;
     getline(cin, line);
@@ -802,18 +811,30 @@ int doit(int argc, char **argv) THROWS(TraceableException) {
     encode_rule(encoded, parse_rule(line));
     print_encoded(encoded);
   }
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   if (filename.size() > 0) {
     fout.close();
   }
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   if (do_print_constants) {
     print_constants();
   }
+#if DEBUG
+  cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
   return 0;
 }
 TRACE(TraceableException, "(trace)")
 
 int main(int argc, char **argv) {
   try {
+#if DEBUG
+    cerr << "[DEBUG] LINE " << __LINE__ << endl;
+#endif
     return doit(argc, argv);
   } catch (TraceableException &e) {
     cerr << "[ERROR] " << e.what() << endl;

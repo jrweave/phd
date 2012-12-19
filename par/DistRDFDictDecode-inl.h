@@ -15,6 +15,9 @@
 
 #include "par/DistRDFDictDecode.h"
 
+#if DIST_RDF_DICT_DECODE_DEBUG
+#include <iomanip>
+#endif
 #include "sys/endian.h"
 #include "util/funcs.h"
 #include "util/hash.h"
@@ -94,6 +97,12 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
       } RETHROW_BAD_ALLOC
     }
 
+#if DIST_RDF_DICT_DECODE_DEBUG
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " astr=" << resp.term << " 4. RESPONDING " << this->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
+#endif
+
     uint8_t *write_to = buffer->dptr();
     int neg = -(this->rank) - 1;
     memcpy(write_to, &neg, sizeof(int));
@@ -103,6 +112,9 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     memcpy(write_to, p->dptr(), p->size());
     p->drop();
     this->pending_responses.pop_front();
+#if DIST_RDF_DICT_DECODE_DEBUG
+    ++DEBUG_SENT;
+#endif
     return resp.send_to;
   }
   if (this->curpos > 2) {
@@ -113,10 +125,16 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     if (this->current == NULL) {
       if (this->ndonesent < this->nproc) {
         len = 1;
+#if DIST_RDF_DICT_DECODE_DEBUG
+        ++DEBUG_SENT;
+#endif
         return this->ndonesent++;
       }
       return this->nprocdone >= this->nproc ? -2 : -1;
     }
+#if DIST_RDF_DICT_DECODE_DEBUG
+    ++DEBUG_READ;
+#endif
     this->curpos = 0;
     pending_triple pend;
     pend.need = 3;
@@ -153,6 +171,9 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
         RDFTriple trip(this->curpend->parts[0], this->curpend->parts[1],
                        this->curpend->parts[2]);
         this->pending_triples.erase(this->curpend);
+#if DIST_RDF_DICT_DECODE_DEBUG
+        ++DEBUG_WRIT;
+#endif
         this->writer->write(trip);
       } JUST_RETHROW(TraceableException, "(rethrow)")
     }
@@ -172,6 +193,18 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     } RETHROW_BAD_ALLOC
   }
 
+#if DIST_RDF_DICT_DECODE_DEBUG
+  _debugss << "send_to=" << this->rank << " n=" << this->count << " id=" << hex;
+  _debugss << setfill('0');
+  const uint8_t *b = id.ptr();
+  const uint8_t *e = b + ID::size();
+  for (; b != e; ++b) {
+    _debugss << setw(2) << (const int)*b << ":";
+  }
+  _debugss << dec << " 1. REQUESTING LOOKUP " << this->rank << endl;
+  cerr << _debugss.str();
+  _debugss.str(string(""));
+#endif
 
   pending_position pend;
   pend.triple = this->curpend;
@@ -189,6 +222,9 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
   write_to += sizeof(uint32_t);
   memcpy(write_to, id.ptr(), ID::size());
   ++this->curpos;
+#if DIST_RDF_DICT_DECODE_DEBUG
+  ++DEBUG_SENT;
+#endif
   return send_to;
 }
 TRACE(TraceableException, "(trace)")
@@ -196,6 +232,9 @@ TRACE(TraceableException, "(trace)")
 template<size_t N, typename ID, typename ENC>
 void DistRDFDictDecode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
     THROWS(TraceableException) {
+#if DIST_RDF_DICT_DECODE_DEBUG
+  ++DEBUG_RECV;
+#endif
   if (msg->size() <= 1) {
     ++this->nprocdone;
     return;
@@ -211,8 +250,27 @@ void DistRDFDictDecode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
     ID id;
     memcpy(id.ptr(), read_from, ID::size());
 
+#if DIST_RDF_DICT_DECODE_DEBUG
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " id=" << hex;
+    _debugss << setfill('0');
+    const uint8_t *b = id.ptr();
+    const uint8_t *e = b + ID::size();
+    for (; b != e; ++b) {
+      _debugss << setw(2) << (const int)*b << ":";
+    }
+    _debugss << dec << " 2. RECEIVED LOOKUP REQUEST " << this->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
+#endif
+
     resp.term = this->dict->decode(id);
     this->pending_responses.push_back(resp);
+
+#if DIST_RDF_DICT_DECODE_DEBUG
+    _debugss << "send_to=" << resp.send_to << " n=" << resp.n << " astr=" << resp.term << " 3. PENDING RESPONSE " << this->rank << endl;
+    cerr << _debugss.str();
+    _debugss.str(string(""));
+#endif
 
     return;
   }
@@ -222,6 +280,11 @@ void DistRDFDictDecode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
   resp.term = RDFTerm::parse(termstr);
   termstr->drop();
 
+#if DIST_RDF_DICT_DECODE_DEBUG
+  _debugss << "send_to=" << this->rank << " n=" << resp.n << " astr=" << resp.term << " 5. RECEIVED RESPONSE " << this->rank << endl;
+  cerr << _debugss.str();
+  _debugss.str(string(""));
+#endif
 
   pair<typename multimap<uint32_t, pending_position>::iterator,
        typename multimap<uint32_t, pending_position>::iterator> range =
@@ -242,6 +305,9 @@ void DistRDFDictDecode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
                        it->second.triple->parts[1],
                        it->second.triple->parts[2]);
         this->pending_triples.erase(it->second.triple);
+#if DIST_RDF_DICT_DECODE_DEBUG
+        ++DEBUG_WRIT;
+#endif
         this->writer->write(trip);
       } JUST_RETHROW(TraceableException, "(rethrow)")
 
@@ -257,6 +323,17 @@ TRACE(TraceableException, "(trace)")
 
 template<size_t N, typename ID, typename ENC>
 void DistRDFDictDecode<N, ID, ENC>::finish() THROWS(TraceableException) {
+#if DIST_RDF_DICT_ENCODE_DEBUG
+  cout << "Pending Responses " << this->pending_responses.size() << endl;
+  cout << "Pending Triples " << this->pending_triples.size() << endl;
+  cout << "Pending Positions " << this->pending_positions.size() << endl;
+  cout << "Pending Term2I " << this->pending_term2i.size() << endl;
+  cout << "Pending I2Term " << this->pending_i2term.size() << endl;
+  cout << "READ " << DEBUG_READ << endl;
+  cout << "SENT " << DEBUG_SENT << endl;
+  cout << "RECV " << DEBUG_RECV << endl;
+  cout << "WRIT " << DEBUG_WRIT << endl;
+#endif
   this->writer->close();
   this->input->close();
 }
