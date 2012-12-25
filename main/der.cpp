@@ -257,9 +257,16 @@ int main(int argc, char **argv) {
   } else {
     NEW(rw, WHOLE(RDFDictEncWriter<ID, ENC>), os, dict, false);
   }
+  size_t count = 0;
   RDFTriple triple;
-  while (rr->read(triple)) {
-    rw->write(triple);
+  try {
+    while (rr->read(triple)) {
+      ++count;
+      rw->write(triple);
+    }
+  } catch (TraceableException &e) {
+    cerr << "[ERROR] After reading " << count << " triples: " << e.what();
+    throw e;
   }
   triple = RDFTriple();
   rr->close();

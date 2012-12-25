@@ -1173,7 +1173,6 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     mintriple[0] = 0;
     maxtriple[0] = CONSTINT_MAX;
     maxvar = subj.get.variable;
-    allvars.insert(subj.get.variable);
   }
   pair<Term, Term> *slot = atom.get.frame.slots.begin;
   for (; slot != atom.get.frame.slots.end; ++slot) {

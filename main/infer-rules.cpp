@@ -15,8 +15,8 @@
 #ifdef DEBUG
 #undef DEBUG
 #endif
-//#define DEBUG(msg, val) cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ": " << (msg) << (val) << endl
-#define DEBUG(msg, val)
+#define DEBUG(msg, val) cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ": " << (msg) << (val) << endl
+//#define DEBUG(msg, val)
 
 using namespace std;
 
@@ -810,6 +810,9 @@ bool join(Tuple &t1, Tuple &t2, Tuple &r) {
 }
 
 void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) {
+  DEBUG("Joining", "");
+  DEBUG("  LHS size = ", lhs.size());
+  DEBUG("  RHS size = ", rhs.size());
   Relation temp;
   Order order(vars);
   lhs.sort(order);
@@ -836,6 +839,7 @@ void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) 
     }
   }
   result.swap(temp);
+  DEBUG("  Result size = ", result.size());
 }
 
 #if 0
@@ -1115,14 +1119,15 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     mintriple[0] = 0;
     maxtriple[0] = CONSTINT_MAX;
     maxvar = subj.get.variable;
-    allvars.insert(subj.get.variable);
   }
   pair<Term, Term> *slot = atom.get.frame.slots.begin;
   for (; slot != atom.get.frame.slots.end; ++slot) {
     Term pred = slot->first;
     Term obj = slot->second;
     if (pred.type == LIST || obj.type == LIST) {
-      continue; // no lists (real lists, not rdf:Lists) in RDF
+      Relation empty;
+      results.swap(empty);
+      return;
     }
     if (pred.type == FUNCTION || obj.type == FUNCTION) {
       cerr << "[ERROR] Functions are currently unsupported." << endl;
@@ -1201,6 +1206,7 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     allvars.insert(newvars.begin(), newvars.end());
   }
   results.swap(intermediate);
+  DEBUG("Number selected = ", results.size());
 }
 
 void query(Condition &condition, set<varint_t> &allvars, Relation &results) {
@@ -1408,34 +1414,43 @@ void infer(vector<Rule> &rules) {
   for (; atomit != atoms.end(); ++atomit) {
     sizes[atomit->first] = atomit->second.size();
   }
+  size_t ncycles = 0;
   while (changed) {
+    cerr << "  Cycle " << ++ncycles << "..." << endl;
     changed = false;
     Index assertions (Order(0, 1, 2));
     Index retractions (Order(0, 1, 2));
     int rulecount = 0;
     vector<Rule>::iterator rule = rules.begin();
     for (; rule != rules.end(); ++rule) {
+      cerr << "    Rule " << (rule - rules.begin()) + 1 << "..." << endl;
       Relation results;
       set<varint_t> allvars;
       query(rule->condition, allvars, results);
       act(rule->action_block, results, assertions, retractions);
     }
+    size_t nretractions = 0;
     Index::iterator it = retractions.begin();
     for (; it != retractions.end(); ++it) {
       if (idxspo.erase(*it) > 0) {
         idxpos.erase(*it);
         idxosp.erase(*it);
         changed = true;
+        ++nretractions;
       }
     }
+    cerr << "  " << nretractions << " retractions, ";
+    size_t nassertions = 0;
     it = assertions.begin();
     for (; it != assertions.end(); ++it) {
       if (idxspo.insert(*it).second) {
         idxpos.insert(*it);
         idxosp.insert(*it);
         changed = true;
+        ++nassertions;
       }
     }
+    cerr << nassertions << " assertions." << endl;
     atomit = atoms.begin();
     for (; atomit != atoms.end(); ++atomit) {
       changed = changed || sizes[atomit->first] != atomit->second.size();

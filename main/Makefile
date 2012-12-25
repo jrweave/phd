@@ -52,7 +52,7 @@ clean :
 	#cd __tests__; $(MAKE) $(MFLAGS) clean
 
 distclean : clean
-	-$(RM) -vfr *.der *.lzo *.idx *.dct *.prd *.enc script/*.der scripts/*.lzo scripts/*.idx scripts/*.dct scripts/*.prd scripts/*.enc *.frc scripts/*.frc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testsfiles/*.prd testfiles/*.enc testfiles/*.frc ccni/jobs/*
+	-$(RM) -vfr *.der *.lzo *.idx *.dct *.prd *.enc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testfiles/*.prd testfiles/*.enc *.frc testfiles/*.frc testfiles/*.der testfiles/*.lzo testfiles/*.idx testfiles/*.dct testsfiles/*.prd testfiles/*.enc testfiles/*.frc ccni/jobs/*
 
 force_look :
 	true

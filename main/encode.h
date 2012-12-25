@@ -1,34 +1,35 @@
+#include <limits>
 #include "sys/ints.h"
 
 typedef uint32_t sizeint_t; // S
-#define SIZEINT_MAX numeric_limits<sizeint_t>::max()
+#define SIZEINT_MAX std::numeric_limits<sizeint_t>::max()
 
 typedef uint8_t varint_t; // V
-#define VARINT_MAX numeric_limits<varint_t>::max()
+#define VARINT_MAX std::numeric_limits<varint_t>::max()
 
 typedef uint8_t atomtypeint_t; // AT
-#define ATOMTYPEINT_MAX numeric_limits<atomtypeint_t>::max()
+#define ATOMTYPEINT_MAX std::numeric_limits<atomtypeint_t>::max()
 
 typedef uint64_t constint_t; // C
-#define CONSTINT_MAX numeric_limits<constint_t>::max()
+#define CONSTINT_MAX std::numeric_limits<constint_t>::max()
 
 typedef uint8_t termtypeint_t; // TT
-#define TERMTYPEINT_MAX numeric_limits<termtypeint_t>::max()
+#define TERMTYPEINT_MAX std::numeric_limits<termtypeint_t>::max()
 
 typedef uint8_t builtint_t; // B
-#define BUILTINT_MAX numeric_limits<builtint_t>::max()
+#define BUILTINT_MAX std::numeric_limits<builtint_t>::max()
 
 typedef uint8_t funcint_t; // F
-#define FUNCINT_MAX numeric_limits<funcint_t>::max()
+#define FUNCINT_MAX std::numeric_limits<funcint_t>::max()
 
 typedef uint8_t execint_t; // E
-#define EXECINT_MAX numeric_limits<execint_t>::max()
+#define EXECINT_MAX std::numeric_limits<execint_t>::max()
 
 typedef uint8_t acttypeint_t; // ACT
-#define ACTTYPEINT_MAX numeric_limits<acttypeint_t>::max()
+#define ACTTYPEINT_MAX std::numeric_limits<acttypeint_t>::max()
 
 typedef uint8_t condtypeint_t; // CND
-#define CONDTYPEINT_MAX numeric_limits<condtypeint_t>::max()
+#define CONDTYPEINT_MAX std::numeric_limits<condtypeint_t>::max()
 
 #define BUILTIN_PRED_LIST_CONTAINS ((builtint_t)0)
 
