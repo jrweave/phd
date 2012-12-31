@@ -17,6 +17,10 @@
 #define __SYS__SYS_H__
 
 #define SYS_DEFAULT 0
+#define SYS_CCNI_OPTERONS 1
+#define SYS_BLUE_GENE_L 2
+#define SYS_CRAY_XMT 3
+#define SYS_CRAY_XMT2 4
 
 #ifndef SYSTEM
 #define SYSTEM SYS_DEFAULT

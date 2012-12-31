@@ -1,4 +1,4 @@
-#/bin/sh -x
+#/bin/sh
 
 if [ $# != 2 ]; then
 	echo "Correct usage: infer.sh <rif-core-rules-file> <ntriples-file>"

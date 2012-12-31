@@ -45,7 +45,7 @@ Forall ?p3 ?p2 ?p1 (
 (* <#prp-spo1> *)
 Forall ?x ?y ?p2 ?p1 (
    ?x[?p2->?y] :- And(
-			 Not(External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf) ?p2)))
        ?p1[rdfs:subPropertyOf->?p2]
+			 Not(External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf) ?p2)))
        ?x[?p1->?y]  ))
 

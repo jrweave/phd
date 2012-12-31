@@ -7,8 +7,4 @@ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
 Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
 Prefix(dc   <http://purl.org/dc/terms/>)
 
-#PRAGMA REPLICATE And(?p[rdfs:domain -> ?c])
-#PRAGMA REPLICATE And(?p[rdfs:range -> ?c])
-#PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2] Not(External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf) ?p2))))
-#PRAGMA REPLICATE And(?c1[rdfs:subClassOf -> ?c2])
 

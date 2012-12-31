@@ -1,4 +1,4 @@
-#/bin/sh -x
+#/bin/sh
 
 if [ $# != 3 ]; then
 	echo "Correct usage: $0 <num-procs> <rif-core-rules-file> <ntriples-file>"

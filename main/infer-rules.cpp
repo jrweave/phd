@@ -15,8 +15,8 @@
 #ifdef DEBUG
 #undef DEBUG
 #endif
-#define DEBUG(msg, val) cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ": " << (msg) << (val) << endl
-//#define DEBUG(msg, val)
+//#define DEBUG(msg, val) cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ": " << (msg) << (val) << endl
+#define DEBUG(msg, val)
 
 using namespace std;
 
@@ -710,17 +710,22 @@ typedef list<Tuple> Relation;
 class Order {
 private:
   vector<size_t> order;
+  bool total_ordering;
 public:
-  Order() {
+  Order() : total_ordering(true) {
     // do nothing
   }
-  Order(size_t i1, size_t i2, size_t i3) {
+  Order(size_t i1, size_t i2, size_t i3) : total_ordering(false) {
     order.push_back(i1);
     order.push_back(i2);
     order.push_back(i3);
   }
   Order(const vector<size_t> &order)
-      : order(order) {
+      : order(order), total_ordering(true) {
+    // do nothing
+  }
+  Order(const vector<size_t> &order, const bool total)
+      : order(order), total_ordering(total) {
     // do nothing
   }
   bool operator()(const Tuple &t1, const Tuple &t2) const {
@@ -736,17 +741,19 @@ public:
         return t1[*it] < t2[*it];
       }
     }
-    Tuple::const_iterator cit1 = t1.begin();
-    Tuple::const_iterator cit2 = t2.begin();
-    while (cit1 != t1.end() && cit2 != t2.end()) {
-      if (*cit1 != *cit2) {
-        return *cit1 < *cit2;
+    if (this->total_ordering) {
+      Tuple::const_iterator cit1 = t1.begin();
+      Tuple::const_iterator cit2 = t2.begin();
+      while (cit1 != t1.end() && cit2 != t2.end()) {
+        if (*cit1 != *cit2) {
+          return *cit1 < *cit2;
+        }
+        ++cit1;
+        ++cit2;
       }
-      ++cit1;
-      ++cit2;
-    }
-    if (cit1 == t1.end()) {
-      return cit2 != t2.end();
+      if (cit1 == t1.end()) {
+        return cit2 != t2.end();
+      }
     }
     return false;
   }
@@ -788,19 +795,17 @@ void minusrel(Relation &intermediate, Relation &negated, Relation &result) {
   cerr << "[ERROR] Negation on non-special formulas is currently unsupported." << endl;
 }
 
-bool join(Tuple &t1, Tuple &t2, Tuple &r) {
-  if (t1.size() != t2.size()) {
-    size_t maxsize = max(t1.size(), t2.size());
-    t1.resize(maxsize);
-    t2.resize(maxsize);
+bool join(Tuple &t1, const Tuple &t2, Tuple &r) {
+  if (t1.size() < t2.size()) {
+    t1.resize(t2.size());
   }
   Tuple temp(t1.size());
   int i;
   for (i = 0; i < t1.size(); ++i) {
-    if (t1[i] == 0 || t1[i] == t2[i]) {
-      temp[i] = t2[i];
-    } else if (t2[i] == 0) {
+    if (i >= t2.size() || t2[i] == 0) {
       temp[i] = t1[i];
+    } else if (t1[i] == 0 || t1[i] == t2[i]) {
+      temp[i] = t2[i];
     } else {
       return false;
     }
@@ -809,6 +814,8 @@ bool join(Tuple &t1, Tuple &t2, Tuple &r) {
   return true;
 }
 
+// Set to 1 to use sort-merge join instead of one-sided hash join
+#if 0
 void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) {
   DEBUG("Joining", "");
   DEBUG("  LHS size = ", lhs.size());
@@ -841,53 +848,36 @@ void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) 
   result.swap(temp);
   DEBUG("  Result size = ", result.size());
 }
-
-#if 0
-bool collect_rdf_list(constint_t listid, Relation &relation, set<constint_t> &track) {
-  Relation rel;
-  if (listid == CONST_RDF_NIL) {
-    rel.push_back(Tuple());
-    relation.swap(rel);
-    return true;
+#else
+void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) {
+  Relation temp;
+  Relation *l, *r;
+  if (lhs.size() >= rhs.size()) {
+    l = &lhs;
+    r = &rhs;
+  } else {
+    l = &rhs;
+    r = &lhs;
   }
-  if (!track.insert(listid).second) {
-    cerr << "[WARNING] Cyclical list in the data.  Turning back." << endl;
-    rel.push_back(Tuple());
-    relation.swap(rel);
-    return false;
+  Order order(vars, false);
+  multiset<Tuple, Order> index (order);
+  Relation::iterator it = r->begin();
+  for (; it != r->end(); ++it) {
+    index.insert(*it);
   }
-  bool acyclic = true;
-  Tuple minfirstq(3);
-  Tuple maxfirstq(3);
-  Tuple minrestq(3);
-  Tuple maxrestq(3);
-  minfirstq[0] = maxfirstq[0] = minrestq[0] = maxrestq[0] = listid;
-  minfirstq[1] = maxfirstq[1] = CONST_RDF_FIRST;
-  minrestq[1] = maxrestq[1] = CONST_RDF_REST;
-  minfirstq[2] = minrestq[2] = 0;
-  maxfirstq[2] = maxrestq[2] = CONSTINT_MAX;
-  Index::const_iterator lower = idxspo.lower_bound(minrestq);
-  Index::const_iterator upper = idxspo.upper_bound(maxrestq);
-  for (; lower != upper; ++lower) {
-    Relation r;
-    acyclic = collect_rdf_list(lower->at(2), r, track) && acyclic;
-    rel.splice(rel.end(), r);
+  for (it = l->begin(); it != l->end(); ++it) {
+    pair<multiset<Tuple, Order>::iterator,
+         multiset<Tuple, Order>::iterator> rng = index.equal_range(*it);
+    multiset<Tuple, Order>::iterator rit;
+    for (rit = rng.first; rit != rng.second; ++rit) {
+      Tuple res;
+      if (!join(*it, *rit, res)) {
+        cerr << "[ERROR] Two tuples that were expected to be compatible turned out not to be.  This indicates a flaw in the program logic." << endl;
+      }
+      temp.push_back(res);
+    }    
   }
-  lower = idxspo.lower_bound(minfirstq);
-  upper = idxspo.upper_bound(minrestq);
-  for (; lower != upper; ++lower) {
-    Relation::iterator it = rel.begin();
-    for (; it != rel.end(); ++it) {
-      it->push_front(lower->at(2));
-    }
-  }
-  relation.swap(rel);
-  return acyclic;
-}
-
-bool collect_rdf_list(constint_t listid, Relation &relation) {
-  set<constint_t> track;
-  return collect_rdf_list(listid, relation, track);
+  result.swap(temp);
 }
 #endif
 
@@ -911,6 +901,8 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
         if (lhs->get.constant != rhs->get.constant) {
           Relation empty;
           filtered.swap(empty);
+        } else {
+          filtered = intermediate;
         }
       } else if (lhs->type == CONSTANT) {
         Relation result;
@@ -940,7 +932,7 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
           constint_t c2 = it->at(rhs->get.variable);
           if (c1 == 0 && c2 == 0) {
             cerr << "[ERROR] Please make sure equality statements occur to the right of atomic formulas that bind a variable." << endl;
-            return false;
+            return true;
           }
           if (c1 == 0) {
             result.push_back(*it);
@@ -992,6 +984,7 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
           Term *t = arg1->get.termlist.begin;
           for (; t != arg1->get.termlist.end; ++t) {
             if (t->type == CONSTANT && t->get.constant == arg2->get.constant) {
+              filtered = intermediate;
               return true;
             }
           }
@@ -1048,15 +1041,21 @@ void query_atom(Atom &atom, set<varint_t> &allvars, Relation &results) {
   // ... hmmm... not so sure about this TODO
   set<varint_t> newvars;
   varint_t maxvar = 0;
+  size_t numvars = 0;
   Term *term = atom.arguments.begin;
   for (; term != atom.arguments.end; ++term) {
     if (term->type == VARIABLE) {
       newvars.insert(term->get.variable);
       maxvar = max(maxvar, term->get.variable);
+      ++numvars;
     } else if (term->type != CONSTANT) {
       cerr << "[ERROR] Not handling lists or functions in atoms." << endl;
       return;
     }
+  }
+  if (numvars > newvars.size()) {
+    cerr << "[ERROR] Results are incorrect when the same variable occurs multiple times in an atom in the rule body." << endl;
+    return;
   }
   Index &base = atoms[atom.predicate];
   Relation temp;
@@ -1182,17 +1181,32 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     // TODO the following loop could probably be more efficient
     Relation selection;
     for (; begin != end; ++begin) {
-      selection.push_back(Tuple(maxvar + 1));
-      Tuple &result = selection.back();
+      Tuple result(maxvar + 1);
       if (subj.type == VARIABLE) {
         result[subj.get.variable] = begin->at(0);
       }
       if (pred.type == VARIABLE) {
+        if (subj.type == VARIABLE && subj.get.variable == pred.get.variable) {
+          if (begin->at(0) != begin->at(1)) {
+            continue;
+          }
+        }
         result[pred.get.variable] = begin->at(1);
       }
       if (obj.type == VARIABLE) {
+        if (subj.type == VARIABLE && subj.get.variable == obj.get.variable) {
+          if (begin->at(0) != begin->at(2)) {
+            continue;
+          }
+        }
+        if (pred.type == VARIABLE && pred.get.variable == obj.get.variable) {
+          if (begin->at(1) != begin->at(2)) {
+            continue;
+          }
+        }
         result[obj.get.variable] = begin->at(2);
       }
+      selection.push_back(result);
     }
     if (slot == atom.get.frame.slots.begin) {
       intermediate.swap(selection);
@@ -1418,17 +1432,25 @@ void infer(vector<Rule> &rules) {
   while (changed) {
     cerr << "  Cycle " << ++ncycles << "..." << endl;
     changed = false;
+#ifndef ANY_ORDER
     Index assertions (Order(0, 1, 2));
     Index retractions (Order(0, 1, 2));
+#endif
     int rulecount = 0;
     vector<Rule>::iterator rule = rules.begin();
     for (; rule != rules.end(); ++rule) {
       cerr << "    Rule " << (rule - rules.begin()) + 1 << "..." << endl;
+#ifdef ANY_ORDER
+      Index assertions (Order(0, 1, 2));
+      Index retractions (Order(0, 1, 2));
+#endif
       Relation results;
       set<varint_t> allvars;
       query(rule->condition, allvars, results);
       act(rule->action_block, results, assertions, retractions);
+#ifndef ANY_ORDER
     }
+#endif
     size_t nretractions = 0;
     Index::iterator it = retractions.begin();
     for (; it != retractions.end(); ++it) {
@@ -1451,6 +1473,9 @@ void infer(vector<Rule> &rules) {
       }
     }
     cerr << nassertions << " assertions." << endl;
+#ifdef ANY_ORDER
+    }
+#endif
     atomit = atoms.begin();
     for (; atomit != atoms.end(); ++atomit) {
       changed = changed || sizes[atomit->first] != atomit->second.size();

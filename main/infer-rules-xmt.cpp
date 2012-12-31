@@ -2,6 +2,7 @@
 // mtarun a.out testfiles/minrdfs.enc testfiles/foaf.der testfiles/foaf-closure.der
 
 #include <algorithm>
+#include <cmath>
 #include <ctime>
 #include <deque>
 #include <fstream>
@@ -15,11 +16,15 @@
 #endif
 #include <sstream>
 #include <string>
+#ifdef FAKE
+#include <sys/stat.h>
+#endif
 #include <utility>
 #include <vector>
 #include "main/encode.h"
 #ifndef FAKE
 #include "mtgl/dynamic_array.hpp"
+#include "mtgl/merge_sort.hpp"
 #endif
 #ifdef FAKE
 #include "sys/endian.h"
@@ -30,41 +35,19 @@
 #define CONTAINER list
 #endif
 
-#ifndef DATA_SIZE
-#error "Must specify the size of the data file (in bytes) using -DDATA_SIZE."
-#endif
-
-#ifndef RULE_SIZE
-#error "Must specify the size of the rule file (in bytes) using -DRULE_SIZE."
-#endif
-
 #ifndef TUPLE_SIZE
 #error "Must specify the tuple size (maximum number of variables in a rule) using -DTUPLE_SIZE."
 #endif
 
-#ifndef NUM_INDEX_STREAMS
-#error "Must specify maximum number of streams for handling triple indexes using -DNUM_INDEX_STREAMS."
-#endif
-
-#ifndef NUM_RELATION_STREAMS
-#error "Must specify maximum number of streams for handling relations (query results) using -DNUM_RELATION_STREAMS."
-#endif
-
-#ifndef NUM_VAR_SET_STREAMS
-//#warning "Maximum number of streams for handling sets of variables was not specified using -DNUM_VAR_SET_STREAMS, so defaulting to the value specified for TUPLE_SIZE."
-#define NUM_VAR_SET_STREAMS TUPLE_SIZE
+#ifndef NUM_ATOM_PREDS
+#error "Must specify the (maximum) number of atom predicates using -DNUM_ATOM_PREDS."
 #endif
 
 #ifdef DEBUG
 #undef DEBUG
 #endif
+//#define DEBUG(msg, val) cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ": " << (msg) << (val) << endl
 #define DEBUG(msg, val)
-
-#ifdef FAKE
-#define FAKE_FOR_ALL_STREAMS(r, n, N) n = N; for (r = 0; r < n; ++r)
-#else
-#define FAKE_FOR_ALL_STREAMS(r, n, N)
-#endif
 
 #ifndef FAKE
 using namespace mtgl;
@@ -725,7 +708,15 @@ const uint8_t *build_rule(const uint8_t *begin, const uint8_t *end, Rule &rule) 
 #endif
 
 #ifdef FAKE
+#define SNAP_ANY_SW 0
+
+typedef struct stat snap_stat_buf;
+
 void snap_init() {}
+
+void snap_stat(const char *filename, uint64_t fsw, snap_stat_buf *file_stat, int64_t *snap_error) {
+  stat(filename, file_stat);
+}
 
 void snap_restore(const char *filename, void *p, const size_t len, int64_t *snap_error) {
   ifstream fin (filename);
@@ -744,45 +735,80 @@ void snap_snapshot(const char *filename, void *buffer, const size_t len, int64_t
 #define readff(p) (*(p))
 #define writexf(p, v) (*(p) = (v))
 #define writeef(p, v) (*(p) = (v))
+#define int_fetch_add(p, v) (*(p)); (*(p)) += v
+
+template <typename T, typename Comparator>
+void merge_sort(T* array, long size, Comparator comp)
+{
+  sort(array, array + size, comp);
+}
 
 template<typename T>
 class dynamic_array {
 private:
-  vector<T> array;
-  T *real_array;
-  bool changed;
+  mutable T *data;
+  size_t len, cap;
 public:
   typedef typename vector<T>::value_type value_type;
   typedef unsigned long size_type;
-  dynamic_array(size_type size = 0) : real_array(NULL), changed(false) {}
-  dynamic_array(const dynamic_array<T> &a) : array(a.array), real_array(NULL), changed(false) {}
-  ~dynamic_array() { if (this->real_array == NULL) { delete [] this->real_array; } }
-  size_type size() const { return this->array.size(); }
-  void resize(size_type new_size) { this->changed = true; this->array.resize(new_size); }
-  bool empty() const { return this->array.empty(); }
-  void reserve(size_type new_size) { this->array.reserve(new_size); }
-  T &operator[](size_type i) { this->changed = true; return this->array[i]; }
-  size_type push_back(const T &key) { this->changed = true; this->array.push_back(key); return this->array.size() - 1; }
-  void swap(dynamic_array<T> &rhs) { this->changed = true; this->array.swap(rhs.array); }
-  void clear() { this->changed = true; this->array.clear(); }
-  T *get_data() {
-    if (this->changed) {
-      delete[] this->real_array;
-      this->real_array = NULL;
-      this->changed = false;
-    }
-    if (this->real_array == NULL) {
-      this->real_array = new T[this->array.size()];
-      copy(this->array.begin(), this->array.end(), this->real_array);
-    }
-    return this->real_array;
+  dynamic_array(size_type size = 0)
+      : len(size), cap(std::max(size, (size_type)1)) {
+    this->data = (T*)malloc(cap*sizeof(T));
   }
-  dynamic_array<T> &operator=(const dynamic_array<T> &rhs) {
-    this->changed = true;
-    this->array = rhs.array;
-    if (this->real_array != NULL) {
-      delete[] this->real_array;
+  dynamic_array(const dynamic_array<T> &a)
+      : len(a.len), cap(a.cap) {
+    this->data = (T*)malloc(cap*sizeof(T));
+    copy(a.data, a.data + len, this->data);
+  }
+  ~dynamic_array() { 
+    free(this->data);
+  }
+  size_type size() const { return this->len; }
+  void resize(size_type new_size) {
+    if (new_size <= this->cap) {
+      this->len = new_size;
+    } else {
+      this->data = (T*)realloc(this->data, new_size*sizeof(T));
+      this->len = this->cap = new_size;
     }
+  }
+  bool empty() const { return this->len == 0; }
+  void reserve(size_type new_size) {
+    if (new_size < this->len) {
+      this->len = new_size;
+    }
+    if (new_size > this->cap) {
+      this->data = (T*)realloc(this->data, new_size*sizeof(T));
+      this->cap = new_size;
+    }
+  }
+  T &operator[](size_type i) { return this->data[i]; }
+  const T&operator[](const size_type i) const { return this->data[i]; }
+  size_type push_back(const T &key) {
+    this->reserve(this->len + 1);
+    this->data[this->len] = key;
+    return this->len++;
+  }
+  size_type unsafe_push_back(const T &key) {
+    if (this->len >= this->cap) {
+      cerr << "[ERROR] Screwed by unsafe_push_back." << endl;
+    }
+    this->data[this->len] = key;
+    return this->len++;
+  }
+  void swap(dynamic_array<T> &rhs) {
+    std::swap(this->data, rhs.data);
+    std::swap(this->len, rhs.len);
+    std::swap(this->cap, rhs.cap);
+  }
+  void clear() { this->len = 0; }
+  T *get_data() const { return this->data; }
+  dynamic_array<T> &operator=(const dynamic_array<T> &rhs) {
+    free(this->data);
+    this->data = (T*)malloc(rhs.cap * sizeof(T));
+    copy(rhs.data, rhs.data + rhs.len, this->data);
+    this->cap = rhs.cap;
+    this->len = rhs.len;
     return *this;
   }
 };
@@ -798,8 +824,9 @@ uint32_t hash_jenkins_one_at_a_time_iter(uint32_t &h, const uint8_t b) {
 
 inline
 uint32_t hash_jenkins_one_at_a_time_accum(uint32_t &h, const uint8_t *begin, const uint8_t *end) {
+  #pragma mta loop serial
   for (; begin != end; ++begin) {
-    hash_jenkins_one_at_a_time_iter(h, *begin);
+    h = hash_jenkins_one_at_a_time_iter(h, *begin);
   }
   return h;
 }
@@ -827,8 +854,10 @@ uint8_t *read_all(const char *filename, size_t &len) {
 }
 
 void load_rules(const char *filename, dynamic_array<Rule> &rules) {
-  size_t len;
-  len = RULE_SIZE;
+  snap_stat_buf file_stat;
+  int64_t snap_error;
+  snap_stat(filename, SNAP_ANY_SW, &file_stat, &snap_error);
+  size_t len = file_stat.st_size;
   uint8_t *begin = read_all(filename, len);
   const uint8_t *bytes = begin;
   const uint8_t *end = bytes + len;
@@ -852,19 +881,38 @@ void load_rules(const char *filename, dynamic_array<Rule> &rules) {
 //  }
 //}
 
-struct Index;
 
-struct Tuple {
-  constint_t at[TUPLE_SIZE];
-};
+
+
+
+// NEW BEGIN
 
 struct Triple {
   constint_t at[3];
 };
 
+Triple &init_triple(Triple &t, const constint_t c) {
+  size_t i;
+  #pragma mta max concurrency 3
+  for (i = 0; i < 3; ++i) {
+    t.at[i] = c;
+  }
+  return t;
+}
+
+inline
+Triple &init_triple(Triple &t) {
+  return init_triple(t, 0);
+}
+
+dynamic_array<Triple> triples;
+
+struct Tuple {
+  constint_t at[TUPLE_SIZE];
+};
+
 Tuple &init_tuple(Tuple &t, const constint_t c) {
   size_t i;
-  #pragma mta assert parallel
   #pragma mta max concurrency TUPLE_SIZE
   for (i = 0; i < TUPLE_SIZE; ++i) {
     t.at[i] = c;
@@ -877,81 +925,6 @@ Tuple &init_tuple(Tuple &t) {
   return init_tuple(t, 0);
 }
 
-bool operator<(const Tuple &lhs, const Tuple &rhs) {
-  int i;
-  for (i = 0; i < TUPLE_SIZE; ++i) {
-    if (lhs.at[i] != rhs.at[i]) {
-      return lhs.at[i] < rhs.at[i];
-    }
-  }
-  return false;
-}
-
-bool operator==(const Tuple &lhs, const Tuple &rhs) {
-  int i;
-  for (i = 0; i < TUPLE_SIZE; ++i) {
-    if (lhs.at[i] != rhs.at[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-Triple &init_triple(Triple &t, const constint_t c) {
-  size_t i;
-  #pragma mta assert parallel
-  #pragma mta max concurrency 3
-  for (i = 0; i < 3; ++i) {
-    t.at[i] = c;
-  }
-  return t;
-}
-
-Triple &init_triple(Triple &t) {
-  return init_triple(t, 0);
-}
-
-bool operator<(const Triple &lhs, const Triple &rhs) {
-  int i;
-  for (i = 0; i < 3; ++i) {
-    if (lhs.at[i] != rhs.at[i]) {
-      return lhs.at[i] < rhs.at[i];
-    }
-  }
-  return false;
-}
-
-bool operator==(const Triple &lhs, const Triple &rhs) {
-  int i;
-  for (i = 0; i < 3; ++i) {
-    if (lhs.at[i] != rhs.at[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void purge_locks(int *locks, const size_t num) {
-  size_t i;
-  #pragma mta assert parallel
-  for (i = 0; i < num; ++i) {
-    purge(&locks[i]);
-  }
-}
-
-void init_locks_full(int *locks, const size_t num, const int val) {
-  size_t i;
-  #pragma mta assert parallel
-  for (i = 0; i < num; ++i) {
-    writexf(&locks[i], val);
-  }
-}
-
-inline
-void init_locks_full(int *locks, const size_t num) {
-  init_locks_full(locks, num, 0);
-}
-
 class Order {
 private:
   dynamic_array<size_t> order;
@@ -962,15 +935,15 @@ public:
   }
   Order(size_t i1, size_t i2, size_t i3) : total_ordering(false) {
     this->order.reserve(3);
-    order.push_back(i1);
-    order.push_back(i2);
-    order.push_back(i3);
+    order.unsafe_push_back(i1);
+    order.unsafe_push_back(i2);
+    order.unsafe_push_back(i3);
   }
   Order(const dynamic_array<size_t> &order)
       : order(order), total_ordering(true) {
     // do nothing
   }
-  Order(const dynamic_array<size_t> &order, const bool total)
+  Order(const dynamic_array<size_t> &order, bool total)
       : order(order), total_ordering(total) {
     // do nothing
   }
@@ -1020,591 +993,361 @@ public:
   }
 };
 
-struct Index {
-  set<Triple, Order> stream[NUM_INDEX_STREAMS];
-  int locks[NUM_INDEX_STREAMS];
-  Index() {
-    init_locks_full(this->locks, NUM_INDEX_STREAMS);
-  }
-  Index(const Order &order) {
-    init_locks_full(this->locks, NUM_INDEX_STREAMS);
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      set<Triple, Order> ordered (order);
-      this->stream[i].swap(ordered);
-    }
-  }
-  Index(Index &copy) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      int x = readfe(&copy.locks[i]);
-      writexf(&this->locks[i], x);
-      this->stream[i] = copy.stream[i];
-      writeef(&copy.locks[i], x);
-    }
-  }
-  ~Index() {
+class Hash {
+private:
+  dynamic_array<size_t> order;
+  bool total_ordering;
+public:
+  Hash() : total_ordering(true) {
     // do nothing
   }
-  Index &operator=(Index &rhs) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      int x = readfe(&rhs.locks[i]);
-      this->stream[i] = rhs.stream[i];
-      writeef(&rhs.locks[i], x);
-      readfe(&this->locks[i]);
-      writeef(&this->locks[i], x);
-    }
+  Hash(size_t i1, size_t i2, size_t i3) : total_ordering(false) {
+    this->order.reserve(3);
+    order.unsafe_push_back(i1);
+    order.unsafe_push_back(i2);
+    order.unsafe_push_back(i3);
+  }
+  Hash(const dynamic_array<size_t> &order)
+      : order(order), total_ordering(false) {
+    // do nothing
+  }
+  Hash(const dynamic_array<size_t> &order, const bool total)
+      : order(order), total_ordering(total) {
+    // do nothing
+  }
+  Hash(const Hash &copy) : order(copy.order), total_ordering(copy.total_ordering) {
+    // do nothing
+  }
+  Hash &operator=(const Hash &rhs) {
+    this->order = rhs.order;
+    this->total_ordering = rhs.total_ordering;
     return *this;
   }
-  void swap(Index &r) {
+  uint32_t operator()(const Tuple &t) const {
+    uint32_t h = 0;
     size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      readfe(&this->locks[i]);
-      readfe(&r.locks[i]);
-      this->stream[i].swap(r.stream[i]);
-      std::swap(this->locks[i], r.locks[i]);
-      writeef(&this->locks[i], this->locks[i]);
-      writeef(&r.locks[i], r.locks[i]);
+    size_t max = this->order.size();
+    #pragma mta loop serial
+    for (i = 0; i < max; ++i) {
+      size_t j = this->order[i];
+      constint_t val;
+      if (j < TUPLE_SIZE) {
+        val = t.at[j];
+      } else {
+        val = 0;
+      }
+      h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&val, (const uint8_t *)((&val) + 1));
     }
+    if (this->total_ordering) {
+      #pragma mta loop serial
+      for (i = 0; i < TUPLE_SIZE; ++i) {
+        h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&t.at[i], (const uint8_t *)((&t.at[i]) + 1));
+      }
+    }
+    return hash_jenkins_one_at_a_time_end(h);
   }
-  bool insert(const Triple &t) {
-    size_t h = hash_jenkins_one_at_a_time((const uint8_t *)&t, ((const uint8_t *)&t) + sizeof(Triple)) % NUM_INDEX_STREAMS;
-    int x = readfe(&this->locks[h]);
-    bool b = this->stream[h].insert(t).second;
-    writeef(&this->locks[h], x);
-    return b;
-  }
-  size_t erase(const Triple &t) {
-    size_t h = hash_jenkins_one_at_a_time((const uint8_t *)&t, ((const uint8_t *)&t) + sizeof(Triple)) % NUM_INDEX_STREAMS;
-    int x = readfe(&this->locks[h]);
-    size_t c = this->stream[h].erase(t);
-    writeef(&this->locks[h], x);
-    return c;
-  }
-  size_t size() const {
-    size_t sz = 0;
+  uint32_t operator()(const Triple &t) const {
+    uint32_t h = 0;
     size_t i;
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      sz += this->stream[i].size();
+    size_t max = this->order.size();
+    #pragma mta loop serial
+    for (i = 0; i < max; ++i) {
+      size_t j = this->order[i];
+      constint_t val;
+      if (j < 3) {
+        val = t.at[j];
+      } else {
+        val = 0;
+      }
+      h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&val, (const uint8_t*)((&val) + 1));
     }
-    return sz;
+    if (this->total_ordering) {
+      #pragma mta loop serial
+      for (i = 0; i < 3; ++i) {
+        h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&t.at[i], (const uint8_t *)((&t.at[i]) + 1));
+      }
+    }
+    return hash_jenkins_one_at_a_time_end(h);
   }
 };
 
+// NEW END
 
-// GLOBAL DATA
-Index idxspo (Order(0, 1, 2));
-Index idxpos (Order(1, 2, 0));
-Index idxosp (Order(2, 0, 1));
+template<typename T, typename CMP>
+void unique(dynamic_array<T> &input, CMP cmp, dynamic_array<T> &output);
 
 void load_data(const char *filename) {
-  uint8_t buffer[DATA_SIZE];
+  size_t i, j;
+  snap_stat_buf file_stat;
   int64_t snap_error;
-  snap_restore(filename, buffer, DATA_SIZE, &snap_error);
-  size_t i;
-  size_t max = DATA_SIZE / (3 * sizeof(constint_t));
+  snap_stat(filename, SNAP_ANY_SW, &file_stat, &snap_error);
+  size_t numids = file_stat.st_size / sizeof(constint_t);
+  dynamic_array<constint_t> ids;
+  ids.resize(numids);
+  constint_t *ids_data = ids.get_data();
+  // XMT is big endian, so don't worry about it.
+  snap_restore(filename, ids_data, file_stat.st_size, &snap_error);
+#ifdef FAKE
+  if (is_little_endian()) {
+    for (i = 0; i < numids; ++i) {
+      reverse_bytes(ids_data[i]);
+    }
+  }
+#endif
+  size_t numtriples = numids / 3;
+  triples.resize(numtriples);
+  Triple *triples_data = triples.get_data();
   #pragma mta assert parallel
-  #pragma mta max concurrency NUM_INDEX_STREAMS
-  for (i = 0; i < max; ++i) {
-    size_t bufoff = i * sizeof(constint_t) * 3;
-    Triple triple;
-    int j;
-    #pragma mta assert parallel
+  for (i = 0; i < numtriples; ++i) {
+    size_t offset = 3*i;
     #pragma mta max concurrency 3
     for (j = 0; j < 3; ++j) {
-      // XMT is big-endian, so no need to check.
-      memcpy(&(triple.at[j]),
-             &(buffer[bufoff + j*sizeof(constint_t)]),
-             sizeof(constint_t));
-#ifdef FAKE
-      if (is_little_endian()) {
-        reverse_bytes(triple.at[j]);
-      }
-#endif
+      triples_data[i].at[j] = ids_data[offset+j];
     }
-    DEBUG("load triple", hex);
-    DEBUG("  subject = ", triple.at[0]);
-    DEBUG("  predicate = ", triple.at[1]);
-    DEBUG("  object = ", triple.at[2]);
-    DEBUG("", dec);
-    idxspo.insert(triple);
-    idxpos.insert(triple);
-    idxosp.insert(triple);
   }
+  //unique(triples, Order(), triples);
+#if 0
+  for (i = 0; i < numtriples; ++i) {
+    cerr << "LOADED ";
+    for (j = 0; j < 3; ++j) {
+      cerr << triples_data[i].at[j] << ' ' << endl;
+    }
+    cerr << endl;
+  }
+#endif
 }
 
-void print_data(char *filename) {
-  size_t numtriples = idxspo.size();
-  constint_t *data = (constint_t*)malloc(3*numtriples*sizeof(constint_t));
-  size_t i;
-//  #pragma mta assert parallel
-//  #pragma mta max concurrency NUM_INDEX_STREAMS
-  #pragma mta loop serial
-  for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-    size_t offset = 0;
-    size_t j;
-    for (j = 0; j < i; ++j) {
-      offset += idxspo.stream[j].size();
+typedef set<varint_t> VarSet; // USE ONLY IN SERIAL CONTEXT
+
+typedef dynamic_array<Tuple> Relation;
+//#define Relation dynamic_array<Tuple>
+
+#if 0
+void print_relation(const Relation &r) {
+  size_t i, j;
+  cerr << "RELATION" << endl;
+  for (i = 0; i < r.size(); ++i) {
+    cerr << "TUPLE";
+    for (j = 0; j < TUPLE_SIZE; ++j) {
+      cerr << ' ' << r[i].at[j];
     }
-    offset *= 3;
-    set<Triple, Order>::const_iterator begin = idxspo.stream[i].begin();
-    set<Triple, Order>::const_iterator end = idxspo.stream[i].end();
-    set<Triple, Order>::const_iterator it;
-    for (it = begin; it != end; ++it) {
-//      #pragma mta assert parallel
-//      #pragma mta max concurrency 3
-      #pragma mta loop serial
-      for (j = 0; j < 3; ++j) {
-        data[offset+j] = it->at[j];
-#ifdef FAKE
-        if (is_little_endian()) {
-          reverse_bytes(data[offset+j]);
-        }
-#endif
-      }
-      offset += 3;
-    }
+    cerr << endl;
   }
-  int64_t snap_error;
-  snap_snapshot(filename, data, 3 * numtriples * sizeof(constint_t), &snap_error);
-  free(data);
 }
+#endif
 
-
-
-struct Relation {
-  list<Tuple> stream[NUM_RELATION_STREAMS];
-  int locks[NUM_RELATION_STREAMS];
-  Relation() {
-    init_locks_full(this->locks, NUM_RELATION_STREAMS);
-  }
-  Relation(Relation &copy) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&copy.locks[i]);
-      writexf(&this->locks[i], x);
-      this->stream[i] = copy.stream[i];
-      writeef(&copy.locks[i], x);
-    }
-  }
-  ~Relation() {
-    // do nothing
-  }
-  Relation &operator=(Relation &rhs) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&rhs.locks[i]);
-      this->stream[i] = rhs.stream[i];
-      writeef(&rhs.locks[i], x);
-      readfe(&this->locks[i]);
-      writeef(&this->locks[i], x);
-    }
-    return *this;
-  }
-  void swap(Relation &r) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&this->locks[i]);
-      int y = readfe(&r.locks[i]);
-      this->stream[i].swap(r.stream[i]);
-      writeef(&this->locks[i], y);
-      writeef(&r.locks[i], x);
-    }
-  }
-  bool empty() {
-    bool e = true;
-    size_t i;
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      e &= this->stream[i].empty();
-    }
-    return e;
-  }
-  size_t size() {
-    size_t sz = 0;
-    size_t i;
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      sz += this->stream[i].size();
-    }
-    return sz;
-  }
-//  void hash_out(Relation &hashed_out, dynamic_array<size_t> &positions) {
-//    Relation h;
-//    size_t i;
-//    #pragma mta assert parallel
-//    #pragma mta max concurrency NUM_RELATION_STREAMS
-//    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-//      Relation interim;
-//      list<Tuple>::const_iterator it = hashed_out.stream[i].begin();
-//      for (; it != hashed_out.stream[i].end(); ++it) {
-//        // TODO here
-//      }
-//    }
-//  }
-  void even_out() {
-    size_t sqmean = 0;
-    size_t mean = 0;
-    size_t i;
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      mean += this->stream[i].size();
-      sqmean += this->stream[i].size() * this->stream[i].size();
-    }
-    mean /= NUM_RELATION_STREAMS;
-    sqmean /= NUM_RELATION_STREAMS;
-    size_t variance = sqmean - mean*mean;
-    if ((float)variance / (float)mean < 0.1f) {
-      return;
-    }
-    size_t stride;
-    #pragma mta loop serial
-    for (stride = 2; stride < 2*NUM_RELATION_STREAMS; stride *= 2) {
-      #pragma mta assert parallel
-      for (i = 0; i < NUM_RELATION_STREAMS; i += stride) {
-        size_t j = i + (stride / 2);
-        if (j < NUM_RELATION_STREAMS) {
-          this->stream[i].splice(this->stream[i].end(), this->stream[j]);
-        }
-      }
-    }
-    #pragma mta loop serial
-    for (stride /= 2; stride > 1; stride /= 2) {
-      #pragma mta assert parallel
-      for (i = 0; i < NUM_RELATION_STREAMS; i += stride) {
-        size_t j = i + (stride / 2);
-        if (j < NUM_RELATION_STREAMS) {
-          size_t part = this->stream[i].size() *
-                        min(stride / 2, (size_t)(NUM_RELATION_STREAMS - j)) /
-                        min(stride    , (size_t)(NUM_RELATION_STREAMS    ));
-          list<Tuple>::iterator it = this->stream[i].begin();
-          size_t k;
-          #pragma mta loop serial
-          for (k = 0; k < part; ++k) {
-            ++it;
-          }
-          this->stream[j].splice(this->stream[j].end(),
-                                 this->stream[i],
-                                 this->stream[i].begin(), it);
-        }
-      }
-    }
-  }
-};
-
-struct RelIndex {
-  multiset<Tuple, Order> stream[NUM_RELATION_STREAMS];
-  int locks[NUM_RELATION_STREAMS];
-  RelIndex() {
-    init_locks_full(this->locks, NUM_RELATION_STREAMS);
-  }
-  RelIndex(const Order &order) {
-    init_locks_full(this->locks, NUM_RELATION_STREAMS);
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      multiset<Tuple, Order> ordered (order);
-      this->stream[i].swap(ordered);
-    }
-  }
-  RelIndex(RelIndex &copy) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&copy.locks[i]);
-      writexf(&this->locks[i], x);
-      this->stream[i] = copy.stream[i];
-      writeef(&copy.locks[i], x);
-    }
-  }
-  ~RelIndex() {
-    // do nothing
-  }
-  RelIndex &operator=(RelIndex &rhs) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&rhs.locks[i]);
-      this->stream[i] = rhs.stream[i];
-      writeef(&rhs.locks[i], x);
-      readfe(&this->locks[i]);
-      writeef(&this->locks[i], x);
-    }
-    return *this;
-  }
-  void swap(RelIndex &r) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      readfe(&this->locks[i]);
-      readfe(&r.locks[i]);
-      this->stream[i].swap(r.stream[i]);
-      std::swap(this->locks[i], r.locks[i]);
-      writeef(&this->locks[i], this->locks[i]);
-      writeef(&r.locks[i], r.locks[i]);
-    }
-  }
-  void insert(const Tuple &t, dynamic_array<size_t> &positions) {
-    uint32_t h = 0;
-    size_t i;
-    for (i = 0; i < positions.size(); ++i) {
-      size_t j = positions[i];
-      h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&t.at[j], (const uint8_t *)(&t.at[j] + 1));
-    }
-    h = hash_jenkins_one_at_a_time_end(h) % NUM_RELATION_STREAMS;
-    int x = readfe(&this->locks[h]);
-    this->stream[h].insert(t);
-    writeef(&this->locks[h], x);
-  }
-  std::pair<multiset<Tuple, Order>::const_iterator, multiset<Tuple, Order>::const_iterator> equal_range(const Tuple &t, dynamic_array<size_t> &positions) {
-    uint32_t h = 0;
-    size_t i;
-    for (i = 0; i < positions.size(); ++i) {
-      size_t j = positions[i];
-      h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&t.at[j], (const uint8_t *)(&t.at[j] + 1));
-    }
-    h = hash_jenkins_one_at_a_time_end(h) % NUM_RELATION_STREAMS;
-    return this->stream[h].equal_range(t);
-  }
-  size_t size() const {
-    size_t sz = 0;
-    size_t i;
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      sz += this->stream[i].size();
-    }
-    return sz;
-  }
-};
-
-struct RelUniqIndex {
-  set<Tuple, Order> stream[NUM_RELATION_STREAMS];
-  int locks[NUM_RELATION_STREAMS];
-  RelUniqIndex() {
-    init_locks_full(this->locks, NUM_RELATION_STREAMS);
-  }
-  RelUniqIndex(const Order &order) {
-    init_locks_full(this->locks, NUM_RELATION_STREAMS);
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      set<Tuple, Order> ordered (order);
-      this->stream[i].swap(ordered);
-    }
-  }
-  // not thread-safe
-  RelUniqIndex(const RelUniqIndex &copy) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      this->stream[i] = copy.stream[i];
-      writexf(&this->locks[i], copy.locks[i]);
-    }
-  }
-  ~RelUniqIndex() {
-    // do nothing
-  }
-  RelUniqIndex &operator=(RelUniqIndex &rhs) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      int x = readfe(&rhs.locks[i]);
-      this->stream[i] = rhs.stream[i];
-      writeef(&rhs.locks[i], x);
-      readfe(&this->locks[i]);
-      writeef(&this->locks[i], x);
-    }
-    return *this;
-  }
-  void swap(RelUniqIndex &r) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_RELATION_STREAMS
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      readfe(&this->locks[i]);
-      readfe(&r.locks[i]);
-      this->stream[i].swap(r.stream[i]);
-      std::swap(this->locks[i], r.locks[i]);
-      writeef(&this->locks[i], this->locks[i]);
-      writeef(&r.locks[i], r.locks[i]);
-    }
-  }
-  void insert(const Tuple &t) {
-    uint32_t h = 0;
-    size_t i;
-    for (i = 0; i < TUPLE_SIZE; ++i) {
-      h = hash_jenkins_one_at_a_time_accum(h, (const uint8_t *)&t.at[i], (const uint8_t *)(&t.at[i] + 1));
-    }
-    h = hash_jenkins_one_at_a_time_end(h) % NUM_RELATION_STREAMS;
-    int x = readfe(&this->locks[h]);
-    this->stream[h].insert(t);
-    writeef(&this->locks[h], x);
-  }
-  size_t size() const {
-    size_t sz = 0;
-    size_t i;
-    for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-      sz += this->stream[i].size();
-    }
-    return sz;
-  }
-};
-
-typedef map<constint_t, RelUniqIndex> AtomMap;
-
-// GLOBAL DATA
-AtomMap atoms;
-
-struct VarSet {
-  set<varint_t> stream[NUM_VAR_SET_STREAMS];
-  int locks[NUM_VAR_SET_STREAMS];
-  VarSet() {
-    init_locks_full(this->locks, NUM_VAR_SET_STREAMS);
-  }
-  VarSet(VarSet &copy) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_VAR_SET_STREAMS
-    for (i = 0; i < NUM_VAR_SET_STREAMS; ++i) {
-      int x = readfe(&copy.locks[i]);
-      writexf(&this->locks[i], x);
-      this->stream[i] = copy.stream[i];
-      writeef(&copy.locks[i], x);
-    }
-  }
-  ~VarSet() {
-    // do nothing
-  }
-  VarSet &operator=(VarSet &rhs) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_VAR_SET_STREAMS
-    for (i = 0; i < NUM_VAR_SET_STREAMS; ++i) {
-      int x = readfe(&rhs.locks[i]);
-      this->stream[i] = rhs.stream[i];
-      writeef(&rhs.locks[i], x);
-      readfe(&this->locks[i]);
-      writeef(&this->locks[i], x);
-    }
-    return *this;
-  }
-  void swap(VarSet &r) {
-    size_t i;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_VAR_SET_STREAMS
-    for (i = 0; i < NUM_VAR_SET_STREAMS; ++i) {
-      readfe(&this->locks[i]);
-      readfe(&r.locks[i]);
-      this->stream[i].swap(r.stream[i]);
-      std::swap(this->locks[i], r.locks[i]);
-      writeef(&this->locks[i], this->locks[i]);
-      writeef(&r.locks[i], r.locks[i]);
-    }
-  }
-  void insert(const varint_t &t) {
-    // TODO need better hashing than this
-    size_t h = t % NUM_VAR_SET_STREAMS;
-    int x = readfe(&this->locks[h]);
-    this->stream[h].insert(t);
-    writeef(&this->locks[h], x);
-  }
-};
-
-//inline
-//bool need_locking(int rank, int nstreams, int nstructures) {
-//  return nstreams < nstructures &&
-//         ((unsigned int)(nstructures / nstreams) > 1 ||
-//          rank < nstructures - nstreams);
-//}
+Relation atoms[NUM_ATOM_PREDS];
+constint_t atom_preds[NUM_ATOM_PREDS];
+uint64_t found_atoms = 0;
 
 void minusrel(Relation &intermediate, Relation &negated, Relation &result) {
   cerr << "[ERROR] Negation of non-special formulas is currently unsupported." << endl;
 }
 
-#if 0
+
+template<typename T, typename CMP>
+void unique(dynamic_array<T> &input, CMP cmp, dynamic_array<T> &output) {
+  bool sorted = true;
+  bool uniq = true;
+  size_t i;
+  T *input_data = input.get_data();
+  size_t input_size = input.size();
+  for (i = 1; i < input_size; ++i) {
+    sorted &= !cmp(input_data[i], input_data[i-1]);
+    uniq &= cmp(input_data[i-1], input_data[i]);
+  }
+  if (uniq) {
+    if (&input != &output) {
+      output = input;
+    }
+    return;
+  }
+  if (!sorted) {
+    merge_sort(input_data, input_size, cmp);
+  }
+  size_t *pos = (size_t*)malloc(input_size * sizeof(size_t));
+  pos[0] = 0;
+  #pragma mta assert parallel
+  for (i = 1; i < input_size; ++i) {
+    pos[i] = cmp(input_data[i-1], input_data[i]) ? 0 : 1;
+  }
+  #pragma mta loop recurrence
+  for (i = 1; i < input_size; ++i) {
+    pos[i] += pos[i - 1];
+  }
+  dynamic_array<T> temp;
+  temp.resize(input_size - pos[input_size-1]);
+  T *temp_data = temp.get_data();
+  temp_data[0] = input_data[0];
+  #pragma mta assert parallel
+  for (i = 1; i < input_size; ++i) {
+    temp_data[i-pos[i]] = input_data[i];
+  }
+  output.swap(temp);
+  free(pos);
+}
+
+#ifdef DEBUG_JOIN
 #undef DEBUG
 #define DEBUG(a, b) cerr << a << b << endl
 #endif
-void join(Relation &lhs, Relation &rhs, dynamic_array<size_t> &vars, Relation &result) {
-  DEBUG("Joining", "");
-  DEBUG("  LHS size = ", lhs.size());
-  DEBUG("  RHS size = ", rhs.size());
-  lhs.even_out();
-  rhs.even_out();
-  Relation temp;
-  Relation *l, *r;
-  if (lhs.size() >= rhs.size()) {
-    l = &lhs;
-    r = &rhs;
-  } else {
-    l = &rhs;
-    r = &lhs;
+
+double LN2 = 0.69314718056;
+
+#if 0
+#include <bitset>
+void print_bloom_filter(dynamic_array<uint64_t> &bloom) {
+  cerr << "BLOOM FILTER ";
+  size_t bloom_size = bloom.size();
+  uint64_t *bloom_data = bloom.get_data();
+  uint64_t i;
+  for (i = 0; i < bloom_size; ++i) {
+    cerr << bitset<64>(bloom_data[i]) << ' ';
   }
-  Order order(vars, false);
-  RelIndex index (order);
+  cerr << endl;
+}
+#endif
+
+void make_bloom_filter(Relation &tuples, Hash hash, size_t nitems, dynamic_array<uint64_t> &output) {
+  size_t nbits = nitems / LN2 + 1;
+  size_t nwords = (nbits >> 6) + 1;
+  nbits = (nwords << 6);
+  uint64_t mask = UINT64_C(0x3F); // bottom six bits
+  //cerr << "BLOOM SPECS nwords=" << nwords << " nbits=" << nbits << " (should be " << nwords*64 << ") mask=" << bitset<64>(mask) << endl;
+  dynamic_array<uint64_t> bloom;
+  bloom.resize(nwords);
+  size_t i, j;
+  size_t numtuples = tuples.size();
+  Tuple *tuple_data = tuples.get_data();
+  uint64_t *bloom_data = bloom.get_data();
+  #pragma mta assert parallel
+  for (i = 0; i < nwords; ++i) {
+    bloom_data[i] = 0;
+  }
+  uint32_t h = 0;
+  #pragma mta assert parallel
+  for (i = 0; i < numtuples; ++i) {
+    h = hash(tuple_data[i]) % nbits;
+    size_t wordi = (h >> 6);
+    size_t biti = h & mask;
+    uint64_t bit = UINT64_C(1) << biti;
+    #pragma mta update
+    bloom_data[wordi] = bloom_data[wordi] | bit;
+    //cerr << "h=" << h << " wordi=" << wordi << " biti=" << biti << " bit=" << bitset<64>(bit) << " bloom_data[wordi]=" << bitset<64>(bloom_data[wordi]) << endl;
+  }
+  //print_bloom_filter(bloom);
+  output.swap(bloom);
+  //print_bloom_filter(output);
+}
+
+void use_bloom_filter(Relation &tuples, Hash hash, dynamic_array<uint64_t> &bloom, Relation &output) {
+  size_t ntuples = tuples.size();
+  Tuple *tuples_data = tuples.get_data();
+  Relation filtered;
+  filtered.reserve(ntuples);
+  uint64_t *bloom_data = bloom.get_data();
+  size_t nbits = bloom.size() * (sizeof(uint64_t) << 3);
+  uint64_t mask = UINT64_C(0x3F); // bottom six bits
   size_t i;
   #pragma mta assert parallel
-  #pragma mta max concurrency NUM_RELATION_STREAMS
-  for (i = 0; i < NUM_RELATION_STREAMS; ++i) {
-    list<Tuple>::const_iterator it = r->stream[i].begin();
-    list<Tuple>::const_iterator end = r->stream[i].end();
-    for (; it != end; ++it) {
-      index.insert(*it, vars);
+  for (i = 0; i < ntuples; ++i) {
+    uint32_t h = hash(tuples_data[i]) % nbits;
+    size_t wordi = (h >> 6);
+    size_t biti = h & mask;
+    uint64_t bit = UINT64_C(1) << biti;
+    if ((bloom_data[wordi] & bit) != 0) {
+      filtered.unsafe_push_back(tuples_data[i]);
     }
   }
-  int rank;
+  output.swap(filtered);
+}
+
+void join(Relation &lhs, Relation &rhs, dynamic_array<size_t> &vars, Relation &output) {
+  Relation results;
+  Hash hash(vars);
+  dynamic_array<uint64_t> lbloom, rbloom;
+  size_t nitems = std::max(lhs.size(), rhs.size());
+  make_bloom_filter(lhs, hash, nitems, lbloom);
+  make_bloom_filter(rhs, hash, nitems, rbloom);
+  size_t bloom_size = lbloom.size();
+  uint64_t *lbloom_data = lbloom.get_data();
+  uint64_t *rbloom_data = rbloom.get_data();
+  size_t i, j, k;
   #pragma mta assert parallel
-  #pragma mta max concurrency NUM_RELATION_STREAMS
-  for (rank = 0; rank < NUM_RELATION_STREAMS; ++rank) {
-    list<Tuple>::const_iterator it = l->stream[rank].begin();
-    list<Tuple>::const_iterator end = l->stream[rank].end();
-    #pragma mta loop serial
-    for (; it != end; ++it) {
-      std::pair<multiset<Tuple, Order>::const_iterator,
-           multiset<Tuple, Order>::const_iterator> rng = index.equal_range(*it, vars);
-      multiset<Tuple, Order>::const_iterator rit;
-      #pragma mta loop serial
-      for (rit = rng.first; rit != rng.second; ++rit) {
-        Tuple r;
-        #pragma mta assert parallel
-        #pragma mta max concurrency TUPLE_SIZE
-        for (i = 0; i < TUPLE_SIZE; ++i) {
-          r.at[i] = max(it->at[i], rit->at[i]);
-        }
-        temp.stream[rank].push_back(r);
+  for (i = 0; i < bloom_size; ++i) {
+    lbloom_data[i] &= rbloom_data[i];
+  }
+  //print_bloom_filter(lbloom);
+  Relation flhs, frhs;
+  use_bloom_filter(lhs, hash, lbloom, flhs);
+  //cerr << "LHS filtered from " << lhs.size() << " to " << flhs.size() << " items." << endl;
+  use_bloom_filter(rhs, hash, rbloom, frhs);
+  //cerr << "RHS filtered from " << rhs.size() << " to " << frhs.size() << " items." << endl;
+  Order order(vars, false);
+  if (flhs.size() < frhs.size()) {
+    flhs.swap(frhs);
+  }
+  size_t lsize = flhs.size();
+  size_t rsize = frhs.size();
+  Tuple *ldata = flhs.get_data();
+  Tuple *rdata = frhs.get_data();
+  Tuple **lower_bounds = (Tuple**)malloc(lsize*sizeof(Tuple*));
+  uint64_t *offsets = (uint64_t *)malloc(lsize*sizeof(uint64_t));
+  merge_sort(rdata, rsize, order);
+  #pragma mta assert parallel
+  for (i = 0; i < lsize; ++i) {
+    lower_bounds[i] = lower_bound(rdata, rdata + rsize, ldata[i], order);
+    Tuple *upper = upper_bound(lower_bounds[i], (Tuple *)rdata + rsize, ldata[i], order);
+    offsets[i] = upper - lower_bounds[i];
+    //cerr << "offsets[" << i << "] = " << offsets[i] << endl;
+  }
+  #pragma mta loop recurrence
+  for (i = 1; i < lsize; ++i) {
+    offsets[i] += offsets[i-1];
+    //cerr << "offsets[" << i << "] = " << offsets[i] << endl;
+  }
+  results.resize(offsets[lsize-1]);
+  Tuple *results_data = results.get_data();
+  #pragma mta assert parallel
+  for (i = 0; i < lsize; ++i) {
+    Tuple *lower = lower_bounds[i];
+    size_t offset, maxj;
+    if (i == 0) {
+      offset = 0;
+      maxj = offsets[0];
+    } else {
+      offset = offsets[i-1];
+      maxj = offsets[i] - offset;
+    }
+    #pragma mta assert parallel
+    for (j = 0; j < maxj; ++j) {
+      uint64_t loc = int_fetch_add(&offset, 1);
+      #pragma mta max concurrency TUPLE_SIZE
+      for (k = 0; k < TUPLE_SIZE; ++k) {
+        // max is just picking whichever is not a variable
+        // if such a value exists.  If they are both non-zero,
+        // then they are the same values.
+        results_data[loc].at[k] = std::max(ldata[i].at[k], lower[j].at[k]);
+        //cerr << "results_data[" << loc << "].at[" << k << "] = std::max(" << ldata[i].at[k] << ", " << lower[j].at[k] << ");" << endl;
       }
     }
   }
-  result.swap(temp);
-  DEBUG("  Results size = ", result.size());
+  free(lower_bounds);
+  free(offsets);
+  //print_relation(results);
+  output.swap(results);
+  //print_relation(output);
 }
-#if 0
+#ifdef DEBUG_JOIN
 #undef DEBUG
 #define DEBUG(a, b)
 #endif
 
-bool special(Condition &condition, Relation &intermediate, Relation &filtered, const bool sign) {
+bool special(Condition &condition, Relation &intermediate, Relation &filtered, bool sign) {
   if (condition.type != ATOMIC) {
     return false;
   }
+  Term *lhs, *rhs;
   switch (condition.get.atom.type) {
     case ATOM:
     case MEMBERSHIP:
@@ -1612,12 +1355,154 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered, c
     case FRAME:
       return false;
     case EQUALITY:
+      lhs = &(condition.get.atom.get.sides[0]);
+      rhs = &(condition.get.atom.get.sides[1]);
+      if (lhs->type == VARIABLE && rhs->type == CONSTANT) {
+        swap(lhs, rhs);
+      }
+      if (rhs->type == CONSTANT) {
+        if (( sign && lhs->get.constant != rhs->get.constant) ||
+            (!sign && lhs->get.constant == rhs->get.constant)) {
+          Relation empty;
+          filtered.swap(empty);
+        } else {
+          filtered = intermediate;
+        }
+      } else if (lhs->type == CONSTANT) {
+        Tuple *inter_data = intermediate.get_data();
+        size_t inter_size = intermediate.size();
+        Relation results;
+        results.reserve(inter_size);
+        size_t i;
+        #pragma mta assert parallel
+        for (i = 0; i < inter_size; ++i) {
+          Tuple &tuple = inter_data[i];
+          if (tuple.at[rhs->get.variable] == 0) {
+            if (sign) {
+              Tuple t = tuple;
+              t.at[rhs->get.variable] = lhs->get.constant;
+              results.unsafe_push_back(t);
+            } else {
+              cerr << "[ERROR] Variables in inequality should be bound by atomics formulas on the left." << endl;
+            }
+          } else if (( sign && tuple.at[rhs->get.variable] == lhs->get.constant) ||
+                     (!sign && tuple.at[rhs->get.variable] != lhs->get.constant)) {
+            results.unsafe_push_back(tuple);
+          }
+        }
+        filtered.swap(results);
+      } else {
+        Tuple *inter_data = intermediate.get_data();
+        size_t inter_size = intermediate.size();
+        Relation results;
+        results.reserve(inter_size);
+        size_t i;
+        #pragma mta assert parallel
+        for (i = 0; i < inter_size; ++i) {
+          Tuple &tuple = inter_data[i];
+          constint_t c1 = tuple.at[lhs->get.variable];
+          constint_t c2 = tuple.at[rhs->get.variable];
+          if (c1 == 0 && c2 == 0) {
+            cerr << "[ERROR] Please make sure (in)equality statements occur to the right of atomic formulas that bind a variable in the (in)equality." << endl;
+          } else if (!sign && (c1 == 0 || c2 == 0)) {
+            cerr << "[ERROR] Please make sure that inequality statements occur to the right of atomic formulas that bind BOTH variables in the inequality." << endl;
+          } else if (c1 == 0) {
+            Tuple t = tuple;
+            t.at[lhs->get.variable] = c2;
+            results.unsafe_push_back(t);
+          } else if (c2 == 0) {
+            Tuple t = tuple;
+            t.at[rhs->get.variable] = c1;
+            results.unsafe_push_back(t);
+          } else if (sign && c1 == c2) {
+            results.unsafe_push_back(tuple);
+          } else if (!sign && c1 != c2) {
+            results.unsafe_push_back(tuple);
+          }
+        }
+        filtered.swap(results);
+      }
+      return true;
     case EXTERNAL:
-      cerr << "[ERROR] Haven't implemented handling of special equality and built-ins, yet." << endl;
-      return false;
+      break;
     default:
       cerr << "[ERROR] Unhandled case " << (int)condition.get.atom.type << " at line " << __LINE__ << endl;
       return false;
+  }
+
+  ///// HANDLE BUILTIN (EXTERNAL) /////
+  Builtin &builtin = condition.get.atom.get.builtin;
+  switch (builtin.predicate) {
+    case BUILTIN_PRED_LIST_CONTAINS: {
+      if (builtin.arguments.end - builtin.arguments.begin != 2) {
+        cerr << "[ERROR] Invalid use of list contains builtin, which should have exactly two arguments, but instead found " << builtin << endl;
+        return false;
+      }
+      Term *arg1 = builtin.arguments.begin;
+      Term *arg2 = arg1 + 1;
+      if (arg1->type != LIST) {
+        cerr << "[ERROR] First argument of list contains builtin must be a list, but instead found " << *arg1 << endl;
+        return false;
+      }
+      switch (arg2->type) {
+        case FUNCTION:
+          cerr << "[ERROR] Functions not supported." << endl;
+          return false;
+        case LIST:
+          cerr << "[ERROR] Currently not supporting nested lists." << endl;
+          return false;
+        case CONSTANT: {
+          Term *t = arg1->get.termlist.begin;
+          #pragma mta loop serial
+          for (; t != arg1->get.termlist.end; ++t) {
+            if (t->type == CONSTANT && t->get.constant == arg2->get.constant) {
+              filtered = intermediate;
+              return true;
+            }
+          }
+          Relation empty;
+          filtered.swap(empty);
+          return true;
+        }
+        case VARIABLE:
+          break; // just handle outside messy switch statement
+        default:
+          cerr << "[ERROR] Unhandled case " << (int)builtin.predicate << " at line " << __LINE__ << endl;
+          return false;
+      }
+      Tuple *inter_data = intermediate.get_data();
+      size_t inter_size = intermediate.size();
+      Relation results;
+      results.reserve(inter_size);
+      size_t i;
+      for (i = 0; i < inter_size; ++i) {
+        Tuple &tuple = inter_data[i];
+        constint_t c = tuple.at[arg2->get.variable];
+        if (c == 0) {
+          cerr << "[ERROR] Variables in built-ins must already be bound by atomic formulas to the left." << endl;
+        } else {
+          Term *t = arg1->get.termlist.begin;
+          #pragma mta loop serial
+          for (; t != arg1->get.termlist.end; ++t) {
+            if (t->type == CONSTANT && t->get.constant == c) {
+              if (sign) {
+                results.unsafe_push_back(tuple);
+              }
+              break;
+            }
+          }
+          if (!sign && t == arg1->get.termlist.end) {
+            results.unsafe_push_back(tuple);
+          }
+        }
+      }
+      filtered.swap(results);
+      return true;
+    }
+    default: {
+      cerr << "[ERROR] Builtin predicate " << (int)builtin.predicate << " is unsupported." << endl;
+      return false;
+    }
   }
 }
 
@@ -1629,49 +1514,66 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
 // called only in a serial context
 void query_atom(Atom &atom, VarSet &allvars, Relation &results) {
   // just doing a scan... great for XMT, bad for others.
-  size_t i;
+  size_t i, j;
   size_t max = atom.arguments.end - atom.arguments.begin;
+  VarSet newvars;
+  size_t nvars = 0;
   Term *term = atom.arguments.begin;
-  #pragma mta assert parallel
-  #pragma mta max concurrency TUPLE_SIZE
-  for (i = 0; i < max; ++i) {
-    if (term[i].type == VARIABLE) {
-      allvars.insert(term[i].get.variable);
+  #pragma mta loop serial
+  for (; term != atom.arguments.end; ++term) {
+    if (term->type == VARIABLE) {
+      allvars.insert(term->get.variable);
+      newvars.insert(term->get.variable);
+      ++nvars;
     } else if (term[i].type != CONSTANT) {
       cerr << "[ERROR] Not handling lists or functions in atoms.  Results will be incorrect." << endl;
     }
   }
-  RelUniqIndex &base = atoms[atom.predicate];
+  if (nvars > newvars.size()) {
+    cerr << "[ERROR] Not handling repeated variables in atoms." << endl;
+    return;
+  }
+  for (i = 0; i < found_atoms && atom_preds[i] != atom.predicate; ++i) {
+    // just finding the index into atoms
+    // horribly inefficienct, but okay for my evaluation because
+    // there are very few atoms... like maybe 10
+  }
+  if (i == found_atoms) {
+    if (found_atoms >= NUM_ATOM_PREDS) {
+      cerr << "[ERROR] There are more atom predicates than was specified with NUM_ATOM_PREDS.  Fail." << endl;
+      return;
+    }
+    i = int_fetch_add(&found_atoms, 1); // should be serial, but just in case
+    atom_preds[i] = atom.predicate;
+  }
+  //print_relation(atoms[i]);
+  Tuple *base_data = atoms[i].get_data();
+  size_t base_size = atoms[i].size();
   Relation temp;
-  int rank;
+  temp.reserve(base_size);
   #pragma mta assert parallel
-  #pragma mta max concurrency NUM_RELATION_STREAMS
-  for (rank = 0; rank < NUM_RELATION_STREAMS; ++rank) {
-    set<Tuple, Order>::const_iterator begin = base.stream[rank].begin();
-    set<Tuple, Order>::const_iterator end = base.stream[rank].end();
-    set<Tuple, Order>::const_iterator tuple;
-
+  for (i = 0; i < base_size; ++i) {
+    Tuple &tuple = base_data[i];
     Tuple result; init_tuple(result);
-    #pragma mta loop serial
-    for (tuple = begin; tuple != end; ++tuple) {
-      Term *t = atom.arguments.begin;
-      size_t max = atom.arguments.end - t;
-      size_t i;
-      for (i = 0; i < max; ++i) {
-        if (t[i].type == VARIABLE) {
-          result.at[t[i].get.variable] = tuple->at[i];
-        } else if (term[i].type == CONSTANT) {
-          if (tuple->at[i] != term[i].get.constant) {
-            break;
-          }
+    Term *t = atom.arguments.begin;
+    size_t max = atom.arguments.end - t;
+    for (j = 0; j < max; ++j) {
+      if (t[j].type == VARIABLE) {
+        result.at[t[j].get.variable] = tuple.at[j];
+      } else if (t[j].type == CONSTANT) {
+        if (tuple.at[j] != t[j].get.constant) {
+          break;
         }
       }
-      if (i == max) {
-        temp.stream[rank].push_back(result);
-      }
+    }
+    if (j == max) {
+      temp.unsafe_push_back(result);
     }
   }
+  //print_relation(temp);
   results.swap(temp);
+  //print_relation(results);
+  //cerr << "[DEBUG] Selected " << results.size() << " atoms (not triples)." << endl;
 }
 
 // called only in a serial context
@@ -1694,122 +1596,93 @@ void query(Atomic &atom, VarSet &allvars, Relation &results) {
       cerr << "[ERROR] Unhandled case " << (int)atom.type << " at line " << __LINE__ << endl;
       return;
   }
-  Relation intermediate;
-  Term &subj = atom.get.frame.object;
-  if (subj.type == LIST) {
+  if (atom.get.frame.slots.end - atom.get.frame.slots.begin != 1) {
+    cerr << "[ERROR] Not handling frames unless they have exactly one slot." << endl;
     return;
   }
-  if (subj.type == FUNCTION) {
-    cerr << "[ERROR] Functions are currently unsupported." << endl;
-    return;
-  }
-  std::pair<Term, Term> *slot = atom.get.frame.slots.begin;
+  //cerr << "Triple pattern creation...";
+  Term *triple_pattern[3];
+  triple_pattern[0] = &(atom.get.frame.object);
+  triple_pattern[1] = &(atom.get.frame.slots.begin->first);
+  triple_pattern[2] = &(atom.get.frame.slots.begin->second);
+  //cerr << " done." << endl;
+  size_t i, j;
   #pragma mta loop serial
-  for (; slot != atom.get.frame.slots.end; ++slot) {
-    //cerr << "Slot #" << (slot - atom.get.frame.slots.begin) << endl;
-    Triple mintriple; init_triple(mintriple);
-    Triple maxtriple; init_triple(maxtriple, CONSTINT_MAX);
-    Term &pred = slot->first;
-    Term &obj = slot->second;
-    if (pred.type == LIST || obj.type == LIST) {
-      Relation empty;
-      results.swap(empty);
-      return;
-    }
-    if (pred.type == FUNCTION || obj.type == FUNCTION) {
-      cerr << "[ERROR] Function are not supported.  Results will be incorrect." << endl;
-      return;
-    }
-    VarSet newvars;
-    if (subj.type == CONSTANT) {
-      mintriple.at[0] = maxtriple.at[0] = subj.get.constant;
-    } else {
-      newvars.insert(subj.get.variable);
-    }
-    if (pred.type == CONSTANT) {
-      mintriple.at[1] = maxtriple.at[1] = pred.get.constant;
-    } else {
-      newvars.insert(pred.get.variable);
-    }
-    if (obj.type == CONSTANT) {
-      mintriple.at[2] = maxtriple.at[2] = obj.get.constant;
-    } else {
-      newvars.insert(obj.get.variable);
-    }
-    DEBUG("triple match", hex);
-    DEBUG("  subject ", mintriple.at[0]);
-    DEBUG("  predicate ", mintriple.at[1]);
-    DEBUG("  object ", mintriple.at[2]);
-    DEBUG("", dec);
-    int idx = (subj.type == CONSTANT ? 0x4 : 0x0) |
-              (pred.type == CONSTANT ? 0x2 : 0x0) |
-              ( obj.type == CONSTANT ? 0X1 : 0X0);
-    Relation selection;
-    //cerr << "Starting the loop" << endl;
-    int rank;
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (rank = 0; rank < NUM_INDEX_STREAMS; ++rank) {
-      set<Triple, Order>::const_iterator begin, it, end;
-      switch (idx) {
-        case 0x0: case 0x4: case 0x6: case 0x7:
-          begin = idxspo.stream[rank].lower_bound(mintriple);
-          end   = idxspo.stream[rank].upper_bound(maxtriple);
-          break;
-        case 0x2: case 0x3:
-          begin = idxpos.stream[rank].lower_bound(mintriple);
-          end   = idxpos.stream[rank].upper_bound(maxtriple);
-          break;
-        case 0x1: case 0x5:
-          begin = idxosp.stream[rank].lower_bound(mintriple);
-          end   = idxosp.stream[rank].upper_bound(maxtriple);
-          break;
-        default:
-          cerr << "[ERROR] Unhandled case " << hex << idx << " at line " << dec << __LINE__ << endl;
-          break;
-      }
-      for (it = begin; it != end; ++it) {
-        Tuple result; init_tuple(result);
-        if (subj.type == VARIABLE) {
-          result.at[subj.get.variable] = it->at[0];
-        }
-        if (pred.type == VARIABLE) {
-          result.at[pred.get.variable] = it->at[1];
-        }
-        if (obj.type == VARIABLE) {
-          result.at[obj.get.variable] = it->at[2];
-        }
-        selection.stream[rank].push_back(result);
-      }
-    }
-    //cerr << "After the loop" << endl;
-    if (slot == atom.get.frame.slots.begin) {
-      intermediate.swap(selection);
-    } else {
-      dynamic_array<size_t> joinvars;
-      joinvars.reserve(TUPLE_SIZE);
-      #pragma mta assert parallel
-      #pragma mta max concurrency NUM_VAR_SET_STREAMS
-      for (rank = 0; rank < NUM_VAR_SET_STREAMS; ++rank) {
-        set<varint_t>::const_iterator it = allvars.stream[rank].begin();
-        set<varint_t>::const_iterator end = allvars.stream[rank].end();
-        for (; it != end; ++it) {
-          if (newvars.stream[rank].count(*it) > 0) {
-            joinvars.push_back(*it);
-          }
-        }
-      }
-      join(intermediate, selection, joinvars, intermediate);
-    }
-    DEBUG("After the join", "");
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_VAR_SET_STREAMS
-    for (rank = 0; rank < NUM_VAR_SET_STREAMS; ++rank) {
-      allvars.stream[rank].insert(newvars.stream[rank].begin(),
-                                  newvars.stream[rank].end());
-    }
-    DEBUG("After aggregating the variables", "");
+  for (i = 0; i < 3; ++i) {
+    if (triple_pattern[i]->type == VARIABLE) {
+      allvars.insert(triple_pattern[i]->get.variable);
+      //cerr << __LINE__ << " triple_pattern[" << i << "] = var " << (int)triple_pattern[i]->get.variable << endl;
+    } //else {
+      //cerr << __LINE__ << " triple_pattern[" << i << "] = const " << (int)triple_pattern[i]->get.constant << endl;
+    //}
   }
+  //cerr << "And collected the new variables." << endl;
+  for (i = 0; i < 3; ++i) {
+    if (triple_pattern[i]->type == LIST) {
+      results.clear();
+      return; // not an error; there are no such list in RDF, so results are empty.
+    } else if (triple_pattern[i]->type == FUNCTION) {
+      cerr << "[ERROR] Functions are not supported." << endl;
+      return;
+    }
+  }
+  Triple *triples_data = triples.get_data();
+  size_t numtriples = triples.size();
+  dynamic_array<size_t> nums;
+  //cerr << __LINE__ << " numtriples=" << numtriples << endl;
+  nums.resize(numtriples);
+  //cerr << __LINE__ << " nums.size()=" << nums.size() << endl;
+  #pragma mta assert parallel
+  for (i = 0; i < numtriples; ++i) {
+    for (j = 0; j < 3; ++j) {
+      //if (triple_pattern[j]->type == CONSTANT) cerr << "[" << j << "] " << triple_pattern[j]->get.constant << " != " << triples_data[i].at[j] << " ?" << endl;
+      if (triple_pattern[j]->type == CONSTANT &&
+          triple_pattern[j]->get.constant != triples_data[i].at[j]) {
+        break;
+      }
+    }
+    nums[i] = j == 3 ? 1 : 0;
+    //cerr << __LINE__ << ": nums[" << i << "] = " << nums[i] << endl;
+  }
+  //cerr << "Got my markings." << endl;
+  #pragma mta loop recurrence
+  for (i = 1; i < numtriples; ++i) {
+    nums[i] += nums[i-1];
+    //cerr << __LINE__ << ": nums[" << i << "] = " << nums[i] << endl;
+  }
+  //cerr << "And my partial sums." << endl;
+  Relation intermediate;
+  //cerr << "... okay, made it to line " << __LINE__ << endl;
+  intermediate.resize(nums[numtriples-1]);
+  //cerr << "... okay, made it to line " << __LINE__ << " where intermediate.size()=" << intermediate.size() << " (should be " << nums[numtriples-1] << ")" << endl;
+  Tuple *inter_data = intermediate.get_data();
+  //cerr << "... okay, made it to line " << __LINE__ << endl;
+  if (nums[0] == 1) {
+    init_tuple(inter_data[0]);
+    for (j = 0; j < 3; ++j) {
+      if (triple_pattern[j]->type == VARIABLE) {
+        inter_data[0].at[triple_pattern[j]->get.variable] = triples_data[0].at[j];
+      }
+    }
+  }
+  //cerr << "... okay, made it to line " << __LINE__ << endl;
+  #pragma mta assert parallel
+  for (i = 1; i < numtriples; ++i) {
+    //cerr << "i=" << i << " prev=" << nums[i-1] << " nums[i]=" << nums[i] << endl;
+    if (nums[i] > nums[i-1]) {
+      //cerr << "init_tuple... ";
+      init_tuple(inter_data[nums[i-1]]);
+      //cerr << "passed." << endl;
+      #pragma mta max concurrency 3
+      for (j = 0; j < 3; ++j) {
+        if (triple_pattern[j]->type == VARIABLE) {
+          //cerr << "inter_data[" << nums[i-1] << "].at[" << (int)triple_pattern[j]->get.variable << "] = " << triples_data[i].at[j] << endl;
+          inter_data[nums[i-1]].at[triple_pattern[j]->get.variable] = triples_data[i].at[j];
+        }
+      }
+    }
+  }
+  //cerr << "... okay, made it to line " << __LINE__ << endl;
   results.swap(intermediate);
   //cerr << "Number selected = " << results.size() << endl;
 }
@@ -1842,36 +1715,35 @@ void query(Condition &condition, VarSet &allvars, Relation &results) {
           if (subformula == condition.get.subformulas.begin) {
             cerr << "[ERROR] Must have non-special query at beginning of conjunction." << endl;
           }
+          if (subresult.empty()) {
+            results.swap(subresult);
+            return;
+          }
           intermediate.swap(subresult);
           continue;
         }
         query(*subformula, newvars, subresult);
+        if (subresult.empty()) {
+          results.swap(subresult);
+          return;
+        }
         if (subformula == condition.get.subformulas.begin) {
           intermediate.swap(subresult);
         } else {
           dynamic_array<size_t> joinvars;
           joinvars.reserve(TUPLE_SIZE);
           size_t rank;
-          #pragma mta assert parallel
-          #pragma mta max concurrency NUM_VAR_SET_STREAMS
-          for (rank = 0; rank < NUM_VAR_SET_STREAMS; ++rank) {
-            set<varint_t>::const_iterator it = allvars.stream[rank].begin();
-            set<varint_t>::const_iterator end = allvars.stream[rank].end();
-            for (; it != end; ++it) {
-              if (newvars.stream[rank].count(*it) > 0) {
-                joinvars.push_back(*it);
-              }
+          VarSet::iterator it = newvars.begin();
+          VarSet::iterator end = newvars.end();
+          #pragma mta loop serial 
+          for (; it != end; ++it) {
+            if (allvars.count(*it) > 0) {
+              joinvars.unsafe_push_back(*it);
             }
           }
           join(intermediate, subresult, joinvars, intermediate);
         }
-        size_t rank;
-        #pragma mta assert parallel
-        #pragma mta max concurrency NUM_VAR_SET_STREAMS
-        for (rank = 0; rank < NUM_VAR_SET_STREAMS; ++rank) {
-          allvars.stream[rank].insert(newvars.stream[rank].begin(),
-                                      newvars.stream[rank].end());
-        }
+        allvars.insert(newvars.begin(), newvars.end());
       }
       break;
     }
@@ -1907,220 +1779,227 @@ void query(Condition &condition, VarSet &allvars, Relation &results) {
   results.swap(intermediate);
 }
 
-void act(Atom &atom, Relation &results) {
-  results.even_out();
-  RelUniqIndex &index = atoms[atom.predicate];
-  size_t max = atom.arguments.end - atom.arguments.begin;
-  size_t rank;
+template<typename T, typename CMP>
+size_t set_union_unique(dynamic_array<T> &base, dynamic_array<T> &tuples, CMP cmp) {
+  //cerr << "SET_UNION_UNIQUE BEGIN" << endl;
+  //cerr << "  * before calling unique, base_size = " << base.size() << endl;
+  unique(base, cmp, base);
+  unique(tuples, cmp, tuples);
+  T *base_data = base.get_data();
+  size_t base_size = base.size();
+  //cerr << "  * after calling unique, base_size = " << base_size << endl;
+  T *tuples_data = tuples.get_data();
+  size_t tuples_size = tuples.size();
+  size_t *selected = (size_t*)malloc(tuples_size*sizeof(size_t));
+  size_t i;
   #pragma mta assert parallel
-  #pragma mta max concurrency NUM_RELATION_STREAMS
-  for (rank = 0; rank < NUM_RELATION_STREAMS; ++rank) {
-    set<Tuple, Order>::const_iterator result = index.stream[rank].begin();
-    set<Tuple, Order>::const_iterator end = index.stream[rank].end();
-    for (; result != end; ++result) {
-      Tuple tuple; init_tuple(tuple);
-      size_t i;
-      #pragma mta assert parallel
-      #pragma mta max concurrency TUPLE_SIZE
-      for (i = 0; i < max; ++i) {
-        if (atom.arguments.begin[i].type == CONSTANT) {
-          tuple.at[i] = atom.arguments.begin[i].get.constant;
-        } else if (atom.arguments.begin[i].type == VARIABLE) {
-          tuple.at[i] = result->at[atom.arguments.begin[i].get.variable];
-        } else {
-          cerr << "[ERROR] Lists and/or/function in target atom ar not currently support.  Results will be incorrect." << endl;
-        }
-      }
-      index.insert(tuple);
+  for (i = 0; i < tuples_size; ++i) {
+    T *lower = lower_bound(base_data, base_data + base_size, tuples_data[i], cmp);
+    selected[i] = (lower == base_data + base_size || cmp(tuples_data[i], *lower)) ? 1 : 0;
+    //cerr << __LINE__ << " selected[" << i << "] = " << selected[i] << endl;
+  }
+  #pragma mta loop recurrence
+  for (i = 1; i < tuples_size; ++i) {
+    selected[i] += selected[i-1];
+    //cerr << __LINE__ << " selected[" << i << "] = " << selected[i] << endl;
+  }
+  base.resize(base_size + selected[tuples_size - 1]);
+  base_data = base.get_data();
+  if (selected[0] == 1) {
+    base_data[base_size] = tuples_data[0];
+  }
+  #pragma mta assert parallel
+  for (i = 1; i < tuples_size; ++i) {
+    if (selected[i-1] < selected[i]) {
+      base_data[base_size+selected[i-1]] = tuples_data[i];
     }
   }
+  free(selected);
+  return base_size;
+  //cerr << "SET_UNION_UNIQUE END" << endl;
 }
 
-void act(ActionBlock &action_block, Relation &results, Index &assertions, Index &retractions) {
+size_t act(Atom &atom, Relation &results) {
+  //cerr << "ACTING BASED ON "; print_relation(results);
+  size_t pred_loc, i, j;
+  for (pred_loc = 0; pred_loc < found_atoms && atom_preds[pred_loc] != atom.predicate; ++pred_loc) {
+    // just finding the index into atoms
+    // horribly inefficienct, but okay for my evaluation because
+    // there are very few atoms... like maybe 10
+  }
+  if (pred_loc == found_atoms) {
+    if (found_atoms >= NUM_ATOM_PREDS) {
+      cerr << "[ERROR] There are more atom predicates than was specified with NUM_ATOM_PREDS.  Fail." << endl;
+      return 0;
+    }
+    pred_loc = int_fetch_add(&found_atoms, 1); // should be serial, but just in case
+    atom_preds[pred_loc] = atom.predicate;
+  }
+  Order lexical_order;
+  Tuple *results_data = results.get_data();
+  size_t results_size = results.size();
+  Relation tuples;
+  tuples.resize(results_size);
+  Tuple *tuples_data = tuples.get_data();
+  size_t nargs = atom.arguments.end - atom.arguments.begin;
+  #pragma mta assert parallel
+  for (i = 0; i < results_size; ++i) {
+    init_tuple(tuples_data[i]);
+    for (j = 0; j < nargs; ++j) {
+      Term &arg = atom.arguments.begin[j];
+      if (arg.type == CONSTANT) {
+        tuples_data[i].at[j] = arg.get.constant;
+      } else if (arg.type == VARIABLE) {
+        tuples_data[i].at[j] = results_data[i].at[arg.get.variable];
+      } else {
+        cerr << "[ERROR] Lists and/or function in target atom not currently supported." << endl;
+      }
+    }
+  }
+  Relation &base = atoms[pred_loc];
+  //cerr << "BASE "; print_relation(base);
+  //cerr << "NEW "; print_relation(tuples);
+  //cerr << "PREDICATE " << hex << (int)atom.predicate << dec << endl;
+  size_t old_size = set_union_unique(base, tuples, lexical_order);
+  //cerr << "old_size = " << old_size << endl;
+  //cerr << "UNIONED "; print_relation(base);
+  //cerr << "base.size() = " << base.size() << endl;
+  return base.size() - old_size;
+}
+
+
+size_t act(ActionBlock &action_block, Relation &results) {
+  if (results.empty()) {
+    return 0;
+  }
   if (action_block.action_variables.begin != action_block.action_variables.end) {
     cerr << "[ERROR] Action variables are not supported." << endl;
-    return;
+    return 0;
   }
+  Tuple *results_data = results.get_data();
+  size_t results_size = results.size();
   Action *action = action_block.actions.begin;
+  size_t nasserts = 0;
   #pragma mta loop serial
   for (; action != action_block.actions.end; ++action) {
     switch (action->type) {
-      case ASSERT_FACT:
-      case RETRACT_FACT: {
+      case ASSERT_FACT: {
         if (action->get.atom.type == ATOM) {
-          if (action->type == RETRACT_FACT) {
-            cerr << "[ERROR] Retraction of atoms is currently unsupported." << endl;
-            return;
-          }
-          act(action->get.atom.get.atom, results);
+          nasserts += act(action->get.atom.get.atom, results);
           continue;
         }
         if (action->get.atom.type != FRAME) {
-          cerr << "[ERROR] For now, supporting only assertion/retraction of frames/triples/atoms." << endl;
-          return;
+          cerr << "[ERROR] For now, supporting only assertion of frames/triples/atoms." << endl;
+          return 0;
         }
         Frame &frame = action->get.atom.get.frame;
-        if (frame.object.type == LIST || frame.object.type == FUNCTION) {
-          cerr << "[ERROR] Not supporting lists or functions in actions." << endl;
-          return;
+        if (frame.slots.end - frame.slots.begin != 1) {
+          cerr << "[ERROR] Frames in actions that don't have exactly one slot are not supported." << endl;
         }
-        std::pair<Term, Term> *slot = frame.slots.begin;
-        #pragma mta loop serial
-        for (; slot != frame.slots.end; ++slot) {
-          Triple triple; init_triple(triple);
-          if (slot->first.type == LIST || slot->first.type == FUNCTION ||
-              slot->second.type == LIST || slot->second.type == FUNCTION) {
-            cerr << "[ERROR] Not supporting lists or functions in actions." << endl;
-            return;
+        Term *triple_pattern[3];
+        triple_pattern[0] = &frame.object;
+        triple_pattern[1] = &frame.slots.begin->first;
+        triple_pattern[2] = &frame.slots.begin->second;
+        size_t i, j;
+        for (i = 0; i < 3; ++i) {
+          if (triple_pattern[i]->type == LIST || triple_pattern[i]->type == FUNCTION) {
+            cerr << "[ERROR] Not support lists or functions in actions." << endl;
+            return 0;
           }
-          if (frame.object.type == CONSTANT) {
-            triple.at[0] = frame.object.get.constant;
-          }
-          if (slot->first.type == CONSTANT) {
-            triple.at[1] = slot->first.get.constant;
-          }
-          if (slot->second.type == CONSTANT) {
-            triple.at[2] = slot->second.get.constant;
-          }
-          if (!results.empty() && frame.object.type == CONSTANT &&
-              slot->first.type == CONSTANT && slot->second.type == CONSTANT) {
-            if (action->type == ASSERT_FACT) {
-              assertions.insert(triple);
+        }
+        dynamic_array<Triple> new_triples;
+        new_triples.resize(results_size);
+        Triple *new_triples_data = new_triples.get_data();
+        #pragma mta assert parallel
+        for (i = 0; i < results_size; ++i) {
+          Triple &trip = new_triples_data[i];
+          init_triple(trip);
+          for (j = 0; j < 3; ++j) {
+            if (triple_pattern[j]->type == CONSTANT) {
+              trip.at[j] = triple_pattern[j]->get.constant;
             } else {
-              retractions.insert(triple);
-            }
-            continue;
-          }
-          results.even_out();
-          size_t rank;
-          #pragma mta assert parallel
-          #pragma mta max concurrency NUM_RELATION_STREAMS
-          for (rank = 0; rank < NUM_RELATION_STREAMS; ++rank) {
-            list<Tuple>::const_iterator tuple = results.stream[rank].begin();
-            list<Tuple>::const_iterator end = results.stream[rank].end();
-            for (; tuple != end; ++tuple) {
-              Triple trip = triple;
-              if (frame.object.type == VARIABLE) {
-                trip.at[0] = tuple->at[frame.object.get.variable];
-              }
-              if (slot->first.type == VARIABLE) {
-                trip.at[1] = tuple->at[slot->first.get.variable];
-              }
-              if (slot->second.type == VARIABLE) {
-                trip.at[2] = tuple->at[slot->second.get.variable];
-              }
-              if (action->type == ASSERT_FACT) {
-                assertions.insert(trip);
-              } else {
-                retractions.insert(trip);
-              }
+              trip.at[j] = results_data[i].at[triple_pattern[j]->get.variable];
             }
           }
         }
-        return;
+        size_t old_size = set_union_unique(triples, new_triples, Order());
+        //cerr << "old triples size=" << old_size << " new triples size=" << triples.size() << endl;
+        nasserts += (triples.size() - old_size);
+        break;
       }
       default: {
-        cerr << "[ERROR] Currently supporting only ASSERT_FACT and RETRACT_FACT actions." << endl;
-        return;
+        cerr << "[ERROR] Currently supporting only ASSERT_FACT." << endl;
+        return 0;
+      }
+    }
+  }
+  return nasserts;
+}
+
+void infer(dynamic_array<Rule> &rules) {
+  size_t rules_since_change = 0;
+  size_t cycle_count;
+  Rule *rules_data = rules.get_data();
+  size_t rules_size = rules.size();
+  #pragma mta loop serial
+  for (cycle_count = 0; rules_since_change < rules_size; ++cycle_count) {
+    cerr << "  Cycle " << (cycle_count+1) << "..." << endl;
+    size_t rulecount;
+    #pragma mta loop serial
+    for (rulecount = 0; rulecount < rules_size && rules_since_change < rules_size; ++rulecount) {
+      cerr << "    Rule " << (rulecount+1) << "..." << endl;
+      size_t nasserts = 0;
+      size_t local_nasserts = 1;
+      size_t app_count;
+      #pragma mta loop serial
+      for (app_count = 0; local_nasserts > 0; ++app_count) {
+        cerr << "      Application " << (app_count+1) << "... ";
+        Relation results;
+        VarSet allvars;
+        cerr << "querying... ";
+        query(rules_data[rulecount].condition, allvars, results);
+        cerr << results.size() << " results... acting... ";
+        local_nasserts = act(rules_data[rulecount].action_block, results);
+        cerr << local_nasserts << " new assertions." << endl;
+        nasserts += local_nasserts;
+      }
+      if (nasserts > 0) {
+        rules_since_change = 0;
+      } else {
+        ++rules_since_change;
       }
     }
   }
 }
 
-void infer(dynamic_array<Rule> &rules) {
-  bool changed = true;
-  map<constint_t, size_t> sizes;
-  map<constint_t, RelUniqIndex>::const_iterator atomit = atoms.begin();
-  #pragma mta loop serial
-  for (; atomit != atoms.end(); ++atomit) {
-    sizes[atomit->first] = atomit->second.size();
+void print_data(char *filename) {
+  size_t triples_size = triples.size();
+  Triple *triples_data = triples.get_data();
+  constint_t *data = (constint_t*)malloc(3 * triples_size * sizeof(constint_t));
+  size_t i, j;
+  #pragma mta assert parallel
+  for (i = 0; i < triples_size; ++i) {
+    size_t offset = 3*i;
+    #pragma mta max concurrency 3
+    for (j = 0; j < 3; ++j) {
+      data[offset+j] = triples_data[i].at[j];
+#ifdef FAKE
+      if (is_little_endian()) {
+        reverse_bytes(data[offset+j]);
+      }
+#endif
+    }
   }
-  size_t ncycles = 0;
-  #pragma mta loop serial
-  while (changed) {
-    cerr << "  Cycle " << ++ncycles << "..." << endl;
-    changed = false;
-    Index assertions (Order(0, 1, 2));
-    Index retractions (Order(0, 1, 2));
-    size_t rulecount;
-    size_t nrules = rules.size();
-    #pragma mta loop serial
-    for (rulecount = 0; rulecount < nrules; ++rulecount) {
-      cerr << "    Rule " << (rulecount+1) << "... ";
-      Relation results;
-      VarSet allvars;
-      cerr << "querying... ";
-      query(rules[rulecount].condition, allvars, results);
-      cerr << results.size() << " results... acting... ";
-      act(rules[rulecount].action_block, results, assertions, retractions);
-      cerr << "accumulated total " << assertions.size() << " assertions and " << retractions.size() << " retractions." << endl;
+  int64_t snap_error;
+  snap_snapshot(filename, data, 3 * triples_size * sizeof(constint_t), &snap_error);
+  free(data);
+  for (i = 0; i < found_atoms; ++i) {
+    if (atom_preds[i] == CONST_RIF_ERROR) {
+      break;
     }
-    int locks[NUM_INDEX_STREAMS];
-    init_locks_full(locks, NUM_INDEX_STREAMS);
-    size_t i;
-    bool changes[NUM_INDEX_STREAMS];
-    size_t nretractions[NUM_INDEX_STREAMS];
-    size_t nassertions[NUM_INDEX_STREAMS];
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      changes[i] = false;
-      nretractions[i] = 0;
-      nassertions[i] = 0;
-    }
-    size_t rank;
-    FAKE_FOR_ALL_STREAMS(rank, nstreams, NUM_INDEX_STREAMS)
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (rank = 0; rank < NUM_INDEX_STREAMS; ++rank) {
-      set<Triple, Order>::const_iterator it = retractions.stream[rank].begin();
-      set<Triple, Order>::const_iterator end = retractions.stream[rank].end();
-      for (; it != end; ++it) {
-        if (idxspo.erase(*it) > 0) {
-          idxpos.erase(*it);
-          idxosp.erase(*it);
-          changes[rank] = true;
-          ++nretractions[rank];
-        }
-      }
-    }
-    size_t summation = 0;
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      summation += nretractions[i];
-    }
-    cerr << "  " << summation << " retractions, ";
-    FAKE_FOR_ALL_STREAMS(rank, nstreams, NUM_INDEX_STREAMS)
-    #pragma mta assert parallel
-    #pragma mta max concurrency NUM_INDEX_STREAMS
-    for (rank = 0; rank < NUM_INDEX_STREAMS; ++rank) {
-      set<Triple, Order>::const_iterator it = assertions.stream[rank].begin();
-      set<Triple, Order>::const_iterator end = assertions.stream[rank].end();
-      for (; it != end; ++it) {
-        if (idxspo.insert(*it)) {
-          DEBUG("insert triple", hex);
-          DEBUG("  subject = ", it->at[0]);
-          DEBUG("  predicate = ", it->at[1]);
-          DEBUG("  object = ", it->at[2]);
-          DEBUG("", dec);
-          idxpos.insert(*it);
-          idxosp.insert(*it);
-          changes[rank] = true;
-          ++nassertions[rank];
-        }
-      }
-    }
-    summation = 0;
-    for (i = 0; i < NUM_INDEX_STREAMS; ++i) {
-      summation += nassertions[i];
-      changed |= changes[i];
-    }
-    cerr << "  " << summation << " assertions." << endl;
-    atomit = atoms.begin();
-    #pragma mta loop serial
-    for (; atomit != atoms.end(); ++atomit) {
-      changed = changed || sizes[atomit->first] != atomit->second.size();
-      sizes[atomit->first] = atomit->second.size();
-    }
+  }
+  if (i < found_atoms && !atoms[i].empty()) {
+    cerr << "INCONSISTENT" << endl;
   }
 }
 
@@ -2135,12 +2014,12 @@ int main(int argc, char **argv) {
   time_t time_start_loading_data = time(NULL);
   cout << "Loading data at time " << time_start_loading_data << "... ";
   load_data(argv[2]);
-  cout << "loaded " << idxspo.size() << " triples." << endl;
+  cout << "loaded " << triples.size() << " triples." << endl;
   time_t time_start_inferring = time(NULL);
   cout << "Inferring at time " << time_start_inferring << "..." << endl;
   infer(rules);
   time_t time_start_writing_data = time(NULL);
-  cout << "Writing data at time " << time_start_writing_data << "..." << endl;
+  cout << "Writing " << triples.size() << " triples at time " << time_start_writing_data << "..." << endl;
   print_data(argv[3]);
   time_t time_finish = time(NULL);
   cout << "DONE at time " << time_finish << "." << endl;

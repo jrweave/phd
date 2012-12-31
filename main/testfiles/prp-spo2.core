@@ -1,0 +1,39 @@
+
+ Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+ Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+ Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+ Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+ Prefix(rif  <http://www.w3.org/2007/rif#>)
+ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+ Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+ Prefix(dc   <http://purl.org/dc/terms/>)
+
+(* <#prp-spo2> *)
+ Forall ?p ?last ?pc ?start (
+   ?start[?p->?last] :- And (
+       ?p[owl:propertyChainAxiom->?pc]
+       _checkChain(?p ?start ?pc ?last) ))
+
+ Forall ?q ?start ?pc ?last ?p ?tl (
+   _checkChain(?q ?start ?pc  ?last) :- And (
+       ?pc[rdf:first->?p]
+			 ?pc[rdf:rest->?tl]
+       ?start[?p->?next]
+       _checkChain(?q ?next ?tl ?last) ))
+
+ Forall ?q ?start ?pc ?last ?p (
+   _checkChain(?q ?start ?pc  ?last) :- And (
+			 _markCheckChain(?q ?pc)
+       ?pc[rdf:first->?p]
+			 ?pc[rdf:rest->rdf:nil]
+       ?start[?p->?last] ))
+
+ Forall ?p ?pc (
+	 _markCheckChain(?p ?pc) :- ?p[owl:propertyChainAxiom->?pc] )
+
+ Forall ?p ?pc (
+	 _markCheckChain(?p ?pc) :- And (
+		 _markCheckChain(?p ?c)
+		 ?c[rdf:rest->?pc]
+		 Not(?pc = rdf:nil) ))
+ 

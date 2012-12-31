@@ -1,4 +1,4 @@
-#/bin/sh -x
+#/bin/sh
 
 main=`pwd`/..
 local=`pwd`/jobs
