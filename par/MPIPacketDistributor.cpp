@@ -114,17 +114,20 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
     THROW(DistException, "You said there were no more sends!");
   }
   if (this->available.empty()) {
+    bool found_one = false;
     list<size_t>::iterator it = this->send_order.begin();
-    for (; it != this->send_order.end(); ++it) {
+    while (!found_one && it != this->send_order.end()) {
       if (this->send_requests[*it].Test()) {
         this->available.push_back(*it);
         this->send_buffers[*it]->drop();
         this->send_buffers[*it] = NULL;
         this->send_order.erase(it);
-        break;
+        found_one = true;
+      } else {
+        ++it;
       }
     }
-    if (it == this->send_order.end()) {
+    if (!found_one) {
       return false;
     }
   }
