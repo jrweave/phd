@@ -72,6 +72,7 @@ inline
 RIFRule &RIFRule::normalize() THROWS(BadAllocException) {
   this->condition.normalize();
   this->actionblock.normalize();
+  return *this;
 }
 TRACE(BadAllocException, "Unable to normalize RIFRule.")
 

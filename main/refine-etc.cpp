@@ -449,4 +449,5 @@ int refine_main(int argc, char **argv) {
   refine_rules(rules, repls, probs, refined, pruned);
   print_rules(cout, refined, false);
   print_rules(cout, pruned, true);
+  return 0;
 }

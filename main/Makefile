@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include -DANY_ORDER
-OBJS		= normalize-nt prd2cnf refine refine-all refine_rules der encode-rules infer-rules infer-rules-xmt
+OBJS		= normalize-nt prd2cnf refine refine-all der encode-rules infer-rules infer-rules-xmt
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
 ifeq ($(USE_PAR_MPI), yes)

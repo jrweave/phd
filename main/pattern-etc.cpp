@@ -23,11 +23,9 @@
 #include "rif/RIFActionBlock.h"
 #include "rif/RIFCondition.h"
 #include "rif/RIFRule.h"
-#include "sat/SATFormula.h"
 
 using namespace ptr;
 using namespace rif;
-using namespace sat;
 using namespace std;
 
 #define DECIDE 0
@@ -1049,4 +1047,5 @@ int prd2cnf(int argc, char **argv) {
   generate_pattern_based_clauses(patterns);
 
   print_cnf();
+  return 0;
 }

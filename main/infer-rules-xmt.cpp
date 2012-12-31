@@ -1525,7 +1525,7 @@ void query_atom(Atom &atom, VarSet &allvars, Relation &results) {
       allvars.insert(term->get.variable);
       newvars.insert(term->get.variable);
       ++nvars;
-    } else if (term[i].type != CONSTANT) {
+    } else if (term->type != CONSTANT) {
       cerr << "[ERROR] Not handling lists or functions in atoms.  Results will be incorrect." << endl;
     }
   }

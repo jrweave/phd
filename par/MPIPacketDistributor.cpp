@@ -115,7 +115,7 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
   }
   if (this->available.empty()) {
     list<size_t>::iterator it = this->send_order.begin();
-    while (it != this->send_order.end()) {
+    for (; it != this->send_order.end(); ++it) {
       if (this->send_requests[*it].Test()) {
         this->available.push_back(*it);
         this->send_buffers[*it]->drop();

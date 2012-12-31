@@ -624,6 +624,9 @@ RIFCondition &RIFCondition::normalize() THROWS(BadAllocException) {
     e->sub.normalize();
     return *this;
   }
+  default:
+    cerr << "[ERROR] " << __FILE__ << ':' << __LINE__ << ": Unhandled case " << this->type << ".  This should never happen." << endl;
+    return *this;
   }
 }
 TRACE(BadAllocException, "(trace)")

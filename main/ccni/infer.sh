@@ -2,7 +2,7 @@
 
 main=`pwd`/..
 local=`pwd`/jobs
-jobs='/gpfs/lb/provisioned/DSSW/DSSWweav/jobs'
+jobs='/gpfs/lb/data/DSSW/DSSWweav/jobs'
 blocksize=`expr 4 \* 1024 \* 1024`
 pagesize=`expr 4 \* 1024 \* 1024`
 

@@ -810,6 +810,9 @@ bool RIFAtomic::isGround() const throw() {
     }
     return true;
   }
+  default:
+    cerr << "[ERROR] " << __FILE__ << ':' << __LINE__ << ": Unhandled case " << this->type << ".  This should never happen." << endl;
+    return false;
   }
 }
 
