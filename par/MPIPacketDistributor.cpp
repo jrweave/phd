@@ -83,6 +83,7 @@ MPIPacketDistributor::~MPIPacketDistributor() throw(DistException) {
 void MPIPacketDistributor::init() throw(DistException, BadAllocException) {
   size_t i;
   for (i = 0; i < this->num_requests; ++i) {
+    this->send_buffers[i] = NULL;
     try {
       NEW(this->recv_buffers[i], MPtr<uint8_t>,
           this->packet_size * sizeof(uint8_t));
@@ -101,6 +102,7 @@ void MPIPacketDistributor::init() throw(DistException, BadAllocException) {
     }
   }
   for (i = 0; i < this->num_requests; ++i) {
+    this->send_requests[i] = MPI::REQUEST_NULL;
     this->recv_requests[i] = this->comm.Irecv(this->recv_buffers[i]->dptr(),
                                               this->packet_size, MPI_BYTE,
                                               MPI::ANY_SOURCE, this->tag);
@@ -108,11 +110,22 @@ void MPIPacketDistributor::init() throw(DistException, BadAllocException) {
   }
 }
 
+// TODO clean up the unused lists and stuff and use MPI::Testany permanently
+#define USE_TEST_ANY 1
 bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
     throw(DistException) {
   if (this->no_more_sends) {
     THROW(DistException, "You said there were no more sends!");
   }
+#if USE_TEST_ANY
+  int use;
+  if (!MPI::Request::Testany(this->num_requests, this->send_requests, use)) {
+    return false;
+  }
+  if (use == MPI_UNDEFINED) {
+    use = 0;
+  }
+#else
   if (this->available.empty()) {
     bool found_one = false;
     list<size_t>::iterator it = this->send_order.begin();
@@ -131,6 +144,10 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
       return false;
     }
   }
+  size_t use = this->available.front();
+  this->available.pop_front();
+  this->send_order.push_back(use);
+#endif
   if (msg == NULL) {
     THROW(DistException, "Tried to send NULL message.");
   }
@@ -143,19 +160,26 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
   if (!msg->standable()) {
     THROW(DistException, "Message DPtr must be standable.");
   }
-  size_t use = this->available.front();
-  this->available.pop_front();
+  if (this->send_buffers[use] != NULL) {
+    this->send_buffers[use]->drop();
+  }
   msg->hold();
   //msg = msg->stand();
   this->send_buffers[use] = msg;
   this->send_requests[use] = this->comm.Isend(msg->dptr(), msg->size(),
                                               MPI_BYTE, rank, this->tag);
   ++this->net_send_recv;
-  this->send_order.push_back(use);
   return true;
 }
 
 DPtr<uint8_t> *MPIPacketDistributor::receive() throw(DistException) {
+#if USE_TEST_ANY
+  int i;
+  if (!MPI::Request::Testany(this->num_requests, this->recv_requests, i)
+      || i == MPI_UNDEFINED) {
+    return NULL;
+  }
+#else
   list<size_t>::iterator it = this->recv_order.begin();
   for (; it != this->recv_order.end() &&
          !this->recv_requests[*it].Test(); ++it) {
@@ -164,16 +188,17 @@ DPtr<uint8_t> *MPIPacketDistributor::receive() throw(DistException) {
   if (it == this->recv_order.end()) {
     return NULL;
   }
-  --this->net_send_recv;
   size_t i = *it;
   this->recv_order.erase(it);
+  this->recv_order.push_back(i);
+#endif
+  --this->net_send_recv;
   DPtr<uint8_t> *buf = this->recv_buffers[i];
   buf->hold();
   buf = buf->stand();
   this->recv_requests[i] = this->comm.Irecv(this->recv_buffers[i]->dptr(),
                                             this->packet_size, MPI_BYTE,
                                             MPI::ANY_SOURCE, this->tag);
-  this->recv_order.push_back(i);
   return buf;
 }
 
