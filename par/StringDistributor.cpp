@@ -29,7 +29,7 @@ StringDistributor::StringDistributor(const int my_rank,
   if (dist == NULL) {
     THROW(BaseException<void*>, NULL, "dist must not be NULL.");
   }
-  if (packet_size <= sizeof(header)) {
+  if (packet_size <= sizeof(size_t) + sizeof(int) + (sizeof(uint32_t) << 1)) {
     THROW(BaseException<size_t>, packet_size,
           "Specified packet size is smaller than necessary header.");
   }
@@ -54,10 +54,10 @@ bool StringDistributor::send(const int rank, DPtr<uint8_t> *msg)
   if (!this->send_packets.empty()) {
     SendList::iterator it = this->send_packets.begin();
     while (it != this->send_packets.end() &&
-           this->send(this->pending_send_rank, *it)) {
-      SendList::iterator erase_me = it;
-      ++it;
-      this->send_packets.erase(erase_me);
+           this->dist->send(this->pending_send_rank, *it)) {
+      (*it)->drop();
+      *it = NULL;
+      it = this->send_packets.erase(it);
     }
     if (!this->send_packets.empty()) {
       return false;
@@ -89,6 +89,7 @@ bool StringDistributor::send(const int rank, DPtr<uint8_t> *msg)
     }
     return true;
   }
+  size_t header_size = sizeof(size_t) + sizeof(int) + (sizeof(uint32_t) << 1);
   header head;
   head.nbytes = msg->size();
   head.sender = this->my_rank;
@@ -115,11 +116,17 @@ bool StringDistributor::send(const int rank, DPtr<uint8_t> *msg)
       RETHROW_AS(DistException, e);
     }
     size_t payloadlen = min((size_t)(end - mark),
-                            this->packet_size - sizeof(header));
-    // Relying on struct header to maintain order of members.
-    // That's almost always the case, but should we make sure?
-    memcpy(packet->dptr(), &head, sizeof(header));
-    memcpy(packet->dptr() + sizeof(header), mark, payloadlen*sizeof(uint8_t));
+                            this->packet_size - header_size);
+    uint8_t *write_to = packet->dptr();
+    memcpy(write_to, &head.nbytes, sizeof(size_t));
+    write_to += sizeof(size_t);
+    memcpy(write_to, &head.sender, sizeof(int));
+    write_to += sizeof(int);
+    memcpy(write_to, &head.id, sizeof(uint32_t));
+    write_to += sizeof(uint32_t);
+    memcpy(write_to, &head.order, sizeof(uint32_t));
+    write_to += sizeof(uint32_t);
+    memcpy(write_to, mark, payloadlen*sizeof(uint8_t));
     if (this->dist->send(this->pending_send_rank, packet)) {
       packet->drop();
     } else {
@@ -136,14 +143,21 @@ DPtr<uint8_t> *StringDistributor::receive() throw(DistException) {
   if (packet == NULL) {
     return NULL;
   }
+  size_t header_size = sizeof(size_t) + sizeof(int) + (sizeof(uint32_t) << 1);
   header head;
-  memcpy(&head, packet->dptr(), sizeof(header));
+  memcpy(&head.nbytes, packet->dptr(), sizeof(size_t));
   if (head.nbytes <= this->packet_size - sizeof(size_t)/sizeof(uint8_t)) {
     DPtr<uint8_t> *payload = packet->sub(sizeof(size_t)/sizeof(uint8_t), head.nbytes);
     packet->drop();
     return payload;
   }
-  size_t payloadlen = this->packet_size - sizeof(header);
+  const uint8_t *read_from = packet->dptr() + sizeof(size_t);
+  memcpy(&head.sender, read_from, sizeof(int));
+  read_from += sizeof(int);
+  memcpy(&head.id, read_from, sizeof(uint32_t));
+  read_from += sizeof(uint32_t);
+  memcpy(&head.order, read_from, sizeof(uint32_t));
+  size_t payloadlen = this->packet_size - header_size;
   size_t npackets = head.nbytes / payloadlen;
   if (head.nbytes % payloadlen > 0) {
     ++npackets;
@@ -162,7 +176,7 @@ DPtr<uint8_t> *StringDistributor::receive() throw(DistException) {
   }
   size_t offset = head.order * payloadlen;
   memcpy(msg->dptr() + offset,
-         packet->dptr() + sizeof(header),
+         packet->dptr() + header_size,
          min(payloadlen, msg->size() - offset));
   packet->drop();
   pair<RecvMap::iterator, RecvMap::iterator> range
@@ -172,7 +186,7 @@ DPtr<uint8_t> *StringDistributor::receive() throw(DistException) {
     offset = it->first.order * payloadlen;
     packet = it->second;
     memcpy(msg->dptr() + offset,
-           packet->dptr() + sizeof(header),
+           packet->dptr() + header_size,
            min(payloadlen, msg->size() - offset));
     packet->drop();
   }
@@ -198,9 +212,8 @@ bool StringDistributor::done() throw(DistException) {
     while (it != this->send_packets.end()) {
       if (this->dist->send(this->pending_send_rank, *it)) {
         (*it)->drop();
-        SendList::iterator erase_me = it;
-        ++it;
-        this->send_packets.erase(erase_me);
+        *it = NULL;
+        it = this->send_packets.erase(it);
       } else {
         ++it;
       }

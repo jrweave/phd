@@ -109,25 +109,25 @@ void DistComputation::exec()
   } catch (bad_alloc &e) {
     if (buffer != NULL) buffer->drop();
     if (recvd != NULL) recvd->drop();
-    if (msg != NULL) recvd->drop();
+    if (msg != NULL) msg->drop();
     this->fail();
     THROWX(BadAllocException);
   } catch (BadAllocException &e) {
     if (buffer != NULL) buffer->drop();
     if (recvd != NULL) recvd->drop();
-    if (msg != NULL) recvd->drop();
+    if (msg != NULL) msg->drop();
     this->fail();
     RETHROW(e, "(rethrow)");
   } catch (DistException &e) {
     if (buffer != NULL) buffer->drop();
     if (recvd != NULL) recvd->drop();
-    if (msg != NULL) recvd->drop();
+    if (msg != NULL) msg->drop();
     this->fail();
     RETHROW(e, "Problem with underlying Distributor.");
   } catch (TraceableException &e) {
     if (buffer != NULL) buffer->drop();
     if (recvd != NULL) recvd->drop();
-    if (msg != NULL) recvd->drop();
+    if (msg != NULL) msg->drop();
     this->fail();
     RETHROW(e, "Problem with computation.");
   }

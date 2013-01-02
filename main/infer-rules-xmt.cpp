@@ -1209,7 +1209,7 @@ void print_bloom_filter(dynamic_array<uint64_t> &bloom) {
 #endif
 
 void make_bloom_filter(Relation &tuples, Hash hash, size_t nitems, dynamic_array<uint64_t> &output) {
-  size_t nbits = nitems / LN2 + 1;
+  size_t nbits = (size_t)((double)nitems / LN2) + 1;
   size_t nwords = (nbits >> 6) + 1;
   nbits = (nwords << 6);
   uint64_t mask = UINT64_C(0x3F); // bottom six bits

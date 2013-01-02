@@ -208,7 +208,7 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     write_to += sizeof(int);
     memcpy(write_to, &resp.n, sizeof(uint32_t));
     write_to += sizeof(uint32_t);
-    memcpy(write_to, &resp.id, N);
+    memcpy(write_to, resp.id.ptr(), N);
     this->pending_responses.pop_front();
 #if DIST_RDF_DICT_ENCODE_DEBUG
     ++DEBUG_SENT;
@@ -371,7 +371,7 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
   }
   // otherwise, negative "send_to" means it is a response
   read_from += sizeof(uint32_t);
-  memcpy(&resp.id, read_from, N);
+  memcpy(resp.id.ptr(), read_from, N);
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
   _debugss << "send_to=" << this->dict->rank << " n=" << resp.n << " id=" << hex;
