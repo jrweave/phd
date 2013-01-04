@@ -132,8 +132,6 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
     while (!found_one && it != this->send_order.end()) {
       if (this->send_requests[*it].Test()) {
         this->available.push_back(*it);
-        this->send_buffers[*it]->drop();
-        this->send_buffers[*it] = NULL;
         it = this->send_order.erase(it);
         found_one = true;
       } else {

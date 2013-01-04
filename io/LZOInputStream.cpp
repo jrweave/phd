@@ -176,7 +176,7 @@ DPtr<uint8_t> *LZOInputStream::read(const int64_t amount)
   }
   DPtr<uint8_t> *p2 = p->sub(0, amount);
   p->drop();
-  this->offset -= amount;
+  this->offset = (p->dptr() - this->buffer->dptr()) + amount;
   return p2;
 }
 TRACE(IOException, "Problem reading from LZOInputStream.")

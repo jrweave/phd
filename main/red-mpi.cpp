@@ -109,6 +109,7 @@ struct cmdargs_t {
   bool single_input;
   bool single_output;
   bool global_dict;
+  bool read_only;
 } cmdargs = {
   /* input          */  string(""),
   /* input_format   */  string(""),
@@ -126,6 +127,7 @@ struct cmdargs_t {
   /* single_input   */  false,
   /* single_output  */  false,
   /* global_dict    */  false,
+  /* read_only      */  false,
 };
 
 size_t parse_size_t(char *cstr) {
@@ -204,6 +206,7 @@ bool parse_args(int argc, char **argv) {
     else CMDARG(argv[i], "--single-input", "-si", single_input, false, true)
     else CMDARG(argv[i], "--single-output", "-so", single_output, false, true)
     else CMDARG(argv[i], "--global-dict", "-gd", global_dict, false, true)
+    else CMDARG(argv[i], "--read-only", "-r", read_only, false, true)
     else if (strcmp(argv[i], "--force") == 0) {
       try {
         string termstr(argv[++i]);
@@ -226,11 +229,11 @@ bool parse_args(int argc, char **argv) {
   DEFAULTVAL(input_format, string(""), string("nt"))
   ENUMVAL(input_format, "--input-format", "-if", string("nt nt.lzo der"))
   CONDITIONALVAL(!cmdargs.single_input, input_format, string("der"), input_dict, "--input-dict", "-id", string(""))
-  else CONDITIONALVAL(!cmdargs.single_input && commsize > 1, input_format, string("nt.lzo"), input_dict, "--input-index", "-ix", string(""))
-  REQUIREDVAL(output, "--output", "-o", string(""))
+  else CONDITIONALVAL(!cmdargs.single_input && commsize > 1, input_format, string("nt.lzo"), input_index, "--input-index", "-ix", string(""))
+  CONDITIONALVAL(!cmdargs.read_only, output, string(""), output, "--output", "-o", string(""))
   DEFAULTVAL(output_format, string(""), string("nt"))
   ENUMVAL(output_format, "--output-format", "-if", string("nt nt.lzo der"))
-  CONDITIONALVAL(true, output_format, string("der"), output_dict, "--output-dict", "-od", string(""))
+  CONDITIONALVAL(!cmdargs.read_only, output_format, string("der"), output_dict, "--output-dict", "-od", string(""))
   DEFAULTVAL(page_size, 0, 4096)
   DEFAULTVAL(block_size, 0, 4096)
   DEFAULTVAL(packet_size, 0, 1024)
@@ -494,19 +497,21 @@ int doit(int argc, char **argv) {
   cerr << "[" << commrank << "] Single output: " << cmdargs.single_output << endl;
   cerr << "[" << commrank << "] Global dict: " << cmdargs.global_dict << endl;
 #endif
-  if (cmdargs.input_format == string("der") && commsize > 1 &&
-      cmdargs.global_dict) {
-    if (cmdargs.output_format == string("der")) {
-      if (commrank == 0) {
-        cerr << "[ERROR] No support for der-to-der with global dictionary (but why do want to do that anyway?)." << endl;
+  if (!cmdargs.read_only) {
+    if (cmdargs.input_format == string("der") && commsize > 1 &&
+        cmdargs.global_dict) {
+      if (cmdargs.output_format == string("der")) {
+        if (commrank == 0) {
+          cerr << "[ERROR] No support for der-to-der with global dictionary (but why do want to do that anyway?)." << endl;
+        }
+        return -1;
       }
-      return -1;
+      return dictionary_decode();
     }
-    return dictionary_decode();
-  }
-  if (cmdargs.output_format == string("der") && commsize > 1 &&
-      (cmdargs.global_dict || cmdargs.single_output)) {
-    return dictionary_encode();
+    if (cmdargs.output_format == string("der") && commsize > 1 &&
+        (cmdargs.global_dict || cmdargs.single_output)) {
+      return dictionary_encode();
+    }
   }
   deque<uint64_t> *index = NULL;
   OutputStream *xs = NULL;
@@ -521,6 +526,15 @@ int doit(int argc, char **argv) {
     NEW(dict, WHOLE(RDFDictionary<ID, ENC>));
   }
   RDFReader *rr = makeRDFReader();
+  if (cmdargs.read_only) {
+    RDFTriple triple;
+    while (rr->read(triple)) {
+      // do nothing
+    }
+    rr->close();
+    DELETE(rr);
+    return 0;
+  }
   RDFWriter *rw = makeRDFWriter(dict, index);
   if (xs == NULL) {
     RDFTriple triple;

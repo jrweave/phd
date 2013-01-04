@@ -290,6 +290,9 @@ RDFTerm collect_stats(RDFTerm term) {
     }
     return norm;
   }
+  default:
+    cerr << "[ERROR] Unhandled case on line " << __LINE__ << '.' << endl;
+    return RDFTerm();
   }
 }
 #endif

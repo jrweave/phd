@@ -24,9 +24,9 @@ using namespace io;
 using namespace rdf;
 using namespace std;
 
-bool test1() {
+bool test1(char *filename, size_t num_bytes, size_t num_errors, size_t num_triples) {
   InputStream *is;
-  NEW(is, IFStream, "foaf.nt");
+  NEW(is, IFStream, filename);
   size_t count = 0;
   size_t nerrs = 0;
   DPtr<uint8_t> *bytes = is->read();
@@ -37,9 +37,9 @@ bool test1() {
   }
   is->close();
   DELETE(is);
-  PROG(count == 11137);
+  PROG(count == num_bytes);
 
-  NEW(is, IFStream, "foaf.nt");
+  NEW(is, IFStream, filename);
   NTriplesReader *nt;
   NEW(nt, NTriplesReader, is);
   RDFTriple triple;
@@ -54,8 +54,8 @@ bool test1() {
       ++nerrs;
     }
   } while(r);
-  PROG(nerrs == 0);
-  PROG(count == 94);
+  PROG(nerrs == num_errors);
+  PROG(count == num_triples);
   nt->close();
   DELETE(nt);
   PASS;
@@ -64,7 +64,8 @@ bool test1() {
 int main(int argc, char **argv) {
   INIT;
 
-  TEST(test1);
+  TEST(test1, "foaf.nt", 11137, 0, 94);
+  TEST(test1, "longtriple.nt", 335187, 0, 1);
 
   FINAL;
 }

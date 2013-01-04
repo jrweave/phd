@@ -14,11 +14,11 @@ bool test(const char *inputfile, const char *outputfile, const char *verifyfile)
   NEW(is, LZOInputStream, is, NULL);
   OutputStream *os;
   NEW(os, OFStream, outputfile);
-  DPtr<uint8_t> *p = is->read();
+  DPtr<uint8_t> *p = is->read(1);
   while (p != NULL) {
     os->write(p);
     p->drop();
-    p = is->read();
+    p = is->read(1);
   }
   is->close();
   os->close();
