@@ -208,6 +208,10 @@ int RIFAtomic::cmp(const RIFAtomic &a1, const RIFAtomic &a2) throw() {
     }
     return 0;
   }
+  default:
+    // This should never happen.
+    cerr << "[ERROR] Unhandled case " << a1.type << " at " << __FILE__ << ":" << __LINE__ << endl;
+    return 0; // Consider two things of unknown type to be equal. 
   }
 }
 
@@ -523,6 +527,10 @@ RIFAtomic RIFAtomic::parse(DPtr<uint8_t> *utf8str)
       } JUST_RETHROW(BadAllocException, "(rethrow)")
     }
   } while (sub == NULL);
+  // This should never happen.
+  cerr << "[ERROR] Unexpected control flow at " << __FILE__ << ":" << __LINE__ << endl;
+  RIFTerm t1, t2;
+  return RIFAtomic(EQUALITY, t1, t2); // List() = List()
 }
 
 DPtr<uint8_t> *RIFAtomic::toUTF8String() const throw(BadAllocException) {
@@ -771,6 +779,12 @@ RIFAtomic &RIFAtomic::normalize() THROWS(BadAllocException) {
     f->slots.swap(normslots);
     return *this;
   }
+  default:
+    // This should never happen, but just in case,
+    // I should do _something_.
+    cerr << "[ERROR] Unhandled case at " << __FILE__ << ":" << __LINE__ << endl;
+    THROWX(BadAllocException);
+    return *this;
   }
 }
 TRACE(BadAllocException, "(trace)")

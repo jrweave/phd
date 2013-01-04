@@ -255,6 +255,7 @@ RIFActVarBind &RIFActVarBind::normalize() THROWS(BadAllocException) {
   if (this->frame != NULL) {
     this->frame->normalize();
   }
+  return *this;
 }
 TRACE(BadAllocException, "Unable to normalize RIFActVarBind.")
 

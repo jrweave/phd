@@ -222,6 +222,10 @@ int RIFCondition::cmp(const RIFCondition &c1, const RIFCondition &c2) throw() {
     }
     return RIFCondition::cmp(e1->sub, e2->sub);
   }
+  default:
+    // This should never happen.
+    cerr << "[ERROR] Unhandled case " << c1.type << " at " << __FILE__ << ":" << __LINE__ << endl;
+    return 0; // Two RIFConditions of unknown type are treated equally.
   }
 }
 

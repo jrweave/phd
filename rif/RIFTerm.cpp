@@ -539,6 +539,10 @@ RIFTerm &RIFTerm::normalize() THROWS(BadAllocException) {
     }
     return *this;
   }
+  default:
+    // Should never happen, but just in case, do _something_.
+    cerr << "[ERROR] Unhandled case " << this->type << " at " << __FILE__ << ":" << __LINE__ << endl;
+    THROWX(BadAllocException);
   }
 }
 TRACE(BadAllocException, "(trace)")
@@ -564,6 +568,10 @@ bool RIFTerm::isGround() const throw() {
     }
     return true;
   }
+  default:
+    // Should never happen, but just in case, do _something_.
+    cerr << "[ERROR] Unhandled case " << this->type << " at " << __FILE__ << ":" << __LINE__ << endl;
+    return false;
   }
 }
 
@@ -588,6 +596,9 @@ bool RIFTerm::containsFunction() const throw() {
       }
       return false;
     }
+    default:
+      // Should never happen, but just in case, do _something_.
+      cerr << "[ERROR] Unhandled case " << this->type << " at " << __FILE__ << ":" << __LINE__ << endl;
   }
 }
 
