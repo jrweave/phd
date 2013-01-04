@@ -1,3 +1,0 @@
-<data:sp> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> .
-<data:p> <data:sp> <data:q> .
-<data:x> <data:p> <data:y> .
