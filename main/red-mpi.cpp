@@ -497,6 +497,9 @@ int doit(int argc, char **argv) {
   cerr << "[" << commrank << "] Single output: " << cmdargs.single_output << endl;
   cerr << "[" << commrank << "] Global dict: " << cmdargs.global_dict << endl;
 #endif
+  deque<uint64_t> *index = NULL;
+  OutputStream *xs = NULL;
+  RDFDictionary<ID, ENC> *dict = NULL;
   if (!cmdargs.read_only) {
     if (cmdargs.input_format == string("der") && commsize > 1 &&
         cmdargs.global_dict) {
@@ -512,18 +515,15 @@ int doit(int argc, char **argv) {
         (cmdargs.global_dict || cmdargs.single_output)) {
       return dictionary_encode();
     }
-  }
-  deque<uint64_t> *index = NULL;
-  OutputStream *xs = NULL;
-  if (cmdargs.output_format == string("nt.lzo") && cmdargs.output_index != string("")) {
-    NEW(index, deque<uint64_t>);
-    if (commsize <= 1 || !cmdargs.single_output) {
-      NEW(xs, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_index.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
+    if (cmdargs.output_format == string("nt.lzo") && cmdargs.output_index != string("")) {
+      NEW(index, deque<uint64_t>);
+      if (commsize <= 1 || !cmdargs.single_output) {
+        NEW(xs, MPIDistPtrFileOutputStream, MPI::COMM_SELF, cmdargs.output_index.c_str(), MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL, cmdargs.page_size, false);
+      }
     }
-  }
-  RDFDictionary<ID, ENC> *dict = NULL;
-  if (cmdargs.output_format == string("der") && cmdargs.output_dict != string("")) {
-    NEW(dict, WHOLE(RDFDictionary<ID, ENC>));
+    if (cmdargs.output_format == string("der") && cmdargs.output_dict != string("")) {
+      NEW(dict, WHOLE(RDFDictionary<ID, ENC>));
+    }
   }
   RDFReader *rr = makeRDFReader();
   if (cmdargs.read_only) {

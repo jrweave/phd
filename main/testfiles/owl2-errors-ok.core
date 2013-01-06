@@ -1,0 +1,254 @@
+ Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+ Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+ Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+ Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+ Prefix(rif  <http://www.w3.org/2007/rif#>)
+ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+ Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+ Prefix(dc   <http://purl.org/dc/terms/>)
+
+#PRAGMA NOT REPLICATE And(?s[?p->?o])
+#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:propertyDisjointWith owl:onProperty owl:onClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members) ?p)))
+#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(0) ?o)))
+#PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:AsymmetricProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses) ?o)))
+
+
+
+
+
+
+(* <#eq-diff1> *)
+Forall ?x ?y (
+   rif:error() :- And(
+       ?x[owl:sameAs->?y]
+       ?x[owl:differentFrom->?y]  ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* <#prp-asyp> *)
+Forall ?p ?x ?y (
+   rif:error() :- And(
+       ?p[rdf:type->owl:AsymmetricProperty]
+       ?x[?p->?y]
+       ?y[?p->?x]  ))
+
+
+
+
+
+(* <#prp-pdw> *)
+Forall ?x ?y ?p2 ?p1 (
+   rif:error() :- And(
+       ?p1[owl:propertyDisjointWith->?p2]
+       ?x[?p1->?y]
+       ?x[?p2->?y]  ))
+
+
+
+
+
+(* <#cls-nothing2> *)
+Forall ?x (
+   rif:error() :- ?x[rdf:type->owl:Nothing])
+
+
+
+
+
+
+(* <#cls-maxc1> *)
+Forall ?p ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]  ))
+
+
+(* <#cls-maxqc1> *)
+Forall ?p ?c ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxQualifiedCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->?c]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]
+       ?y[rdf:type->?c]  ))
+
+(* <#cls-maxqc2> *)
+Forall ?p ?u ?x ?y (
+   rif:error() :- And(
+       ?x[owl:maxQualifiedCardinality->0]
+       ?x[owl:onProperty->?p]
+       ?x[owl:onClass->owl:Thing]
+       ?u[rdf:type->?x]
+       ?u[?p->?y]  ))
+
+
+
+
+
+
+(* <#cax-dw> *)
+Forall ?x ?c1 ?c2 (
+   rif:error() :- And(
+       ?c1[owl:disjointWith->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2]  ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* <#prp-npa1> *)
+Forall ?x ?i1 ?p ?i2 (
+    rif:error() :- And(
+       ?x[owl:sourceIndividual->?i1]
+       ?x[owl:assertionProperty->?p]
+       ?x[owl:targetIndividual->?i2]
+       ?i1[?p->?i2] ))
+
+(* <#prp-npa2> *)
+Forall ?x ?i ?p ?lt (
+    rif:error() :- And(
+       ?x[owl:sourceIndividual->?i]
+       ?x[owl:assertionProperty->?p]
+       ?x[owl:targetValue->?lt]
+       ?i[?p->?lt] ))
+
+(* <#cax-dw> *)
+Forall ?c1 ?c2 ?x (
+    rif:error() :- And(
+       ?c1[owl:disjointWith->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2] ))
+
+(* <#cls-com> *)
+Forall ?c1 ?c2 ?x (
+    rif:error() :- And(
+       ?c1[owl:complementOf->?c2]
+       ?x[rdf:type->?c1]
+       ?x[rdf:type->?c2] ))
+
+
+(* <#eq-diff2-3> *)
+ Forall ?x ?y1 ?y2 ?z1 ?z2 (
+   rif:error() :- And (
+       ?x[rdf:type -> owl:AllDifferent]
+			 _checkDifferent(?x ?y1)
+			 _checkDifferent(?x ?y2)
+			 Not(?y1 = ?y2)
+			 ?y1[rdf:first->?z1]
+			 ?y2[rdf:first->?z2]
+       ?z1[owl:sameAs->?z2] ))
+
+ Forall ?x ?y (
+	 _checkDifferent(?x ?y) :- And (
+		 ?x[rdf:type->owl:AllDifferent]
+		 ?x[owl:distinctMembers->?y] ))
+
+ Forall ?x ?y (
+	 _checkDifferent(?x ?y) :- And (
+		 ?x[rdf:type->owl:AllDifferent]
+		 ?x[owl:members->?y] ))
+
+ Forall ?x ?y ?z (
+	 _checkDifferent(?x ?y) :- And (
+		 _checkDifferent(?x ?z)
+		 ?z[rdf:rest->?y]
+		 Not(?y = rdf:nil) ))
+
+(* <#prp-adp> *)
+ Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
+   rif:error() :- And (
+       ?r[rdf:type -> owl:AllDisjointProperties]
+			 _checkDisjointProperties(?r ?l1)
+			 _checkDisjointProperties(?r ?l2)
+			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[?x->?v]
+			 ?o[?y->?v] ))
+
+ Forall ?r ?l (
+	 _checkDisjointProperties(?r ?l) :- And (
+		 ?r[rdf:type->owl:AllDisjointProperties]
+		 ?r[owl:members -> ?l] ))
+
+ Forall ?r ?l ?x (
+	 _checkDisjointProperties(?r ?l) :- And (
+		 _checkDisjointProperties(?r ?x)
+		 ?x[rdf:rest->?l]
+		 Not(?l = rdf:nil) ))
+
+(* <#cax-adc> *)
+ Forall ?x ?y ?o ?l1 ?l2 ?r (
+   rif:error() :- And (
+       ?r[rdf:type -> owl:AllDisjointClasses]
+			 _checkDisjointClasses(?r ?l1)
+			 _checkDisjointClasses(?r ?l2)
+			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[rdf:type->?x]
+			 ?o[rdf:type->?y] ))
+
+ Forall ?r ?l (
+   _checkDisjointClasses(?r ?l) :- And (
+		 ?r[rdf:type -> owl:AllDisjointClasses]
+		 ?r[owl:members -> ?l] ))
+
+ Forall ?r ?l ?x (
+	 _checkDisjointClasses(?r ?l) :- And (
+		 _checkDisjointClasses(?r ?x)
+		 ?x[rdf:rest->?l]
+		 Not(?l = rdf:nil) ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

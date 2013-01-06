@@ -1830,8 +1830,12 @@ void write_data(const char *filename) {
       while (!req.Test()) {
         // spin until writing is done
       }
+    } else {
+      written_once = true;
     }
     req = file.Iwrite(data, write_to - data, MPI::BYTE);
+  }
+  if (written_once) {
     while (!req.Test()) {
       // spin until writing is done
     }

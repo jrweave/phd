@@ -26,41 +26,45 @@
 #if TIMING_USE == TIMING_NONE
 #define TIME_T(...)
 #define TIME()
+#define TIMESET(t)
 #define DIFFTIME(b,a)
 #define PRINTTIME
 #define TIMEUNITS
-#define TIMEOUTPUT(t) "[no time]"
+#define TIMEOUTPUT(...) "[no time]"
 #define TIMESTREAM(s, t)
 #elif TIMING_USE == TIMING_TIME
 #include <ctime>
 #define TIME_T(...) time_t __VA_ARGS__
 #define TIME() time(NULL)
+#define TIMESET(t) (t = TIME())
 #define DIFFTIME(b,a) difftime(b,a)
 #define PRINTTIME "%u"
 #define TIMEUNITS "seconds"
-#define TIMEOUTPUT(t) t << " " << TIMEUNITS
+#define TIMEOUTPUT(...) (__VA_ARGS__) << " " << TIMEUNITS
 #define TIMESTREAM(s, t) (s << TIMEOUTPUT(t))
 #elif TIMING_USE == TIMING_CLOCK
 #include <ctime>
 #define TIME_T(...) clock_t __VA_ARGS__
 #define TIME() clock()
+#define TIMESET(t) (t = TIME())
 #define DIFFTIME(b,a) (b-a)
 #define PRINTTIME "%u"
 #define TIMEUNITS "seconds"
-#define TIMEOUTPUT(t) t << " " << TIMEUNITS
+#define TIMEOUTPUT(...) (__VA_ARGS__) << " " << TIMEUNITS
 #define TIMESTREAM(s, t) (s << TIMEOUTPUT(t))
 #elif TIMING_USE == TIMING_RDTSC
 #include "rdtsc.h"
 #define TIME_T(...) unsigned long long __VA_ARGS__
 #define TIME() rdtsc()
+#define TIMESET(t) (t = TIME())
 #define PRINTTIME "%llu"
 #define DIFFTIME(b,a) (b-a)
 #ifdef TIMING_CPU_FREQUENCY
 #define TIMEUNITS "seconds"
-#define TIMEOUTPUT(t) (t/TIMING_CPU_FEQUENCY) << " " << TIMEUNITS
+#define TIMEOUTPUT(...) ((__VA_ARGS__)/TIMING_CPU_FREQUENCY) << " " << TIMEUNITS
 #else
 #define TIMEUNITS "cycles"
-#define TIMEOUTPUT(t) t << " " << TIMEUNITS
+#define TIMEOUTPUT(...) (__VA_ARGS__) << " " << TIMEUNITS
 #endif
 #define TIMESTREAM(s, t) (s << TIMEOUTPUT(t))
 #else

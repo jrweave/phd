@@ -23,6 +23,16 @@ namespace rif {
 using namespace ptr;
 using namespace std;
 
+RIFAtomic::RIFAtomic() throw()
+    : type(EQUALITY) {
+  pair<RIFTerm, RIFTerm> *p;
+  RIFTerm empty_list;
+  try {
+    NEW(p, WHOLE(pair<RIFTerm, RIFTerm>), empty_list, empty_list);
+  } RETHROW_BAD_ALLOC
+  this->state = p;
+}
+
 RIFAtomic::RIFAtomic(const RIFConst &pred, DPtr<RIFTerm> *args, bool external)
     throw(SizeUnknownException, BadAllocException)
     : type(external ? EXTERNAL : ATOM) {

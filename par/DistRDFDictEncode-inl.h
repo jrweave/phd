@@ -294,7 +294,7 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
   }
 
 #if DIST_RDF_DICT_ENCODE_DEBUG
-  _debugss << "send_to=" << this->dict->rank << " n=" << this->count << " astr=" << term << " 1. REQUESTING LOOKUP " << this->dict->rank << endl;
+  _debugss << "send_to=" << send_to << " n=" << this->count << " astr=" << term << " 1. REQUESTING LOOKUP " << this->dict->rank << endl;
   cerr << _debugss.str();
   _debugss.str(string(""));
 #endif

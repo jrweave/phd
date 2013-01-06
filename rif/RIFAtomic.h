@@ -109,6 +109,7 @@ private:
     }
   };
 public:
+  RIFAtomic() throw();
   RIFAtomic(const RIFConst &pred, DPtr<RIFTerm> *args, bool external)
       throw(SizeUnknownException, BadAllocException);
   RIFAtomic(const enum RIFAtomicType type, const RIFTerm &lhs,

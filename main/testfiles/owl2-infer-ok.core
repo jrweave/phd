@@ -8,23 +8,10 @@
  Prefix(dc   <http://purl.org/dc/terms/>)
 
 #PRAGMA NOT REPLICATE And(?s[?p->?o])
-#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf) ?p)))
-#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(0 1) ?o)))
-#PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:IrreflexiveProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:ObjectProperty owl:DatatypeProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses) ?o)))
+#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf) ?p)))
+#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(1) ?o)))
+#PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:SymmetricProperty owl:TransitiveProperty owl:Class) ?o)))
 
-# REPEATED VARS START
-(* <#eq-ref> *)
-Forall ?p ?o ?s (
-   ?s[owl:sameAs->?s] :- ?s[?p->?o])
-
-(* <#eq-ref1> *)
-Forall ?p ?o ?s (
-   ?p[owl:sameAs->?p] :- ?s[?p->?o])
-
-(* <#eq-ref2> *)
-Forall ?p ?o ?s (
-   ?o[owl:sameAs->?o] :- ?s[?p->?o])
-#REPEATED VARS END
 
 (* <#eq-sym> *)
 Forall ?x ?y (
@@ -54,11 +41,6 @@ Forall ?p ?o ?s ?o2 (
        ?o[owl:sameAs->?o2]
        ?s[?p->?o]  ))
 
-(* <#eq-diff1> *)
-Forall ?x ?y (
-   rif:error() :- And(
-       ?x[owl:sameAs->?y]
-       ?x[owl:differentFrom->?y]  ))
 
 (* <#prp-ap-label> *)
     rdfs:label[rdf:type->owl:AnnotationProperty]
@@ -110,13 +92,6 @@ Forall ?p ?x1 ?x2 ?y (
        ?x1[?p->?y]
        ?x2[?p->?y]  ))
 
-#REPEATED VARS START
-(* <#prp-irp> *)
-Forall ?p ?x (
-   rif:error() :- And(
-       ?p[rdf:type->owl:IrreflexiveProperty]
-       ?x[?p->?x]  ))
-#REPEATED VARS END
 
 (* <#prp-symp> *)
 Forall ?p ?x ?y (
@@ -124,12 +99,6 @@ Forall ?p ?x ?y (
        ?p[rdf:type->owl:SymmetricProperty]
        ?x[?p->?y]  ))
 
-(* <#prp-asyp> *)
-Forall ?p ?x ?y (
-   rif:error() :- And(
-       ?p[rdf:type->owl:AsymmetricProperty]
-       ?x[?p->?y]
-       ?y[?p->?x]  ))
 
 (* <#prp-trp> *)
 Forall ?p ?x ?z ?y (
@@ -156,12 +125,6 @@ Forall ?x ?y ?p2 ?p1 (
        ?p1[owl:equivalentProperty->?p2]
        ?x[?p2->?y]  ))
 
-(* <#prp-pdw> *)
-Forall ?x ?y ?p2 ?p1 (
-   rif:error() :- And(
-       ?p1[owl:propertyDisjointWith->?p2]
-       ?x[?p1->?y]
-       ?x[?p2->?y]  ))
 
 (* <#prp-inv1> *)
 Forall ?x ?y ?p2 ?p1 (
@@ -181,9 +144,6 @@ Forall ?x ?y ?p2 ?p1 (
 (* <#cls-nothing1> *)
     owl:Nothing[rdf:type->owl:Class]
 
-(* <#cls-nothing2> *)
-Forall ?x (
-   rif:error() :- ?x[rdf:type->owl:Nothing])
 
 (* <#cls-svf1> *)
 Forall ?p ?v ?u ?x ?y (
@@ -222,13 +182,6 @@ Forall ?p ?u ?x ?y (
        ?x[owl:onProperty->?p]
        ?u[?p->?y]  ))
 
-(* <#cls-maxc1> *)
-Forall ?p ?u ?x ?y (
-   rif:error() :- And(
-       ?x[owl:maxCardinality->0]
-       ?x[owl:onProperty->?p]
-       ?u[rdf:type->?x]
-       ?u[?p->?y]  ))
 
 (* <#cls-maxc2> *)
 Forall ?p ?y2 ?u ?x ?y1 (
@@ -239,24 +192,7 @@ Forall ?p ?y2 ?u ?x ?y1 (
        ?u[?p->?y1]
        ?u[?p->?y2]  ))
 
-(* <#cls-maxqc1> *)
-Forall ?p ?c ?u ?x ?y (
-   rif:error() :- And(
-       ?x[owl:maxQualifiedCardinality->0]
-       ?x[owl:onProperty->?p]
-       ?x[owl:onClass->?c]
-       ?u[rdf:type->?x]
-       ?u[?p->?y]
-       ?y[rdf:type->?c]  ))
 
-(* <#cls-maxqc2> *)
-Forall ?p ?u ?x ?y (
-   rif:error() :- And(
-       ?x[owl:maxQualifiedCardinality->0]
-       ?x[owl:onProperty->?p]
-       ?x[owl:onClass->owl:Thing]
-       ?u[rdf:type->?x]
-       ?u[?p->?y]  ))
 
 (* <#cls-maxqc3> *)
 Forall ?p ?y2 ?c ?u ?x ?y1 (
@@ -298,22 +234,7 @@ Forall ?x ?c1 ?c2 (
        ?c1[owl:equivalentClass->?c2]
        ?x[rdf:type->?c2]  ))
 
-(* <#cax-dw> *)
-Forall ?x ?c1 ?c2 (
-   rif:error() :- And(
-       ?c1[owl:disjointWith->?c2]
-       ?x[rdf:type->?c1]
-       ?x[rdf:type->?c2]  ))
 
-#REPEATED VARS START
-(* <#scm-cls> *)
-Forall ?c (
-   ?c[rdfs:subClassOf->?c] :- ?c[rdf:type->owl:Class])
-
-(* <#scm-cls1> *)
-Forall ?c (
-   ?c[owl:equivalentClass->?c] :- ?c[rdf:type->owl:Class])
-#REPEATED VARS END
 
 (* <#scm-cls2> *)
 Forall ?c (
@@ -343,23 +264,6 @@ Forall ?c1 ?c2 (
        ?c1[rdfs:subClassOf->?c2]
        ?c2[rdfs:subClassOf->?c1]  ))
 
-#REPEATED VARS START
-(* <#scm-op> *)
-Forall ?p (
-   ?p[rdfs:subPropertyOf->?p] :- ?p[rdf:type->owl:ObjectProperty])
-
-(* <#scm-op1> *)
-Forall ?p (
-   ?p[owl:equivalentProperty->?p] :- ?p[rdf:type->owl:ObjectProperty])
-
-(* <#scm-dp> *)
-Forall ?p (
-   ?p[rdfs:subPropertyOf->?p] :- ?p[rdf:type->owl:DatatypeProperty])
-
-(* <#scm-dp1> *)
-Forall ?p (
-   ?p[owl:equivalentProperty->?p] :- ?p[rdf:type->owl:DatatypeProperty])
-#REPEATED VARS END
 
 (* <#scm-spo> *)
 Forall ?p3 ?p2 ?p1 (
@@ -450,109 +354,13 @@ Forall ?c1 ?c2 ?y ?p2 ?p1 (
        ?c2[owl:onProperty->?p2]
        ?p1[rdfs:subPropertyOf->?p2]  ))
 
-(* <#prp-npa1> *)
-Forall ?x ?i1 ?p ?i2 (
-    rif:error() :- And(
-       ?x[owl:sourceIndividual->?i1]
-      ?x[owl:assertionProperty->?p]
-       ?x[owl:targetIndividual->?i2]
-       ?i1[?p->?i2] ))
-
-(* <#prp-npa2> *)
-Forall ?x ?i ?p ?lt (
-    rif:error() :- And(
-       ?x[owl:sourceIndividual->?i]
-       ?x[owl:assertionProperty->?p]
-       ?x[owl:targetValue->?lt]
-       ?i[?p->?lt] ))
-
-(* <#cax-dw> *)
-Forall ?c1 ?c2 ?x (
-    rif:error() :- And(
-       ?c1[owl:disjointWith->?c2]
-       ?x[rdf:type->?c1]
-       ?x[rdf:type->?c2] ))
-
-(* <#cls-com> *)
-Forall ?c1 ?c2 ?x (
-    rif:error() :- And(
-       ?c1[owl:complementOf->?c2]
-       ?x[rdf:type->?c1]
-       ?x[rdf:type->?c2] ))
 
 
-(* <#eq-diff2-3> *)
- Forall ?x ?y1 ?y2 ?z1 ?z2 (
-   rif:error() :- And (
-       ?x[rdf:type -> owl:AllDifferent]
-			 _checkDifferent(?x ?y1)
-			 _checkDifferent(?x ?y2)
-			 Not(?y1 = ?y2)
-			 ?y1[rdf:first->?z1]
-			 ?y2[rdf:first->?z2]
-       ?z1[owl:sameAs->?z2] ))
 
- Forall ?x ?y (
-	 _checkDifferent(?x ?y) :- And (
-		 ?x[rdf:type->owl:AllDifferent]
-		 ?x[owl:distinctMembers->?y] ))
 
- Forall ?x ?y (
-	 _checkDifferent(?x ?y) :- And (
-		 ?x[rdf:type->owl:AllDifferent]
-		 ?x[owl:members->?y] ))
 
- Forall ?x ?y ?z (
-	 _checkDifferent(?x ?y) :- And (
-		 _checkDifferent(?x ?z)
-		 ?z[rdf:rest->?y]
-		 Not(?y = rdf:nil) ))
 
-(* <#prp-adp> *)
- Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
-   rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointProperties]
-			 _checkDisjointProperties(?r ?l1)
-			 _checkDisjointProperties(?r ?l2)
-			 Not(?l1 = ?l2)
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[?x->?v]
-			 ?o[?y->?v] ))
 
- Forall ?r ?l (
-	 _checkDisjointProperties(?r ?l) :- And (
-		 ?r[rdf:type->owl:AllDisjointProperties]
-		 ?r[owl:members -> ?l] ))
-
- Forall ?r ?l ?x (
-	 _checkDisjointProperties(?r ?l) :- And (
-		 _checkDisjointProperties(?r ?x)
-		 ?x[rdf:rest->?l]
-		 Not(?l = rdf:nil) ))
-
-(* <#cax-adc> *)
- Forall ?x ?y ?o ?l1 ?l2 ?r (
-   rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointClasses]
-			 _checkDisjointClasses(?r ?l1)
-			 _checkDisjointClasses(?r ?l2)
-			 Not(?l1 = ?l2)
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[rdf:type->?x]
-			 ?o[rdf:type->?y] ))
-
- Forall ?r ?l (
-   _checkDisjointClasses(?r ?l) :- And (
-		 ?r[rdf:type -> owl:AllDisjointClasses]
-		 ?r[owl:members -> ?l] ))
-
- Forall ?r ?l ?x (
-	 _checkDisjointClasses(?r ?l) :- And (
-		 _checkDisjointClasses(?r ?x)
-		 ?x[rdf:rest->?l]
-		 Not(?l = rdf:nil) ))
 
 (* <#prp-spo2> *)
  Forall ?p ?last ?pc ?start (
