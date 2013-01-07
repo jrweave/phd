@@ -1053,7 +1053,7 @@ void join(Relation &lhs, Relation &rhs, vector<size_t> &vars, Relation &result) 
 }
 #endif
 
-bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
+bool special(Condition &condition, Relation &intermediate, Relation &filtered, bool sign) {
   if (condition.type != ATOMIC) {
     return false;
   }
@@ -1070,7 +1070,8 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
         swap(lhs, rhs);
       }
       if (rhs->type == CONSTANT) {
-        if (lhs->get.constant != rhs->get.constant) {
+        if (( sign && lhs->get.constant != rhs->get.constant) ||
+            (!sign && lhs->get.constant == rhs->get.constant)) {
           Relation empty;
           filtered.swap(empty);
         } else {
@@ -1084,10 +1085,15 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
             it->resize(rhs->get.variable + 1);
           }
           if (it->at(rhs->get.variable) == 0) {
-            result.push_back(*it);
-            Tuple &t = result.back();
-            t[rhs->get.variable] = lhs->get.constant;
-          } else if (it->at(rhs->get.variable) == lhs->get.constant) {
+            if (sign) {
+              result.push_back(*it);
+              Tuple &t = result.back();
+              t[rhs->get.variable] = lhs->get.constant;
+            } else {
+              cerr << "[ERROR] Variables in inequality should be bound by atomic formulas on the left." << endl;
+            }
+          } else if (( sign && it->at(rhs->get.variable) == lhs->get.constant) ||
+                     (!sign && it->at(rhs->get.variable) != lhs->get.constant)) {
             result.push_back(*it);
           }
         }
@@ -1105,8 +1111,9 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
           if (c1 == 0 && c2 == 0) {
             cerr << "[ERROR] Please make sure equality statements occur to the right of atomic formulas that bind a variable." << endl;
             return true;
-          }
-          if (c1 == 0) {
+          } else if (!sign && (c1 == 0 || c2 == 0)) {
+            cerr << "[ERROR] Please make sure that inequality statements occur to the right of atomic of atomic formulas that bind BOTH variables and the inequality." << endl;
+          } else if (c1 == 0) {
             result.push_back(*it);
             Tuple &t = result.back();
             t[lhs->get.variable] = c2;
@@ -1114,7 +1121,9 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
             result.push_back(*it);
             Tuple &t = result.back();
             t[rhs->get.variable] = c1;
-          } else if (c1 == c2) {
+          } else if (sign && c1 == c2) {
+            result.push_back(*it);
+          } else if (!sign && c1 != c2) {
             result.push_back(*it);
           }
         }
@@ -1178,20 +1187,26 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
         }
         constint_t c = it->at(arg2->get.variable);
         if (c == 0) {
-          Term *t = arg1->get.termlist.begin;
-          for (; t != arg1->get.termlist.end; ++t) {
-            if (t->type == CONSTANT) {
-              results.push_back(*it);
-              results.back().at(arg2->get.variable) = t->get.constant;
-            }
-          }
+          cerr << "[ERROR] Variables in built-ins must already be bound by atomic formulas to the left." << endl;
+//          Term *t = arg1->get.termlist.begin;
+//          for (; t != arg1->get.termlist.end; ++t) {
+//            if (t->type == CONSTANT) {
+//              results.push_back(*it);
+//              results.back().at(arg2->get.variable) = t->get.constant;
+//            }
+//          }
         } else {
           Term *t = arg1->get.termlist.begin;
           for (; t != arg1->get.termlist.end; ++t) {
             if (t->type == CONSTANT && t->get.constant == c) {
-              results.push_back(*it);
+              if (sign) {
+                results.push_back(*it);
+              }
               break;
             }
+          }
+          if (!sign && t == arg1->get.termlist.end) {
+            results.push_back(*it);
           }
         }
       }
@@ -1203,6 +1218,10 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
       return false;
     }
   }
+}
+
+bool special(Condition &condition, Relation &intermediate, Relation &filtered) {
+  return special(condition, intermediate, filtered, true);
 }
 
 void query_atom(Atom &atom, set<varint_t> &allvars, Relation &results) {
@@ -1468,6 +1487,16 @@ void query(Condition &condition, set<varint_t> &allvars, Relation &results) {
   for (; !intermediate.empty() && it != negated.end(); ++it) {
     Relation negresult;
     Condition *cond = (Condition*) *it;
+
+#if 1 /* FAST WAY */
+
+    if (special(*cond, intermediate, negresult, false)) {
+      intermediate.swap(negresult);
+      continue;
+    }
+    
+#else /* SLOW WAY */
+
     if (special(*cond, intermediate, negresult)) {
 #ifdef CONTAINER
       sort(intermediate.begin(), intermediate.end());
@@ -1490,6 +1519,9 @@ void query(Condition &condition, set<varint_t> &allvars, Relation &results) {
       intermediate.swap(newinter);
       continue;
     }
+
+#endif /* END WAYS */
+
     query(*((Condition*)(*it)), allvars, negresult);
     minusrel(intermediate, negresult, intermediate);
   }

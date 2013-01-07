@@ -31,7 +31,7 @@ MPIPacketDistributor::MPIPacketDistributor(MPI::Intracomm &comm,
       packet_size(packet_size), num_requests(num_requests),
       no_more_sends(false), send_requests(NULL), recv_requests(NULL),
       send_buffers(NULL), recv_buffers(NULL), tag(tag),
-      check_every(check_every), check_count(0) {
+      check_every(check_every), check_count(0), declared_done(false) {
   try {
     NEW_ARRAY(this->send_requests, MPI::Request, num_requests);
     NEW_ARRAY(this->recv_requests, MPI::Request, num_requests);
@@ -171,6 +171,9 @@ bool MPIPacketDistributor::send(const int rank, DPtr<uint8_t> *msg)
 }
 
 DPtr<uint8_t> *MPIPacketDistributor::receive() throw(DistException) {
+  if (this->declared_done) {
+    return NULL;
+  }
 #if USE_TEST_ANY
   int i;
   if (!MPI::Request::Testany(this->num_requests, this->recv_requests, i)
@@ -209,6 +212,9 @@ void MPIPacketDistributor::noMoreSends() throw(DistException) {
 }
 
 bool MPIPacketDistributor::done() throw(DistException) {
+  if (this->declared_done) {
+    return true;
+  }
   if (++this->check_count < this->check_every) {
     return false;
   }
@@ -218,6 +224,7 @@ bool MPIPacketDistributor::done() throw(DistException) {
   if (net != 0) {
     return false;
   }
+  this->declared_done = true;
   MPI::Request *req = this->send_requests;
   MPI::Request *end = req + this->num_requests;
   for (; req != end; ++req) {

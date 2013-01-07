@@ -41,6 +41,7 @@ private:
   size_t check_count;
   int tag;
   bool no_more_sends;
+  bool declared_done;
 public:
   MPIPacketDistributor(MPI::Intracomm &comm, const size_t packet_size,
                        const size_t num_requests, const size_t check_every,
