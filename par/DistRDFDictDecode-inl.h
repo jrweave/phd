@@ -32,7 +32,7 @@ DistRDFDictDecode<N, ID, ENC>::DistRDFDictDecode(const int rank,
     : DistComputation(dist), dict(dict), gotten(false), count(0),
       nproc(nproc), rank(rank), discard_atypical(discard_atypical),
       curpos(3), writer(writer), input(in), nprocdone(0), ndonesent(0),
-      current(NULL) {
+      current(NULL), ndonerecv(0) {
   if (writer == NULL) {
     THROW(BaseException<void*>, NULL, "RDFWriter *writer must not be NULL.");
   }
@@ -49,7 +49,7 @@ DistRDFDictDecode<N, ID, ENC>::DistRDFDictDecode(const int rank,
     : DistComputation(dist, enc), dict(dict), gotten(false), count(0),
       nproc(nproc), rank(rank), discard_atypical(discard_atypical),
       curpos(3), writer(writer), input(in), nprocdone(0), ndonesent(0),
-      current(NULL) {
+      current(NULL), ndonerecv(0) {
   if (writer == NULL) {
     THROW(BaseException<void*>, NULL, "RDFWriter *writer must not be NULL.");
   }
@@ -130,7 +130,17 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
 #endif
         return this->ndonesent++;
       }
-      return this->nprocdone >= this->nproc ? -2 : -1;
+      if (!this->pending_positions.empty()) {
+        return -1;
+      }
+      if (this->ndonerecv < this->nproc) {
+        len = 1;
+#if DIST_RDF_DICT_DECODE_DEBUG
+        ++DEBUG_SENT;
+#endif
+        return this->ndonerecv++;
+      }
+      return this->nprocdone >= (this->nproc << 1) ? -2 : -1;
     }
 #if DIST_RDF_DICT_DECODE_DEBUG
     ++DEBUG_READ;
@@ -180,7 +190,7 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
     return -1;
   }
   uint32_t top;
-  memcpy(&top, id.ptr(), ID::size());
+  memcpy(&top, id.ptr(), sizeof(uint32_t));
   if (is_little_endian()) {
     reverse_bytes(top);
   }
@@ -194,7 +204,7 @@ int DistRDFDictDecode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
   }
 
 #if DIST_RDF_DICT_DECODE_DEBUG
-  _debugss << "send_to=" << this->rank << " n=" << this->count << " id=" << hex;
+  _debugss << "send_to=" << send_to << " n=" << this->count << " id=" << hex;
   _debugss << setfill('0');
   const uint8_t *b = id.ptr();
   const uint8_t *e = b + ID::size();
@@ -336,6 +346,13 @@ void DistRDFDictDecode<N, ID, ENC>::finish() THROWS(TraceableException) {
 #endif
   this->writer->close();
   this->input->close();
+  // Sanity check
+  if (!this->pending_responses.empty() || !this->pending_triples.empty() ||
+      !this->pending_positions.empty() || !this->pending_term2i.empty() ||
+      !this->pending_i2term.empty()) {
+    THROW(TraceableException,
+          "Oh no!  Stopped decoding, but there's more work to be done!");
+  }
 }
 TRACE(TraceableException, "(trace)")
 

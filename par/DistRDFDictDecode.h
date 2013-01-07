@@ -62,6 +62,7 @@ private:
   InputStream *input;
   RDFDictionary<ID, ENC> *dict;
   int ndonesent;
+  int ndonerecv;
   int nprocdone;
   int nproc;
   int rank;

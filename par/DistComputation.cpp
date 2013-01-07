@@ -91,7 +91,7 @@ void DistComputation::exec()
       msg->drop();
       msg = NULL;
       if (!buffer->alone()) {
-        buffer = buffer->stand();
+        buffer = buffer->stand(false);
       }
     } while (send_to >= -1);
     this->dist->noMoreSends();

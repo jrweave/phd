@@ -126,7 +126,7 @@ bool parse_args(const int argc, char **argv) {
 }
 
 void print(const ID &id, const RDFTerm &term) {
-  if (!cmdargs.print_index) {
+  if (!cmdargs.print_index && cmdargs.lookups.empty()) {
     cout.write((const char *)id.ptr(), ID::size());
     DPtr<uint8_t> *p = term.toUTF8String();
     if (p->size() > (size_t)UINT32_MAX) {

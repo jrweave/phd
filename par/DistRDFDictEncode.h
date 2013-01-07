@@ -86,6 +86,7 @@ private:
   DPtr<uint8_t> *outbuf;
   DistRDFDictionary<N, ID, ENC> *dict;
   int ndonesent;
+  int ndonerecv;
   int nprocdone;
   int nproc;
   uint32_t count;

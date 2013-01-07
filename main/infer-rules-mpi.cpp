@@ -718,8 +718,118 @@ void print_rules(vector<Rule> &rules) {
 
 ////// JOIN PROCESSING //////
 
+#define CONTAINER deque
+
+template<size_t N>
+class Array {
+private:
+  constint_t data[N];
+  size_t sz;
+  void safety_check(size_t s) {
+    if (s > N) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << "[ERROR] You have requested size " << s << " but fixed to " << N << ".  You will probably see a segmentation fault or bus error soon hereafter." << endl;
+      cerr << ss.str();
+    }
+  }
+public:
+  typedef constint_t* iterator;
+  typedef const constint_t* const_iterator;
+  Array() : sz(0) {
+    fill_n(this->data, N, 0);
+  }
+  Array(size_t n)
+      : sz(n) {
+    safety_check(n);
+    fill_n(this->data, N, 0);
+  }
+  Array(size_t n, const constint_t &val)
+      : sz(n) {
+    safety_check(n);
+    fill_n(this->data, n, val);
+    fill_n(this->data + n, N - n, 0);
+  }
+  Array(const Array<N> &copy)
+      : sz(copy.sz) {
+    std::copy(copy.data, copy.data + N, this->data);
+  }
+  ~Array() {}
+  Array &operator=(const Array<N> &rhs) {
+    this->sz = rhs.sz;
+    copy(rhs.data, rhs.data + rhs.sz, this->data);
+    return *this;
+  }
+  iterator begin() { return this->data; }
+  const_iterator begin() const { return this->data; }
+  iterator end() { return this->data + this->sz; }
+  const_iterator end() const { return this->data + this->sz; }
+  size_t size() const { return this->sz; }
+  size_t max_size() const { return N; }
+  void resize(size_t n) {
+    safety_check(n);
+    if (n < this->sz) {
+      fill(this->data + n, this->data + this->sz, 0);
+    }
+    this->sz = n;
+  }
+  void resize(size_t n, constint_t val) {
+    safety_check(n);
+    if (this->sz < n) {
+      fill(this->data + this->sz, this->data + n, val);
+    } else if (n < this->sz) {
+      fill(this->data + n, this->data + this->sz, 0);
+    }
+    this->sz = n;
+  }
+  size_t capacity() const { return N; }
+  bool empty() const { return this->sz == 0; }
+  void reserve(size_t  n) {
+    safety_check(n);
+  }
+  constint_t &operator[](size_t i) { return this->data[i]; }
+  const constint_t &operator[](size_t i) const { return this->data[i]; }
+  constint_t &at(size_t i) { return this->data[i]; }
+  const constint_t &at(size_t i) const { return this->data[i]; }
+  constint_t &front() { return this->data[0]; }
+  const constint_t &front() const { return this->data[0]; }
+  constint_t &back() { return this->data[this->sz-1]; }
+  const constint_t &back() const { return this->data[this->sz-1]; }
+  void push_back(const constint_t &val) {
+    safety_check(this->sz + 1);
+    this->data[this->sz++] = val;
+  }
+  void pop_back(const constint_t &val) {
+    this->data[--this->sz] = 0;
+  }
+  void swap(Array<N> &t) {
+    size_t x = max(this->sz, t.sz);
+    swap_ranges(this->data, this->data + x, t.data);
+    std::swap(this->sz, t.sz);
+  }
+  void clear() {
+    fill_n(this->data, this->sz, 0);
+    this->sz = 0;
+  }
+  bool operator<(const Array<N> &t) const {
+    return lexicographical_compare(this->data, this->data + this->sz,
+                                   t.data, t.data + t.sz);
+  }
+};
+
+typedef Array<3> Triple;
+
+#ifdef TUPLE_SIZE
+typedef Array<TUPLE_SIZE> Tuple;
+#else
 typedef vector<constint_t> Tuple;
+#endif
+
+
+#ifdef CONTAINER
+typedef CONTAINER<Tuple> Relation;
+#else
 typedef list<Tuple> Relation;
+#endif
 
 class Order {
 private:
@@ -755,28 +865,32 @@ public:
         return t1[*it] < t2[*it];
       }
     }
-    if (this->total_ordering) {
-      Tuple::const_iterator cit1 = t1.begin();
-      Tuple::const_iterator cit2 = t2.begin();
-      while (cit1 != t1.end() && cit2 != t2.end()) {
-        if (*cit1 != *cit2) {
-          return *cit1 < *cit2;
+    return this->total_ordering ?
+           t1 < t2 : false;
+  }
+  bool operator()(const Triple &t1, const Triple &t2) const {
+    vector<size_t>::const_iterator it = this->order.begin();
+    for (; it != this->order.end(); ++it) {
+      if (*it >= t1.size()) {
+        if (*it < t2.size()) {
+          return false;
         }
-        ++cit1;
-        ++cit2;
-      }
-      if (cit1 == t1.end()) {
-        return cit2 != t2.end();
+      } else if (*it >= t2.size()) {
+        return true;
+      } else if (t1[*it] != t2[*it]) {
+        return t1[*it] < t2[*it];
       }
     }
-    return false;
+    return this->total_ordering ?
+           t1 < t2 : false;
   }
 };
 
 typedef set<Tuple, Order> Index;
-Index idxspo (Order(0, 1, 2));
-Index idxpos (Order(1, 2, 0));
-Index idxosp (Order(2, 0, 1));
+typedef set<Triple, Order> TripleIndex;
+TripleIndex idxspo (Order(0, 1, 2));
+TripleIndex idxpos (Order(1, 2, 0));
+TripleIndex idxosp (Order(2, 0, 1));
 map<constint_t, Index> atoms;
 
 void load_data(const char *filename) {
@@ -830,8 +944,8 @@ void load_data(const char *filename) {
     const uint8_t *p = data;
     const uint8_t *end = data + datalen;
     while(p != end) {
-      Tuple triple(3);
-      Tuple::iterator it = triple.begin();
+      Triple triple(3);
+      Triple::iterator it = triple.begin();
       for (; it != triple.end(); ++it) {
         *it = 0;
         const uint8_t *e = p + sizeof(constint_t);
@@ -1168,8 +1282,8 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     return;
   }
   varint_t maxvar = 0;
-  Tuple mintriple(3);
-  Tuple maxtriple(3);
+  Triple mintriple(3);
+  Triple maxtriple(3);
   if (subj.type == CONSTANT) {
     mintriple[0] = maxtriple[0] = subj.get.constant;
   } else {
@@ -1211,7 +1325,7 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
     int idx = (subj.type == CONSTANT ? 0x4 : 0x0) |
               (pred.type == CONSTANT ? 0x2 : 0x0) |
               ( obj.type == CONSTANT ? 0x1 : 0x0);
-    Index::const_iterator begin, end;
+    TripleIndex::const_iterator begin, end;
     switch (idx) {
       case 0x0:
       case 0x4:
@@ -1331,7 +1445,11 @@ void query(Condition &condition, set<varint_t> &allvars, Relation &results) {
         }
         Relation subresult;
         query(*subformula, allvars, subresult);
+#ifdef CONTAINER
+        intermediate.insert(intermediate.end(), subresult.begin(), subresult.end());
+#else
         intermediate.splice(intermediate.end(), subresult);
+#endif
       }
       break;
     }
@@ -1351,15 +1469,24 @@ void query(Condition &condition, set<varint_t> &allvars, Relation &results) {
     Relation negresult;
     Condition *cond = (Condition*) *it;
     if (special(*cond, intermediate, negresult)) {
+#ifdef CONTAINER
+      sort(intermediate.begin(), intermediate.end());
+      sort(negresult.begin(), negresult.end());
+#else
       intermediate.sort();
       negresult.sort();
+#endif
       Relation leftover(intermediate.size());
       Relation::iterator iit = set_difference(intermediate.begin(),
           intermediate.end(), negresult.begin(), negresult.end(),
           leftover.begin());
       Relation newinter;
+#ifdef CONTAINER
+      newinter.insert(newinter.end(), leftover.begin(), iit);
+#else
       newinter.splice(newinter.end(), leftover,
                       leftover.begin(), iit);
+#endif
       intermediate.swap(newinter);
       continue;
     }
@@ -1395,7 +1522,7 @@ void act(Atom &atom, Relation &results) {
   }
 }
 
-void act(ActionBlock &action_block, Relation &results, Index &assertions, Index &retractions) {
+void act(ActionBlock &action_block, Relation &results, TripleIndex &assertions, TripleIndex &retractions) {
   if (action_block.action_variables.begin != action_block.action_variables.end) {
     cerr << "[ERROR] Action variables are unsupported." << endl;
     return;
@@ -1418,7 +1545,7 @@ void act(ActionBlock &action_block, Relation &results, Index &assertions, Index 
           return;
         }
         Frame frame = action->get.atom.get.frame;
-        Tuple triple(3);
+        Triple triple(3);
         if (frame.object.type == LIST || frame.object.type == FUNCTION) {
           cerr << "[ERROR] Not supporting lists or functions in action target." << endl;
           return;
@@ -1475,7 +1602,7 @@ void act(ActionBlock &action_block, Relation &results, Index &assertions, Index 
   }
 }
 
-void infer(Rule &rule, Index &assertions, Index &retractions) {
+void infer(Rule &rule, TripleIndex &assertions, TripleIndex &retractions) {
   Relation results;
   set<varint_t> allvars;
   query(rule.condition, allvars, results);
@@ -1493,21 +1620,21 @@ void infer(vector<Rule> &rules) {
   while (changed) {
     changed = false;
 #ifndef ANY_ORDER
-    Index assertions (Order(0, 1, 2));
-    Index retractions (Order(0, 1, 2));
+    TripleIndex assertions (Order(0, 1, 2));
+    TripleIndex retractions (Order(0, 1, 2));
 #endif
     int rulecount = 0;
     vector<Rule>::iterator rule = rules.begin();
     for (; rule != rules.end(); ++rule) {
 #ifdef ANY_ORDER
-      Index assertions (Order(0, 1, 2));
-      Index retractions (Order(0, 1, 2));
+      TripleIndex assertions (Order(0, 1, 2));
+      TripleIndex retractions (Order(0, 1, 2));
 #endif
       infer(*rule, assertions, retractions);
 #ifndef ANY_ORDER
     }
 #endif
-    Index::iterator it = retractions.begin();
+    TripleIndex::iterator it = retractions.begin();
     for (; it != retractions.end(); ++it) {
       if (idxspo.erase(*it) > 0) {
         idxpos.erase(*it);
@@ -1546,14 +1673,14 @@ void infer(vector<Rule> &rules) {
 class DistUniq : public DistComputation {
 private:
   int rank, nproc;
-  Index::const_iterator it;
-  Index::const_iterator end;
+  TripleIndex::const_iterator it;
+  TripleIndex::const_iterator end;
 public:
-  Index newindex;
+  TripleIndex newindex;
   DistUniq(Distributor *dist) throw(BaseException<void*>)
       : DistComputation(dist), rank(MPI::COMM_WORLD.Get_rank()),
         nproc(MPI::COMM_WORLD.Get_size()), it(idxspo.begin()),
-        end(idxspo.end()), newindex(Index(Order(0,1,2))) {
+        end(idxspo.end()), newindex(TripleIndex(Order(0,1,2))) {
     // do nothing
   }
   virtual ~DistUniq() throw(DistException) {
@@ -1571,8 +1698,26 @@ public:
     }
     uint32_t send_to = 0;
     size_t i;
-    const Tuple &tuple = *this->it;
+    const Triple &tuple = *this->it;
     ++this->it;
+
+#if 1
+    // hacking hash_jenkins_one_at_a_time into here for better distribution
+    send_to = 0;
+    for (i = 0; i < 3; ++i) {
+      size_t j;
+      for (j = 0; j < sizeof(constint_t); ++j) {
+        uint8_t b = ((tuple[i] >> (j << 3)) & 0xFF);
+        send_to += b;
+        send_to += (send_to << 10);
+        send_to ^= (send_to >> 6);
+      }
+    }
+    send_to += (send_to << 3);
+    send_to ^= (send_to >> 11);
+    send_to += (send_to << 15);
+    send_to %= this->nproc;
+#else
     for (i = 0; i < sizeof(uint32_t); ++i) {
       send_to = (send_to << 8) | ((tuple[0] >> ((sizeof(constint_t)-i-1) << 3)) & 0xFF);
     }
@@ -1584,6 +1729,8 @@ public:
       }
       send_to = send_to % this->nproc;
     }
+#endif
+
     if (this->rank == send_to) {
       this->newindex.insert(tuple);
       return -1;
@@ -1604,7 +1751,7 @@ public:
     return (int)send_to;
   }
   void dropoff(DPtr<uint8_t> *msg) throw(TraceableException) {
-    Tuple triple(3);
+    Triple triple(3);
     const uint8_t *read_from = msg->dptr();
     memcpy(&triple[0], read_from, sizeof(constint_t));
     read_from += sizeof(constint_t);
@@ -1618,17 +1765,17 @@ public:
 class Redistributor : public DistComputation {
 private:
   int rank, nproc, repl_count;
-  Index::const_iterator it;
-  Index::const_iterator end;
+  TripleIndex::const_iterator it;
+  TripleIndex::const_iterator end;
 public:
-  Index newindex;
-  Index replications;
+  TripleIndex newindex;
+  TripleIndex replications;
   bool randomize;
   Redistributor(Distributor *dist) throw(BaseException<void*>)
       : DistComputation(dist), rank(MPI::COMM_WORLD.Get_rank()),
         nproc(MPI::COMM_WORLD.Get_size()), it(idxspo.begin()),
-        end(idxspo.end()), repl_count(0), newindex(Index(Order(0,1,2))),
-        replications(Index(Order(0,1,2))) {
+        end(idxspo.end()), repl_count(0), newindex(TripleIndex(Order(0,1,2))),
+        replications(TripleIndex(Order(0,1,2))) {
     // do nothing
   }
   virtual ~Redistributor() throw(DistException) {
@@ -1678,7 +1825,7 @@ public:
     return send_to;
   }
   void dropoff(DPtr<uint8_t> *msg) throw(TraceableException) {
-    Tuple triple(3);
+    Triple triple(3);
     const uint8_t *read_from = msg->dptr();
     memcpy(&triple[0], read_from, sizeof(constint_t));
     read_from += sizeof(constint_t);
@@ -1689,7 +1836,7 @@ public:
   }
 };
 
-void get_redist_data(const uint8_t *bytes, size_t len, Index &repls) {
+void get_redist_data(const uint8_t *bytes, size_t len, TripleIndex &repls) {
   const uint8_t *end = bytes + len;
   vector<Rule> rules;
   while (bytes != end) {
@@ -1709,7 +1856,7 @@ void get_redist_data(const uint8_t *bytes, size_t len, Index &repls) {
     rule.action_block.action_variables.end = NULL;
     rule.action_block.actions.begin = &action;
     rule.action_block.actions.end = rule.action_block.actions.begin + 1;
-    Index ignore;
+    TripleIndex ignore;
     infer(rule, repls, ignore);
     // TODO deliberately dropping pointers here, knowing that it should
     // be only a little bit, but this is BAD BAD BAD
@@ -1724,7 +1871,7 @@ void redistribute_data(const char *filename) {
   if (!RANDOMIZE && filename == NULL) {
     return;
   }
-  Index repls (Order(0,1,2));
+  TripleIndex repls (Order(0,1,2));
   if (filename != NULL) {
     ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
     size_t len;
@@ -1744,8 +1891,8 @@ void redistribute_data(const char *filename) {
   if (RANDOMIZE) {
     idxspo.swap(redist->newindex);
     DELETE(redist);
-    Index newpos(Order(1,2,0));
-    Index newosp(Order(2,0,1));
+    TripleIndex newpos(Order(1,2,0));
+    TripleIndex newosp(Order(2,0,1));
     newpos.insert(idxspo.begin(), idxspo.end());
     newosp.insert(idxspo.begin(), idxspo.end());
     idxpos.swap(newpos);
@@ -1801,9 +1948,9 @@ void write_data(const char *filename) {
   MPI::File file = MPI::File::Open(MPI::COMM_SELF, fnamestr.c_str(),
       MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL);
   file.Seek(0, MPI_SEEK_SET);
-  Index::iterator it = idxspo.begin();
+  TripleIndex::iterator it = idxspo.begin();
   for (; it != idxspo.end(); ++it) {
-    Tuple::const_iterator tit = it->begin();
+    Triple::const_iterator tit = it->begin();
     for (; tit != it->end(); ++tit) {
       size_t i;
       for (i = 0; i < sizeof(constint_t); ++i) {
@@ -1847,9 +1994,9 @@ void write_data(const char *filename) {
 
 #define FOR_HUMAN_EYES 0
 void print_data() {
-  Index::iterator it = idxspo.begin();
+  TripleIndex::iterator it = idxspo.begin();
   for (; it != idxspo.end(); ++it) {
-    Tuple::const_iterator tit = it->begin();
+    Triple::const_iterator tit = it->begin();
     for (; tit != it->end(); ++tit) {
 #if !FOR_HUMAN_EYES
       size_t i;
@@ -1923,7 +2070,7 @@ int main(int argc, char **argv) {
   ZEROSAY("[INFO] Loading rules from " << argv[1] << endl);
   load_rules(argv[1], rules);
   //print_rules(rules);
-  ZEROSAY("[INFO] Loading data from " << argv[1] << endl);
+  ZEROSAY("[INFO] Loading data from " << argv[2] << endl);
   load_data(argv[2]);
   if (RANDOMIZE || argc > 4) {
     ZEROSAY("[INFO] Redistributing data according to " << (argc <= 4 ? "(nothing)" : argv[4]) << endl);

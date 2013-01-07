@@ -118,7 +118,8 @@ DistRDFDictEncode<N, ID, ENC>::DistRDFDictEncode(const int rank,
     throw(BaseException<void*>, BadAllocException)
     : DistComputation(dist), dict(NULL), gotten(false), count(0),
       nproc(nproc), pending_term2i(Term2IMap(RDFTerm::cmplt0)),
-      curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0) {
+      curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0),
+      ndonerecv(0) {
   try {
     NEW(dict, WHOLE(DistRDFDictionary<N, ID, ENC>), rank);
   } RETHROW_BAD_ALLOC
@@ -140,7 +141,8 @@ DistRDFDictEncode<N, ID, ENC>::DistRDFDictEncode(const int rank,
     throw(BaseException<void*>, BadAllocException)
     : DistComputation(dist, enc), dict(NULL), gotten(false), count(0),
       nproc(nproc), pending_term2i(Term2IMap(RDFTerm::cmplt0)),
-      curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0) {
+      curpos(3), reader(reader), output(out), nprocdone(0), ndonesent(0),
+      ndonerecv(0) {
   try {
     NEW(dict, WHOLE(DistRDFDictionary<N, ID, ENC>), rank);
   } RETHROW_BAD_ALLOC
@@ -224,7 +226,17 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
 #endif
         return this->ndonesent++;
       }
-      return this->nprocdone >= this->nproc ? -2 : -1;
+      if (!this->pending_positions.empty()) {
+        return -1;
+      }
+      if (this->ndonerecv < this->nproc) {
+        len = 1;
+#if DIST_RDF_DICT_ENCODE_DEBUG
+        ++DEBUG_SENT;
+#endif
+        return this->ndonerecv++;
+      }
+      return this->nprocdone >= (this->nproc << 1) ? -2 : -1;
     }
 #if DIST_RDF_DICT_ENCODE_DEBUG
     ++DEBUG_READ;
@@ -269,11 +281,11 @@ int DistRDFDictEncode<N, ID, ENC>::pickup(DPtr<uint8_t> *&buffer, size_t &len)
         this->outbuf = this->outbuf->stand();
       }
       uint8_t *write_to = this->outbuf->dptr();
-      memcpy(write_to, &pend.parts[0], N*sizeof(uint8_t));
+      memcpy(write_to, pend.parts[0].ptr(), N*sizeof(uint8_t));
       write_to += N*sizeof(uint8_t);
-      memcpy(write_to, &pend.parts[1], N*sizeof(uint8_t));
+      memcpy(write_to, pend.parts[1].ptr(), N*sizeof(uint8_t));
       write_to += N*sizeof(uint8_t);
-      memcpy(write_to, &pend.parts[2], N*sizeof(uint8_t));
+      memcpy(write_to, pend.parts[2].ptr(), N*sizeof(uint8_t));
 #if DIST_RDF_DICT_ENCODE_DEBUG
       ++DEBUG_WRIT;
 #endif
@@ -398,11 +410,11 @@ void DistRDFDictEncode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
         this->outbuf = this->outbuf->stand();
       }
       uint8_t *write_to = this->outbuf->dptr();
-      memcpy(write_to, &pend_trip.parts[0], N);
+      memcpy(write_to, pend_trip.parts[0].ptr(), N);
       write_to += N;
-      memcpy(write_to, &pend_trip.parts[1], N);
+      memcpy(write_to, pend_trip.parts[1].ptr(), N);
       write_to += N;
-      memcpy(write_to, &pend_trip.parts[2], N);
+      memcpy(write_to, pend_trip.parts[2].ptr(), N);
 #if DIST_RDF_DICT_ENCODE_DEBUG
       ++DEBUG_WRIT;
 #endif
@@ -433,6 +445,13 @@ void DistRDFDictEncode<N, ID, ENC>::finish() THROWS(TraceableException) {
   this->reader->close();
   if (this->output != NULL) {
     this->output->close();
+  }
+  // Sanity check
+  if (!this->pending_responses.empty() || !this->pending_triples.empty() ||
+      !this->pending_positions.empty() || !this->pending_term2i.empty() ||
+      !this->pending_i2term.empty()) {
+    THROW(TraceableException,
+         "Oh no!  Processors quit encoding, but there is actually some left!");
   }
 }
 TRACE(TraceableException, "(trace)")
