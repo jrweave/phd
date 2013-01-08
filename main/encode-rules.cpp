@@ -42,6 +42,7 @@ typedef map<RIFConst, builtint_t, bool(*)(const RIFConst &, const RIFConst &)> B
 typedef map<RIFConst, funcint_t, bool(*)(const RIFConst &, const RIFConst &)> FuncEncMap;
 typedef map<RIFConst, execint_t, bool(*)(const RIFConst &, const RIFConst &)> ExecEncMap;
 
+// GLOBAL VARIABLES ARE EVIL!... but this is already such a hack... oh well
 ConstEncMap constenc (RIFConst::cmplt0);
 BuiltEncMap builtenc (RIFConst::cmplt0);
 FuncEncMap funcenc (RIFConst::cmplt0);
@@ -835,7 +836,17 @@ int main(int argc, char **argv) {
 #if DEBUG
     cerr << "[DEBUG] LINE " << __LINE__ << endl;
 #endif
-    return doit(argc, argv);
+
+    int r = doit(argc, argv);
+
+    // CLEAR OUT THE GLOBAL VARIABLES OR FACE DOOM!
+    constenc.clear();
+    builtenc.clear();
+    execenc.clear();
+    funcenc.clear();
+
+    return r;
+
   } catch (TraceableException &e) {
     cerr << "[ERROR] " << e.what() << endl;
     RETHROWX(e);
