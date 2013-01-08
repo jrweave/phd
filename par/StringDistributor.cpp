@@ -25,7 +25,7 @@ StringDistributor::StringDistributor(const int my_rank,
     throw(BaseException<void*>, BaseException<size_t>)
     : Distributor(), recv_packets(RecvMap(headerlt)), dist(dist),
       packet_size(packet_size), my_rank(my_rank), id_counter(0),
-      no_more_sends(false) {
+      no_more_sends(false), really_no_more_sends(false) {
   if (dist == NULL) {
     THROW(BaseException<void*>, NULL, "dist must not be NULL.");
   }
@@ -202,25 +202,25 @@ void StringDistributor::noMoreSends() throw(DistException) {
   if (this->send_packets.empty()) {
     try {
       this->dist->noMoreSends();
+      this->really_no_more_sends = true;
     } JUST_RETHROW(DistException, "Underlying Distributor problem.")
   }
 }
 
 bool StringDistributor::done() throw(DistException) {
-  if (this->no_more_sends && !this->send_packets.empty()) {
+  if (!this->send_packets.empty()) {
     SendList::iterator it = this->send_packets.begin();
-    while (it != this->send_packets.end()) {
-      if (this->dist->send(this->pending_send_rank, *it)) {
-        (*it)->drop();
-        *it = NULL;
-        it = this->send_packets.erase(it);
-      } else {
-        ++it;
-      }
+    while (it != this->send_packets.end() &&
+           this->dist->send(this->pending_send_rank, *it)) {
+      (*it)->drop();
+      *it = NULL;
+      it = this->send_packets.erase(it);
     }
-    if (this->send_packets.empty()) {
-      this->dist->noMoreSends();
-    }
+  }
+  if (this->no_more_sends && this->send_packets.empty() &&
+      !this->really_no_more_sends) {
+    this->dist->noMoreSends();
+    this->really_no_more_sends = true;
   }
   return this->dist->done();
 }

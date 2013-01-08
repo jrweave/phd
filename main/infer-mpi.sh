@@ -20,11 +20,11 @@ echo "./der --print-index $base1.dct | awk '{print \"--force \"$2;}' > $base1.fr
 echo "rm -v $base2-rank-*.der $base2-rank-*.dct $base2-closure-rank-*.der $base2-closure-rank-*.nt"
 rm -v $base2-rank-*.der $base2-rank-*.dct $base2-closure-rank-*.der $base2-closure-rank-*.nt
 
-echo "mpirun -np $1 red-mpi -si -i $3 -of der -o $base2-#.der -od $base2-#.dct `cat $base1.frc`"
-mpirun -np $1 red-mpi -si -i $3 -of der -o $base2-rank-#.der -od $base2-rank-#.dct --global-dict `cat $base1.frc`
+echo "mpirun -np $1 ./red-mpi -si -i $3 -of der -o $base2-#.der -od $base2-#.dct `cat $base1.frc`"
+mpirun -np $1 ./red-mpi -si -i $3 -of der -o $base2-rank-#.der -od $base2-rank-#.dct --global-dict `cat $base1.frc`
 
-echo "mpirun -np $1 infer-rules-mpi $base1.enc $base2-#.der $base2-closure-#.der $base1-repls.enc"
-mpirun -np $1 infer-rules-mpi $base1.enc $base2-rank-#.der $base2-closure-rank-#.der $base1-repls.enc
+echo "mpirun -np $1 ./infer-rules-mpi $base1.enc $base2-#.der $base2-closure-#.der $base1-repls.enc"
+mpirun -np $1 ./infer-rules-mpi $base1.enc $base2-rank-#.der $base2-closure-rank-#.der $base1-repls.enc
 
-echo "mpirun -np $1 red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.der -o $base2-closure-rank-#.nt --global-dict"
-mpirun -np $1 red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.dct -o $base2-closure-rank-#.nt --global-dict
+echo "mpirun -np $1 ./red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.der -o $base2-closure-rank-#.nt --global-dict"
+mpirun -np $1 ./red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.dct -o $base2-closure-rank-#.nt --global-dict

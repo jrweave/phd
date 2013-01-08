@@ -14,7 +14,8 @@ for line in `cat $TESTS`
 do
 	rulefile=`echo "$line" | cut -d ',' -f 1`
 	datafile=`echo "$line" | cut -d ',' -f 2`
-	cwmnote=`echo "$line" | cut -d ',' -f 3`
+	mpiprocs=`echo "$line" | cut -d ',' -f 3`
+	cwmnote=`echo "$line" | cut -d ',' -f 4`
 	rulefile="$maindir/$rulefile"
 	datafile="$maindir/$datafile"
 	echo "[TEST] $rulefile $datafile"
@@ -30,7 +31,7 @@ do
 			echo "(IGNORE CWM)"
 		fi
 	fi
-	./infer-test.sh $rulefile $datafile
+	./infer-test.sh $rulefile $datafile $mpiprocs
 	rc=$?
 	if [ $rc -ne 0 ]; then
 		inferfailures=`expr $inferfailures + 1`

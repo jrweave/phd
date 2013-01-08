@@ -44,7 +44,7 @@ if [ $reuse -eq 0 ]; then
 	LASTNP=$nproc
 	~/makejobdirs.sh $LASTJOB $LASTNP
 	echo "$LASTJOB"
-	mpirun  -np  $LASTNP ./red-mpi -b 4194304 -p $PAGESIZE -si -if nt.lzo -i ~/data/$data.nt.lzo -ix ~/data/$data.nt.idx -of der -o ~/jobs/$LASTJOB/#/$data.der -od ~/jobs/$LASTJOB/#/$data.dct --global-dict --packet-size $PACKETSIZE --num-requests $NUMREQUESTS --check-every $CHECKEVERY `cat $rulesdir/parminrdfs.frc`
+	mpirun  -np  $LASTNP ./red-mpi -b 4194304 -p $PAGESIZE -si -if nt.lzo -i ~/data/$data.nt.lzo -ix ~/data/$data.nt.idx -of der -o ~/jobs/$LASTJOB/#/$data.der -od ~/jobs/$LASTJOB/#/$data.dct --global-dict --packet-size $PACKETSIZE --num-requests $NUMREQUESTS --check-every $CHECKEVERY `cat $rulesdir/$rules.frc`
 	DATAJOB=$LASTJOB
 else
 	DATAJOB=$reuse

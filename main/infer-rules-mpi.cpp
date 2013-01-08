@@ -1701,8 +1701,19 @@ void infer(vector<Rule> &rules) {
       }
     }
   }
-  if (!atoms[CONST_RIF_ERROR].empty()) {
-    cerr << "INCONSISTENT" << endl;
+  int rank = MPI::COMM_WORLD.Get_rank();
+  int inconsistent = atoms[CONST_RIF_ERROR].empty() ? 0 : 1; 
+  if (inconsistent > 0) { 
+    stringstream ss(stringstream::in | stringstream::out);
+    ss << "Processor " << rank << " is inconsistent." << endl;
+    cerr << ss.str() << flush;
+  }
+  int nproc_inconsistent;
+  MPI::COMM_WORLD.Reduce(&inconsistent, &nproc_inconsistent, 1, MPI::INT,
+                         MPI::SUM, 0);
+  if (rank == 0 && nproc_inconsistent > 0) { 
+    cerr << nproc_inconsistent << " processors were inconsistent." << endl;
+    cerr << "INCONSISTENT" << endl;  // MUST HAVE THIS LAST!
   }
 }
 #else
@@ -1756,8 +1767,19 @@ void infer(vector<Rule> &rules) {
       sizes[atomit->first] = atomit->second.size();
     }
   }
-  if (!atoms[CONST_RIF_ERROR].empty()) {
-    cerr << "INCONSISTENT" << endl;
+  int rank = MPI::COMM_WORLD.Get_rank();
+  int inconsistent = atoms[CONST_RIF_ERROR].empty() ? 0 : 1; 
+  if (inconsistent > 0) { 
+    stringstream ss(stringstream::in | stringstream::out);
+    ss << "Processor " << rank << " is inconsistent." << endl;
+    cerr << ss.str() << flush;
+  }
+  int nproc_inconsistent;
+  MPI::COMM_WORLD.Reduce(&inconsistent, &nproc_inconsistent, 1, MPI::INT,
+                         MPI::SUM, 0);
+  if (rank == 0 && nproc_inconsistent > 0) { 
+    cerr << nproc_inconsistent << " processors were inconsistent." << endl;
+    cerr << "INCONSISTENT" << endl;  // MUST HAVE THIS LAST!
   }
 }
 #endif

@@ -1,9 +1,11 @@
 #!/bin/sh
 
-if [ $# -ne 2 ]; then
-	echo "[USAGE] $0 <rif-core-file> <ntriples-files>"
+if [ $# -ne 3 ]; then
+	echo "[USAGE] $0 <rif-core-file> <ntriples-files> <num-mpi-procs>"
 	exit -1
 fi
+
+mpiprocs=$3
 
 cp $1 _rules
 cp $2 _data
@@ -21,10 +23,10 @@ sort -u _data-closure.nt > _closure
 #mv data _data
 ## end hassle
 
-cd ..; ./infer-mpi.sh 1 testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_mpi | grep INCONSISTENT > testsuite/_inc1; cd - 2>&1 > /dev/null
+cd ..; ./infer-mpi.sh $mpiprocs testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_mpi | grep INCONSISTENT > testsuite/_inc1; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out_mpi > _err_mpi
-sort -u _data-closure-rank-0.nt > _closure_mpi
-rm _data-closure-rank-0.nt
+sort -u _data-closure-rank-*.nt > _closure_mpi
+rm _data-closure-rank-*.nt
 cd ..; ./infer-xmt.sh testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_xmt | grep INCONSISTENT > testsuite/_inc2; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out_xmt > _err_xmt
 sort -u _data-closure.nt > _closure_xmt

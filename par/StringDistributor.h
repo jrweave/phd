@@ -49,6 +49,7 @@ private:
   int pending_send_rank;
   uint32_t id_counter;
   bool no_more_sends;
+  bool really_no_more_sends;
   static bool headerlt(const header &h1, const header &h2);
 public:
   StringDistributor(const int my_rank, const size_t packet_size,

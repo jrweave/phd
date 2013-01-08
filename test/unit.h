@@ -16,6 +16,7 @@
 #ifndef __TEST__UNIT_H__
 #define __TEST__UNIT_H__
 
+#include <cstdlib>
 #include <iostream>
 
 #ifdef PTR_MEMDEBUG
@@ -65,10 +66,10 @@
     std::cerr << "| X     X   X   X   X       |\n"; \
     std::cerr << "| X     X   X XXXXX XXXXX X |\n"; \
     std::cerr << "+---------------------------+\n"; \
-    exit(__failures); \
+    std::exit(__failures); \
   } \
   std::cerr << "CLEARED ALL " << __ntests << " TESTS\n"; \
-  exit(0)
+  std::exit(0)
 #else
 #define FINAL \
   std::cerr << std::dec; \
@@ -81,7 +82,7 @@
     std::cerr << "| X     X   X   X   X       |\n"; \
     std::cerr << "| X     X   X XXXXX XXXXX X |\n"; \
     std::cerr << "+---------------------------+\n"; \
-    exit(__failures); \
+    std::exit(__failures); \
   } \
   if (ptr::__PTRS.size() > 0) { \
     std::set<void*>::iterator __it; \
@@ -96,10 +97,10 @@
     std::cerr << "| X       X    X X        X     X     |\n"; \
     std::cerr << "| X     XXXXX X   X     XXXXX   X   X |\n"; \
     std::cerr << "+-------------------------------------+\n"; \
-    exit(ptr::__PTRS.size()); \
+    std::exit(ptr::__PTRS.size()); \
   } \
   std::cerr << "CLEARED ALL " << __ntests << " TESTS\n"; \
-  exit(0)
+  std::exit(0)
 #endif
 
 #endif /* __TEST__UNIT_H__ */
