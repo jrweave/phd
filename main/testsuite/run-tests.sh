@@ -1,7 +1,7 @@
 #!/bin/sh
 
 TESTS=tests.txt
-CWM='' #'/Users/jesseweaver/Desktop/cwm-1.2.1/cwm'
+CWM='/Users/jesseweaver/Desktop/cwm-1.2.1/cwm'
 
 cwmfailures=0
 cwmexpected=0

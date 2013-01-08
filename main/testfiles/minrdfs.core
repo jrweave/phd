@@ -14,6 +14,24 @@ Prefix(dc   <http://purl.org/dc/terms/>)
 #PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2])
 #PRAGMA REPLICATE And(?c1[rdfs:subClassOf -> ?c2])
 
+(* <#scm-spo> *)
+Forall ?p3 ?p2 ?p1 (
+   ?p1[rdfs:subPropertyOf->?p3] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?p2[rdfs:subPropertyOf->?p3]  ))
+
+(* <#scm-sco> *)
+Forall ?c1 ?c2 ?c3 (
+   ?c1[rdfs:subClassOf->?c3] :- And(
+       ?c1[rdfs:subClassOf->?c2]
+       ?c2[rdfs:subClassOf->?c3]  ))
+
+(* <#prp-spo1> *)
+Forall ?x ?y ?p2 ?p1 (
+   ?x[?p2->?y] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?x[?p1->?y]  ))
+
 (* <#prp-dom> *)
 Forall ?p ?c ?x ?y (
    ?x[rdf:type->?c] :- And(
@@ -31,22 +49,4 @@ Forall ?x ?c1 ?c2 (
    ?x[rdf:type->?c2] :- And(
        ?c1[rdfs:subClassOf->?c2]
        ?x[rdf:type->?c1]  ))
-
-(* <#scm-sco> *)
-Forall ?c1 ?c2 ?c3 (
-   ?c1[rdfs:subClassOf->?c3] :- And(
-       ?c1[rdfs:subClassOf->?c2]
-       ?c2[rdfs:subClassOf->?c3]  ))
-
-(* <#scm-spo> *)
-Forall ?p3 ?p2 ?p1 (
-   ?p1[rdfs:subPropertyOf->?p3] :- And(
-       ?p1[rdfs:subPropertyOf->?p2]
-       ?p2[rdfs:subPropertyOf->?p3]  ))
-
-(* <#prp-spo1> *)
-Forall ?x ?y ?p2 ?p1 (
-   ?x[?p2->?y] :- And(
-       ?p1[rdfs:subPropertyOf->?p2]
-       ?x[?p1->?y]  ))
 

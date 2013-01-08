@@ -12,29 +12,11 @@
 #PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(0) ?o)))
 #PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:AsymmetricProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses) ?o)))
 
-
-
-
-
-
 (* <#eq-diff1> *)
 Forall ?x ?y (
    rif:error() :- And(
        ?x[owl:sameAs->?y]
        ?x[owl:differentFrom->?y]  ))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (* <#prp-asyp> *)
 Forall ?p ?x ?y (
@@ -43,10 +25,6 @@ Forall ?p ?x ?y (
        ?x[?p->?y]
        ?y[?p->?x]  ))
 
-
-
-
-
 (* <#prp-pdw> *)
 Forall ?x ?y ?p2 ?p1 (
    rif:error() :- And(
@@ -54,18 +32,9 @@ Forall ?x ?y ?p2 ?p1 (
        ?x[?p1->?y]
        ?x[?p2->?y]  ))
 
-
-
-
-
 (* <#cls-nothing2> *)
 Forall ?x (
    rif:error() :- ?x[rdf:type->owl:Nothing])
-
-
-
-
-
 
 (* <#cls-maxc1> *)
 Forall ?p ?u ?x ?y (
@@ -74,7 +43,6 @@ Forall ?p ?u ?x ?y (
        ?x[owl:onProperty->?p]
        ?u[rdf:type->?x]
        ?u[?p->?y]  ))
-
 
 (* <#cls-maxqc1> *)
 Forall ?p ?c ?u ?x ?y (
@@ -95,36 +63,12 @@ Forall ?p ?u ?x ?y (
        ?u[rdf:type->?x]
        ?u[?p->?y]  ))
 
-
-
-
-
-
 (* <#cax-dw> *)
 Forall ?x ?c1 ?c2 (
    rif:error() :- And(
        ?c1[owl:disjointWith->?c2]
        ?x[rdf:type->?c1]
        ?x[rdf:type->?c2]  ))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (* <#prp-npa1> *)
 Forall ?x ?i1 ?p ?i2 (
@@ -158,16 +102,6 @@ Forall ?c1 ?c2 ?x (
 
 
 (* <#eq-diff2-3> *)
- Forall ?x ?y1 ?y2 ?z1 ?z2 (
-   rif:error() :- And (
-       ?x[rdf:type -> owl:AllDifferent]
-			 _checkDifferent(?x ?y1)
-			 _checkDifferent(?x ?y2)
-			 Not(?y1 = ?y2)
-			 ?y1[rdf:first->?z1]
-			 ?y2[rdf:first->?z2]
-       ?z1[owl:sameAs->?z2] ))
-
  Forall ?x ?y (
 	 _checkDifferent(?x ?y) :- And (
 		 ?x[rdf:type->owl:AllDifferent]
@@ -184,18 +118,17 @@ Forall ?c1 ?c2 ?x (
 		 ?z[rdf:rest->?y]
 		 Not(?y = rdf:nil) ))
 
-(* <#prp-adp> *)
- Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
+ Forall ?x ?y1 ?y2 ?z1 ?z2 (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointProperties]
-			 _checkDisjointProperties(?r ?l1)
-			 _checkDisjointProperties(?r ?l2)
-			 Not(?l1 = ?l2)
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[?x->?v]
-			 ?o[?y->?v] ))
+       ?x[rdf:type -> owl:AllDifferent]
+			 _checkDifferent(?x ?y1)
+			 _checkDifferent(?x ?y2)
+			 Not(?y1 = ?y2)
+			 ?y1[rdf:first->?z1]
+			 ?y2[rdf:first->?z2]
+       ?z1[owl:sameAs->?z2] ))
 
+(* <#prp-adp> *)
  Forall ?r ?l (
 	 _checkDisjointProperties(?r ?l) :- And (
 		 ?r[rdf:type->owl:AllDisjointProperties]
@@ -207,18 +140,18 @@ Forall ?c1 ?c2 ?x (
 		 ?x[rdf:rest->?l]
 		 Not(?l = rdf:nil) ))
 
-(* <#cax-adc> *)
- Forall ?x ?y ?o ?l1 ?l2 ?r (
+ Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointClasses]
-			 _checkDisjointClasses(?r ?l1)
-			 _checkDisjointClasses(?r ?l2)
+       ?r[rdf:type -> owl:AllDisjointProperties]
+			 _checkDisjointProperties(?r ?l1)
+			 _checkDisjointProperties(?r ?l2)
 			 Not(?l1 = ?l2)
 			 ?l1[rdf:first->?x]
 			 ?l2[rdf:first->?y]
-			 ?o[rdf:type->?x]
-			 ?o[rdf:type->?y] ))
+			 ?o[?x->?v]
+			 ?o[?y->?v] ))
 
+(* <#cax-adc> *)
  Forall ?r ?l (
    _checkDisjointClasses(?r ?l) :- And (
 		 ?r[rdf:type -> owl:AllDisjointClasses]
@@ -230,25 +163,15 @@ Forall ?c1 ?c2 ?x (
 		 ?x[rdf:rest->?l]
 		 Not(?l = rdf:nil) ))
 
+ Forall ?x ?y ?o ?l1 ?l2 ?r (
+   rif:error() :- And (
+       ?r[rdf:type -> owl:AllDisjointClasses]
+			 _checkDisjointClasses(?r ?l1)
+			 _checkDisjointClasses(?r ?l2)
+			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[rdf:type->?x]
+			 ?o[rdf:type->?y] ))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#EOF

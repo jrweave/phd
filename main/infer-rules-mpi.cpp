@@ -1641,6 +1641,71 @@ void infer(Rule &rule, TripleIndex &assertions, TripleIndex &retractions) {
   act(rule.action_block, results, assertions, retractions);
 }
 
+#define USE_OLD_WAY 0
+#if !USE_OLD_WAY
+void note_sizes(vector<size_t> &sizes) {
+  vector<size_t> sz;
+  sz.reserve(1 + atoms.size());
+  sz.push_back(idxspo.size());
+  map<constint_t, Index>::const_iterator it = atoms.begin();
+  for (; it != atoms.end(); ++it) {
+    sz.push_back(it->second.size());
+  }
+  sizes.swap(sz);
+}
+
+void infer(vector<Rule> &rules) {
+  size_t rules_since_change = 0;
+  size_t cycle_count;
+  vector<size_t> old_sizes;
+  note_sizes(old_sizes);
+  for (cycle_count = 0; rules_since_change < rules.size(); ++cycle_count) {
+    size_t rulecount;
+    for (rulecount = 0; rulecount < rules.size() && rules_since_change < rules.size(); ++rulecount) {
+      bool changed = true;
+      size_t app_count;
+      for (app_count = 0; changed; ++app_count) {
+        changed = false;
+
+        TripleIndex assertions (Order(0, 1, 2));
+        TripleIndex retractions (Order(0, 1, 2));
+        infer(rules[rulecount], assertions, retractions);
+
+        TripleIndex::iterator it = retractions.begin();
+        for (; it != retractions.end(); ++it) {
+          if (idxspo.erase(*it) > 0) {
+            idxpos.erase(*it);
+            idxosp.erase(*it);
+            changed = true;
+          }
+        }
+        it = assertions.begin();
+        for (; it != assertions.end(); ++it) {
+          if (idxspo.insert(*it).second) {
+            idxpos.insert(*it);
+            idxosp.insert(*it);
+            changed = true;
+          }
+        }
+
+        vector<size_t> new_sizes;
+        note_sizes(new_sizes);
+        changed = changed || old_sizes != new_sizes;
+        old_sizes.swap(new_sizes);
+      }
+
+      if (app_count > 1) {
+        rules_since_change = 0;
+      } else {
+        ++rules_since_change;
+      }
+    }
+  }
+  if (!atoms[CONST_RIF_ERROR].empty()) {
+    cerr << "INCONSISTENT" << endl;
+  }
+}
+#else
 // infer until fixpoint, which may not be appropriate in the presence of retraction
 void infer(vector<Rule> &rules) {
   bool changed = true;
@@ -1695,7 +1760,7 @@ void infer(vector<Rule> &rules) {
     cerr << "INCONSISTENT" << endl;
   }
 }
-
+#endif
 
 
 

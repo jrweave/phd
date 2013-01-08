@@ -12,6 +12,153 @@
 #PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(0 1) ?o)))
 #PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses) ?o)))
 
+(* <#scm-int> *)
+ Forall ?c ?l (
+	 _markAllTypes(?c ?l) :- ?c[owl:intersectionOf->?l] )
+
+ Forall ?c ?l ?r (
+	 _markAllTypes(?c ?l) :- And (
+		 _markAllTypes(?c ?r)
+		 ?r[rdf:rest->?l]
+		 Not(?l = rdf:nil) ))
+
+ Forall ?c ?ci ?l (
+   ?c[rdfs:subClassOf->?ci] :- And (
+		 _markAllTypes(?c ?l)
+		 ?l[rdf:first->?ci] ))
+
+(* <#scm-uni> *)
+ Forall ?c ?l (
+	 _checkUnionOf(?c ?l) :- ?c[owl:unionOf->?l] )
+
+ Forall ?c ?l ?r (
+	 _checkUnionOf(?c ?l) :- And(
+		 _checkUnionOf(?c ?r)
+		 ?r[rdf:rest->?l]
+		 Not(?l = rdf:nil) ))
+
+ Forall ?c ?ci ?l (
+   ?ci[rdfs:subClassOf->?c] :- And (
+		 _checkUnionOf(?c ?l)
+		 ?l[rdf:first->?ci] ))
+ 
+(* <#scm-cls2> *)
+Forall ?c (
+   ?c[rdfs:subClassOf->owl:Thing] :- ?c[rdf:type->owl:Class])
+
+(* <#scm-cls3> *)
+Forall ?c (
+   owl:Nothing[rdfs:subClassOf->?c] :- ?c[rdf:type->owl:Class])
+
+(* <#scm-sco> *)
+Forall ?c1 ?c2 ?c3 (
+   ?c1[rdfs:subClassOf->?c3] :- And(
+       ?c1[rdfs:subClassOf->?c2]
+       ?c2[rdfs:subClassOf->?c3]  ))
+
+(* <#scm-eqc1> *)
+Forall ?c1 ?c2 (
+   ?c1[rdfs:subClassOf->?c2] :- ?c1[owl:equivalentClass->?c2])
+
+(* <#scm-eqc11> *)
+Forall ?c1 ?c2 (
+   ?c2[rdfs:subClassOf->?c1] :- ?c1[owl:equivalentClass->?c2])
+
+(* <#scm-eqc2> *)
+Forall ?c1 ?c2 (
+   ?c1[owl:equivalentClass->?c2] :- And(
+       ?c1[rdfs:subClassOf->?c2]
+       ?c2[rdfs:subClassOf->?c1]  ))
+
+(* <#scm-spo> *)
+Forall ?p3 ?p2 ?p1 (
+   ?p1[rdfs:subPropertyOf->?p3] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?p2[rdfs:subPropertyOf->?p3]  ))
+
+(* <#scm-eqp1> *)
+Forall ?p2 ?p1 (
+   ?p1[rdfs:subPropertyOf->?p2] :- ?p1[owl:equivalentProperty->?p2])
+
+(* <#scm-eqp11> *)
+Forall ?p2 ?p1 (
+   ?p2[rdfs:subPropertyOf->?p1] :- ?p1[owl:equivalentProperty->?p2])
+
+(* <#scm-eqp2> *)
+Forall ?p2 ?p1 (
+   ?p1[owl:equivalentProperty->?p2] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?p2[rdfs:subPropertyOf->?p1]  ))
+
+(* <#scm-dom1> *)
+Forall ?p ?c1 ?c2 (
+   ?p[rdfs:domain->?c2] :- And(
+       ?p[rdfs:domain->?c1]
+       ?c1[rdfs:subClassOf->?c2]  ))
+
+(* <#scm-dom2> *)
+Forall ?c ?p2 ?p1 (
+   ?p1[rdfs:domain->?c] :- And(
+       ?p2[rdfs:domain->?c]
+       ?p1[rdfs:subPropertyOf->?p2]  ))
+
+(* <#scm-rng1> *)
+Forall ?p ?c1 ?c2 (
+   ?p[rdfs:range->?c2] :- And(
+       ?p[rdfs:range->?c1]
+       ?c1[rdfs:subClassOf->?c2]  ))
+
+(* <#scm-rng2> *)
+Forall ?c ?p2 ?p1 (
+   ?p1[rdfs:range->?c] :- And(
+       ?p2[rdfs:range->?c]
+       ?p1[rdfs:subPropertyOf->?p2]  ))
+
+(* <#scm-hv> *)
+Forall ?c1 ?c2 ?i ?p2 ?p1 (
+   ?c1[rdfs:subClassOf->?c2] :- And(
+       ?c1[owl:hasValue->?i]
+       ?c1[owl:onProperty->?p1]
+       ?c2[owl:hasValue->?i]
+       ?c2[owl:onProperty->?p2]
+       ?p1[rdfs:subPropertyOf->?p2]  ))
+
+(* <#scm-svf1> *)
+Forall ?p ?y2 ?c1 ?c2 ?y1 (
+   ?c1[rdfs:subClassOf->?c2] :- And(
+       ?c1[owl:someValuesFrom->?y1]
+       ?c1[owl:onProperty->?p]
+       ?c2[owl:someValuesFrom->?y2]
+       ?c2[owl:onProperty->?p]
+       ?y1[rdfs:subClassOf->?y2]  ))
+
+(* <#scm-svf2> *)
+Forall ?c1 ?c2 ?y ?p2 ?p1 (
+   ?c1[rdfs:subClassOf->?c2] :- And(
+       ?c1[owl:someValuesFrom->?y]
+       ?c1[owl:onProperty->?p1]
+       ?c2[owl:someValuesFrom->?y]
+       ?c2[owl:onProperty->?p2]
+       ?p1[rdfs:subPropertyOf->?p2]  ))
+
+(* <#scm-avf1> *)
+Forall ?p ?y2 ?c1 ?c2 ?y1 (
+   ?c1[rdfs:subClassOf->?c2] :- And(
+       ?c1[owl:allValuesFrom->?y1]
+       ?c1[owl:onProperty->?p]
+       ?c2[owl:allValuesFrom->?y2]
+       ?c2[owl:onProperty->?p]
+       ?y1[rdfs:subClassOf->?y2]  ))
+
+(* <#scm-avf2> *)
+Forall ?c1 ?c2 ?y ?p2 ?p1 (
+   ?c2[rdfs:subClassOf->?c1] :- And(
+       ?c1[owl:allValuesFrom->?y]
+       ?c1[owl:onProperty->?p1]
+       ?c2[owl:allValuesFrom->?y]
+       ?c2[owl:onProperty->?p2]
+       ?p1[rdfs:subPropertyOf->?p2]  ))
+
 
 (* <#eq-sym> *)
 Forall ?x ?y (
@@ -284,123 +431,6 @@ Forall ?x ?c1 ?c2 (
        ?x[rdf:type->?c1]
        ?x[rdf:type->?c2]  ))
 
-(* <#scm-cls2> *)
-Forall ?c (
-   ?c[rdfs:subClassOf->owl:Thing] :- ?c[rdf:type->owl:Class])
-
-(* <#scm-cls3> *)
-Forall ?c (
-   owl:Nothing[rdfs:subClassOf->?c] :- ?c[rdf:type->owl:Class])
-
-(* <#scm-sco> *)
-Forall ?c1 ?c2 ?c3 (
-   ?c1[rdfs:subClassOf->?c3] :- And(
-       ?c1[rdfs:subClassOf->?c2]
-       ?c2[rdfs:subClassOf->?c3]  ))
-
-(* <#scm-eqc1> *)
-Forall ?c1 ?c2 (
-   ?c1[rdfs:subClassOf->?c2] :- ?c1[owl:equivalentClass->?c2])
-
-(* <#scm-eqc11> *)
-Forall ?c1 ?c2 (
-   ?c2[rdfs:subClassOf->?c1] :- ?c1[owl:equivalentClass->?c2])
-
-(* <#scm-eqc2> *)
-Forall ?c1 ?c2 (
-   ?c1[owl:equivalentClass->?c2] :- And(
-       ?c1[rdfs:subClassOf->?c2]
-       ?c2[rdfs:subClassOf->?c1]  ))
-
-(* <#scm-spo> *)
-Forall ?p3 ?p2 ?p1 (
-   ?p1[rdfs:subPropertyOf->?p3] :- And(
-       ?p1[rdfs:subPropertyOf->?p2]
-       ?p2[rdfs:subPropertyOf->?p3]  ))
-
-(* <#scm-eqp1> *)
-Forall ?p2 ?p1 (
-   ?p1[rdfs:subPropertyOf->?p2] :- ?p1[owl:equivalentProperty->?p2])
-
-(* <#scm-eqp11> *)
-Forall ?p2 ?p1 (
-   ?p2[rdfs:subPropertyOf->?p1] :- ?p1[owl:equivalentProperty->?p2])
-
-(* <#scm-eqp2> *)
-Forall ?p2 ?p1 (
-   ?p1[owl:equivalentProperty->?p2] :- And(
-       ?p1[rdfs:subPropertyOf->?p2]
-       ?p2[rdfs:subPropertyOf->?p1]  ))
-
-(* <#scm-dom1> *)
-Forall ?p ?c1 ?c2 (
-   ?p[rdfs:domain->?c2] :- And(
-       ?p[rdfs:domain->?c1]
-       ?c1[rdfs:subClassOf->?c2]  ))
-
-(* <#scm-dom2> *)
-Forall ?c ?p2 ?p1 (
-   ?p1[rdfs:domain->?c] :- And(
-       ?p2[rdfs:domain->?c]
-       ?p1[rdfs:subPropertyOf->?p2]  ))
-
-(* <#scm-rng1> *)
-Forall ?p ?c1 ?c2 (
-   ?p[rdfs:range->?c2] :- And(
-       ?p[rdfs:range->?c1]
-       ?c1[rdfs:subClassOf->?c2]  ))
-
-(* <#scm-rng2> *)
-Forall ?c ?p2 ?p1 (
-   ?p1[rdfs:range->?c] :- And(
-       ?p2[rdfs:range->?c]
-       ?p1[rdfs:subPropertyOf->?p2]  ))
-
-(* <#scm-hv> *)
-Forall ?c1 ?c2 ?i ?p2 ?p1 (
-   ?c1[rdfs:subClassOf->?c2] :- And(
-       ?c1[owl:hasValue->?i]
-       ?c1[owl:onProperty->?p1]
-       ?c2[owl:hasValue->?i]
-       ?c2[owl:onProperty->?p2]
-       ?p1[rdfs:subPropertyOf->?p2]  ))
-
-(* <#scm-svf1> *)
-Forall ?p ?y2 ?c1 ?c2 ?y1 (
-   ?c1[rdfs:subClassOf->?c2] :- And(
-       ?c1[owl:someValuesFrom->?y1]
-       ?c1[owl:onProperty->?p]
-       ?c2[owl:someValuesFrom->?y2]
-       ?c2[owl:onProperty->?p]
-       ?y1[rdfs:subClassOf->?y2]  ))
-
-(* <#scm-svf2> *)
-Forall ?c1 ?c2 ?y ?p2 ?p1 (
-   ?c1[rdfs:subClassOf->?c2] :- And(
-       ?c1[owl:someValuesFrom->?y]
-       ?c1[owl:onProperty->?p1]
-       ?c2[owl:someValuesFrom->?y]
-       ?c2[owl:onProperty->?p2]
-       ?p1[rdfs:subPropertyOf->?p2]  ))
-
-(* <#scm-avf1> *)
-Forall ?p ?y2 ?c1 ?c2 ?y1 (
-   ?c1[rdfs:subClassOf->?c2] :- And(
-       ?c1[owl:allValuesFrom->?y1]
-       ?c1[owl:onProperty->?p]
-       ?c2[owl:allValuesFrom->?y2]
-       ?c2[owl:onProperty->?p]
-       ?y1[rdfs:subClassOf->?y2]  ))
-
-(* <#scm-avf2> *)
-Forall ?c1 ?c2 ?y ?p2 ?p1 (
-   ?c2[rdfs:subClassOf->?c1] :- And(
-       ?c1[owl:allValuesFrom->?y]
-       ?c1[owl:onProperty->?p1]
-       ?c2[owl:allValuesFrom->?y]
-       ?c2[owl:onProperty->?p2]
-       ?p1[rdfs:subPropertyOf->?p2]  ))
-
 (* <#prp-npa1> *)
 Forall ?x ?i1 ?p ?i2 (
     rif:error() :- And(
@@ -433,16 +463,6 @@ Forall ?c1 ?c2 ?x (
 
 
 (* <#eq-diff2-3> *)
- Forall ?x ?y1 ?y2 ?z1 ?z2 (
-   rif:error() :- And (
-       ?x[rdf:type -> owl:AllDifferent]
-			 _checkDifferent(?x ?y1)
-			 _checkDifferent(?x ?y2)
-			 Not(?y1 = ?y2)
-			 ?y1[rdf:first->?z1]
-			 ?y2[rdf:first->?z2]
-       ?z1[owl:sameAs->?z2] ))
-
  Forall ?x ?y (
 	 _checkDifferent(?x ?y) :- And (
 		 ?x[rdf:type->owl:AllDifferent]
@@ -459,18 +479,17 @@ Forall ?c1 ?c2 ?x (
 		 ?z[rdf:rest->?y]
 		 Not(?y = rdf:nil) ))
 
-(* <#prp-adp> *)
- Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
+ Forall ?x ?y1 ?y2 ?z1 ?z2 (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointProperties]
-			 _checkDisjointProperties(?r ?l1)
-			 _checkDisjointProperties(?r ?l2)
-			 Not(?l1 = ?l2)
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[?x->?v]
-			 ?o[?y->?v] ))
+       ?x[rdf:type -> owl:AllDifferent]
+			 _checkDifferent(?x ?y1)
+			 _checkDifferent(?x ?y2)
+			 Not(?y1 = ?y2)
+			 ?y1[rdf:first->?z1]
+			 ?y2[rdf:first->?z2]
+       ?z1[owl:sameAs->?z2] ))
 
+(* <#prp-adp> *)
  Forall ?r ?l (
 	 _checkDisjointProperties(?r ?l) :- And (
 		 ?r[rdf:type->owl:AllDisjointProperties]
@@ -482,18 +501,18 @@ Forall ?c1 ?c2 ?x (
 		 ?x[rdf:rest->?l]
 		 Not(?l = rdf:nil) ))
 
-(* <#cax-adc> *)
- Forall ?x ?y ?o ?l1 ?l2 ?r (
+ Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointClasses]
-			 _checkDisjointClasses(?r ?l1)
-			 _checkDisjointClasses(?r ?l2)
+       ?r[rdf:type -> owl:AllDisjointProperties]
+			 _checkDisjointProperties(?r ?l1)
+			 _checkDisjointProperties(?r ?l2)
 			 Not(?l1 = ?l2)
 			 ?l1[rdf:first->?x]
 			 ?l2[rdf:first->?y]
-			 ?o[rdf:type->?x]
-			 ?o[rdf:type->?y] ))
+			 ?o[?x->?v]
+			 ?o[?y->?v] ))
 
+(* <#cax-adc> *)
  Forall ?r ?l (
    _checkDisjointClasses(?r ?l) :- And (
 		 ?r[rdf:type -> owl:AllDisjointClasses]
@@ -505,26 +524,18 @@ Forall ?c1 ?c2 ?x (
 		 ?x[rdf:rest->?l]
 		 Not(?l = rdf:nil) ))
 
+ Forall ?x ?y ?o ?l1 ?l2 ?r (
+   rif:error() :- And (
+       ?r[rdf:type -> owl:AllDisjointClasses]
+			 _checkDisjointClasses(?r ?l1)
+			 _checkDisjointClasses(?r ?l2)
+			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[rdf:type->?x]
+			 ?o[rdf:type->?y] ))
+
 (* <#prp-spo2> *)
- Forall ?p ?last ?pc ?start (
-   ?start[?p->?last] :- And (
-       ?p[owl:propertyChainAxiom->?pc]
-       _checkChain(?p ?start ?pc ?last) ))
-
- Forall ?q ?start ?pc ?last ?p ?tl (
-   _checkChain(?q ?start ?pc  ?last) :- And (
-       ?pc[rdf:first->?p]
-			 ?pc[rdf:rest->?tl]
-       ?start[?p->?next]
-       _checkChain(?q ?next ?tl ?last) ))
-
- Forall ?q ?start ?pc ?last ?p (
-   _checkChain(?q ?start ?pc  ?last) :- And (
-			 _markCheckChain(?q ?pc)
-       ?pc[rdf:first->?p]
-			 ?pc[rdf:rest->rdf:nil]
-       ?start[?p->?last] ))
-
  Forall ?p ?pc (
 	 _markCheckChain(?p ?pc) :- ?p[owl:propertyChainAxiom->?pc] )
 
@@ -534,11 +545,32 @@ Forall ?c1 ?c2 ?x (
 		 ?q[rdf:rest->?p]
 		 Not(?p = rdf:nil) ))
  
+ Forall ?q ?start ?pc ?last ?p (
+   _checkChain(?q ?start ?pc  ?last) :- And (
+			 _markCheckChain(?q ?pc)
+       ?pc[rdf:first->?p]
+			 ?pc[rdf:rest->rdf:nil]
+       ?start[?p->?last] ))
+
+ Forall ?q ?start ?pc ?last ?p ?tl (
+   _checkChain(?q ?start ?pc  ?last) :- And (
+       ?pc[rdf:first->?p]
+			 ?pc[rdf:rest->?tl]
+       ?start[?p->?next]
+       _checkChain(?q ?next ?tl ?last) ))
+
+ Forall ?p ?last ?pc ?start (
+   ?start[?p->?last] :- And (
+       ?p[owl:propertyChainAxiom->?pc]
+       _checkChain(?p ?start ?pc ?last) ))
+
 (* <#cls-int1> *)
- Forall ?y ?c ?l (
-   ?y[rdf:type->?c] :- And (
-     ?c[owl:intersectionOf->?l]
-     _allTypes(?c ?l ?y) ))
+ Forall ?c ?l ?y ?ty (
+   _allTypes(?c ?l ?y) :- And (
+		 _markAllTypes(?c ?l)
+     ?l[rdf:first->?ty]
+		 ?l[rdf:rest->rdf:nil]
+     ?y[rdf:type->?ty] ))
 
  Forall ?c ?l ?y ?ty ?tl (
    _allTypes(?c ?l ?y) :- And (
@@ -547,42 +579,12 @@ Forall ?c1 ?c2 ?x (
      ?y[rdf:type->?ty]
      _allTypes(?c ?tl ?y) ))
 
- Forall ?c ?l ?y ?ty (
-   _allTypes(?c ?l ?y) :- And (
-		 _markAllTypes(?c ?l)
-     ?l[rdf:first->?ty]
-		 ?l[rdf:rest->rdf:nil]
-     ?y[rdf:type->?ty] ))
-
- Forall ?c ?l (
-	 _markAllTypes(?c ?l) :- ?c[owl:intersectionOf->?l] )
-
- Forall ?c ?l ?r (
-	 _markAllTypes(?c ?l) :- And (
-		 _markAllTypes(?c ?r)
-		 ?r[rdf:rest->?l]
-		 Not(?l = rdf:nil) ))
+ Forall ?y ?c ?l (
+   ?y[rdf:type->?c] :- And (
+     ?c[owl:intersectionOf->?l]
+     _allTypes(?c ?l ?y) ))
 
 (* <#prp-key> *)
- Forall ?x ?y ?c ?u (
-   ?x[owl:sameAs->?y] :- And (
-     ?c[owl:hasKey->?u]  ?x[rdf:type->?c]  ?y[rdf:type->?c]
-     _sameKey(?c ?u ?x ?y) ))
-
- Forall ?c ?u ?x ?y (
-   _sameKey(?c ?u ?x ?y) :- And (
-     ?u[rdf:first->?key]
-		 ?u[rdf:rest->?tl]
-     ?x[?key->?v] ?y[?key->?v]
-     _sameKey(?c ?tl ?x ?y) ))
-
- Forall ?c ?u ?x ?y (
-   _sameKey(?c ?u ?x ?y) :- And (
-     _markSameKey(?c ?u)
-     ?u[rdf:first->?key]
-		 ?u[rdf:rest->rdf:nil]
-     ?x[?key->?v] ?y[?key->?v] ))
-
  Forall ?c ?u (
    _markSameKey(?c ?u) :- ?c[owl:hasKey->?u] )
 
@@ -592,6 +594,25 @@ Forall ?c1 ?c2 ?x (
 		 ?v[rdf:rest->?u]
 		 Not(?u = rdf:nil) ))
 
+ Forall ?c ?u ?x ?y (
+   _sameKey(?c ?u ?x ?y) :- And (
+     _markSameKey(?c ?u)
+     ?u[rdf:first->?key]
+		 ?u[rdf:rest->rdf:nil]
+     ?x[?key->?v] ?y[?key->?v] ))
+
+ Forall ?c ?u ?x ?y (
+   _sameKey(?c ?u ?x ?y) :- And (
+     ?u[rdf:first->?key]
+		 ?u[rdf:rest->?tl]
+     ?x[?key->?v] ?y[?key->?v]
+     _sameKey(?c ?tl ?x ?y) ))
+
+ Forall ?x ?y ?c ?u (
+   ?x[owl:sameAs->?y] :- And (
+     ?c[owl:hasKey->?u]  ?x[rdf:type->?c]  ?y[rdf:type->?c]
+     _sameKey(?c ?u ?x ?y) ))
+
 (* <#cls-uni> *)
  Forall ?y ?c ?l ?ci (
    ?y[rdf:type->?c] :- And (
@@ -599,21 +620,7 @@ Forall ?c1 ?c2 ?x (
 		 ?l[rdf:first->?ci]
      ?y[rdf:type->?ci] ))
 
- Forall ?c ?l (
-	 _checkUnionOf(?c ?l) :- ?c[owl:unionOf->?l] )
-
- Forall ?c ?l ?r (
-	 _checkUnionOf(?c ?l) :- And(
-		 _checkUnionOf(?c ?r)
-		 ?r[rdf:rest->?l]
-		 Not(?l = rdf:nil) ))
-
 (* <#cls-oo> *)
- Forall ?yi ?c ?l (
-   ?yi[rdf:type->?c] :- And (
-     _checkOneOf(?c ?l)
-		 ?l[rdf:first->?yi] ))
-
  Forall ?c ?l (
 	 _checkOneOf(?c ?l) :- ?c[owl:oneOf->?l] )
 
@@ -623,6 +630,11 @@ Forall ?c1 ?c2 ?x (
 		 ?r[rdf:rest->?l]
 		 Not(?l = rdf:nil) ))
 
+ Forall ?yi ?c ?l (
+   ?yi[rdf:type->?c] :- And (
+     _checkOneOf(?c ?l)
+		 ?l[rdf:first->?yi] ))
+
 (* <#cls-int2> *)
  Forall ?y ?c ?ci ?l (
    ?y[rdf:type->?ci] :- And (
@@ -630,15 +642,4 @@ Forall ?c1 ?c2 ?x (
 		 ?l[rdf:first->?ci]
      ?y[rdf:type->?c] ))
 
-(* <#scm-int> *)
- Forall ?c ?ci ?l (
-   ?c[rdfs:subClassOf->?ci] :- And (
-		 _markAllTypes(?c ?l)
-		 ?l[rdf:first->?ci] ))
-
-(* <#scm-uni> *)
- Forall ?c ?ci ?l (
-   ?ci[rdfs:subClassOf->?c] :- And (
-		 _checkUnionOf(?c ?l)
-		 ?l[rdf:first->?ci] ))
- 
+#EOF
