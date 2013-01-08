@@ -220,6 +220,7 @@ int main (int argc, char **argv) {
       NULL);
   TEST(equiv, str2iri("#"), NULL, NULL, NULL, NULL, str2ptr(""), NULL,
       str2ptr(""));
+  TEST(malformed, str2ptr("http://www.lookandlisten.co.za/layout/images/productimage.aspx?path=%2f600%2f914%2f318%"));
   TEST(malformed, str2ptr(":"));
   TEST(malformed, str2ptr("://@:/?#"));
   TEST(equiv,

@@ -505,6 +505,17 @@ bool isISegment(iter begin, iter end) {
     if (!IRIRef::isIPChar(*begin)) {
       return false;
     }
+    if (*begin == to_ascii('%')) {
+      iter start = begin;
+      if (++begin == end || ++begin == end) {
+        return false;
+      }
+      iter next = begin;
+      ++next;
+      if (!isPctEncoded(start, next)) {
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -546,6 +557,17 @@ bool isIQuery(iter begin, iter end) {
         !IRIRef::isIPChar(*begin) && !IRIRef::isIPrivate(*begin)) {
       return false;
     }
+    if (*begin == to_ascii('%')) {
+      iter start = begin;
+      if (++begin == end || ++begin == end) {
+        return false;
+      }
+      iter next = begin;
+      ++next;
+      if (!isPctEncoded(start, next)) {
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -558,6 +580,17 @@ bool isIFragment(iter begin, iter end) {
     if (*begin != to_ascii('/') && *begin != to_ascii('?') &&
         !IRIRef::isIPChar(*begin)) {
       return false;
+    }
+    if (*begin == to_ascii('%')) {
+      iter start = begin;
+      if (++begin == end || ++begin == end) {
+        return false;
+      }
+      iter next = begin;
+      ++next;
+      if (!isPctEncoded(start, next)) {
+        return false;
+      }
     }
   }
   return true;
@@ -574,7 +607,7 @@ bool isPctEncoded(iter begin, iter end) {
     return false;
   }
   ++begin;
-  return begin != end && is_xdigit(*begin);
+  return begin != end && is_xdigit(*begin) && ++begin == end;
 }
 
 inline
