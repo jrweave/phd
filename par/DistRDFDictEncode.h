@@ -25,6 +25,10 @@
 #include "rdf/RDFTriple.h"
 #include "util/hash.h"
 
+#ifndef CACHE_LOOKUPS
+#define CACHE_LOOKUPS 0
+#endif
+
 namespace par {
 
 using namespace io;

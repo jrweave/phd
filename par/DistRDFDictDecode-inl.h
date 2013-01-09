@@ -325,7 +325,9 @@ void DistRDFDictDecode<N, ID, ENC>::dropoff(DPtr<uint8_t> *msg)
   }
   this->pending_positions.erase(range.first, range.second);
   typename I2TermMap::iterator i2t = this->pending_i2term.find(resp.n);
+#if CACHE_LOOKUPS
   this->dict->force(i2t->second, resp.term);
+#endif
   this->pending_term2i.erase(i2t->second);
   this->pending_i2term.erase(i2t);
 }

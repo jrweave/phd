@@ -49,6 +49,15 @@
 #include "sys/ints.h"
 #include "util/funcs.h"
 
+#include "util/timing_choices.h"
+#if defined(TIMING_USE) && TIMING_USE == TIMING_NONE
+#undef TIMING_USE
+#endif
+#ifndef TIMING_USE
+#define TIMING_USE TIMING_TIME
+#endif
+#include "util/timing.h"
+
 using namespace io;
 using namespace par;
 using namespace ptr;
@@ -110,6 +119,7 @@ struct cmdargs_t {
   bool single_output;
   bool global_dict;
   bool read_only;
+  bool report_time;
 } cmdargs = {
   /* input          */  string(""),
   /* input_format   */  string(""),
@@ -128,6 +138,7 @@ struct cmdargs_t {
   /* single_output  */  false,
   /* global_dict    */  false,
   /* read_only      */  false,
+  /* report_times   */  false,
 };
 
 size_t parse_size_t(char *cstr) {
@@ -207,6 +218,7 @@ bool parse_args(int argc, char **argv) {
     else CMDARG(argv[i], "--single-output", "-so", single_output, false, true)
     else CMDARG(argv[i], "--global-dict", "-gd", global_dict, false, true)
     else CMDARG(argv[i], "--read-only", "-r", read_only, false, true)
+    else CMDARG(argv[i], "--time", "-t", report_time, false, true)
     else if (strcmp(argv[i], "--force") == 0) {
       try {
         string termstr(argv[++i]);
@@ -611,11 +623,60 @@ int doit(int argc, char **argv) {
   return 0;
 }
 
+#if TIMING_USE == TIMING_RDTSC
+#define TIMEDIFF_T unsigned long long
+#define MPITIME_T MPI::UNSIGNED_LONG_LONG
+#else
+#define TIMEDIFF_T unsigned long
+#define MPITIME_T MPI::UNSIGNED_LONG
+#endif
+void report_time(TIME_T(begin), TIME_T(end)) {
+  TIMEDIFF_T min, max, sum, sumsq, local, avg, stdev;
+  local = DIFFTIME(end, begin);
+  MPI::COMM_WORLD.Reduce(&local, &min, 1, MPITIME_T, MPI::MIN, 0);
+  MPI::COMM_WORLD.Reduce(&local, &max, 1, MPITIME_T, MPI::MAX, 0);
+  MPI::COMM_WORLD.Reduce(&local, &sum, 1, MPITIME_T, MPI::SUM, 0);
+  local *= local; // squared
+  MPI::COMM_WORLD.Reduce(&local, &sumsq, 1, MPITIME_T, MPI::SUM, 0);
+  if (MPI::COMM_WORLD.Get_rank() == 0) {
+    double avgd = ((double) sum) / ((double) MPI::COMM_WORLD.Get_size());
+    double stdevd = sqrt(((double) sumsq) / ((double) MPI::COMM_WORLD.Get_size()) - (avgd*avgd));
+    avg = (TIMEDIFF_T) avgd;
+    if (avgd - ((double) avg) > 0.5) {
+      ++avg;
+    }
+    stdev = (TIMEDIFF_T) stdevd;
+    if (stdevd - ((double) stdev) > 0.5) {
+      ++stdev;
+    }
+    cerr << "[TIME] "
+         << " Prs " << MPI::COMM_WORLD.Get_size()
+         << " Min " << TIMEOUTPUT(min)
+         << " Avg " << TIMEOUTPUT(avg)
+         << " Max " << TIMEOUTPUT(max)
+         << " Std " << TIMEOUTPUT(stdev)
+         << endl;
+  }
+}
+
 int main(int argc, char **argv) {
   try {
     MPI::Init(argc, argv);
+
     DEBUG("Started")
+
+    TIME_T(ts_start);
+    TIMESET(ts_start);
+
     int r = doit(argc, argv);
+
+    TIME_T(ts_finish);
+    TIMESET(ts_finish);
+
+    if (cmdargs.report_time) {
+      report_time(ts_start, ts_finish);
+    }
+
     DEBUG("Finalize")
     MPI::Finalize();
     CustomRDFEncoder::dict.clear();

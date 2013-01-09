@@ -17,6 +17,7 @@
 #include "par/MPIPacketDistributor.h"
 #include "ptr/DPtr.h"
 #include "ptr/MPtr.h"
+#include "util/timing.h"
 
 bool RANDOMIZE = false;
 int PAGESIZE = 4*1024*1024;
@@ -954,8 +955,6 @@ void load_data(const char *filename) {
         }
       }
       idxspo.insert(triple);
-      idxpos.insert(triple);
-      idxosp.insert(triple);
     }
   }
   file.Close();
@@ -1993,10 +1992,20 @@ void redistribute_data(const char *filename) {
   TripleIndex repls (Order(0,1,2));
   if (filename != NULL) {
     ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
+    
+    // build the indexes to support finding data in need of replication
+    idxpos.insert(idxspo.begin(), idxspo.end());
+    idxosp.insert(idxspo.begin(), idxspo.end());
+
     size_t len;
     uint8_t *bytes = read_all(filename, len);
     get_redist_data(bytes, len, repls);
     free(bytes);
+
+    // now get rid of them because we need memory during redistribution
+    // and they'll be outdated after redistribution anyway
+    idxpos.clear();
+    idxosp.clear();
   }
   ZEROSAY("Performing redistribution..." << endl);
   Distributor *dist;
@@ -2009,19 +2018,10 @@ void redistribute_data(const char *filename) {
   redist->exec();
   if (RANDOMIZE) {
     idxspo.swap(redist->newindex);
-    DELETE(redist);
-    TripleIndex newpos(Order(1,2,0));
-    TripleIndex newosp(Order(2,0,1));
-    newpos.insert(idxspo.begin(), idxspo.end());
-    newosp.insert(idxspo.begin(), idxspo.end());
-    idxpos.swap(newpos);
-    idxosp.swap(newosp);
   } else {
     idxspo.insert(redist->newindex.begin(), redist->newindex.end());
-    idxpos.insert(redist->newindex.begin(), redist->newindex.end());
-    idxosp.insert(redist->newindex.begin(), redist->newindex.end());
-    DELETE(redist);
   }
+  DELETE(redist);
 }
 
 void uniq() {
@@ -2137,12 +2137,51 @@ void print_data() {
 
 
 
-
-
+#if defined(TIMING_USE) && TIMING_USE != TIMING_NONE
+#if TIMING_USE == TIMING_RDTSC
+#define TIMEDIFF_T unsigned long long
+#define MPITIME_T MPI::UNSIGNED_LONG_LONG
+#else
+#define TIMEDIFF_T unsigned long
+#define MPITIME_T MPI::UNSIGNED_LONG
+#endif
+void report_times(const char *time_label, TIME_T(begin), TIME_T(end)) {
+  TIMEDIFF_T min, max, sum, sumsq, local, avg, stdev;
+  local = DIFFTIME(end, begin);
+  MPI::COMM_WORLD.Reduce(&local, &min, 1, MPITIME_T, MPI::MIN, 0);
+  MPI::COMM_WORLD.Reduce(&local, &max, 1, MPITIME_T, MPI::MAX, 0);
+  MPI::COMM_WORLD.Reduce(&local, &sum, 1, MPITIME_T, MPI::SUM, 0);
+  local *= local; // squared
+  MPI::COMM_WORLD.Reduce(&local, &sumsq, 1, MPITIME_T, MPI::SUM, 0);
+  if (MPI::COMM_WORLD.Get_rank() == 0) {
+    double avgd = ((double) sum) / ((double) MPI::COMM_WORLD.Get_size());
+    double stdevd = sqrt(((double) sumsq) / ((double) MPI::COMM_WORLD.Get_size()) - (avgd*avgd));
+    avg = (TIMEDIFF_T) avgd;
+    if (avgd - ((double) avg) > 0.5) {
+      ++avg;
+    }
+    stdev = (TIMEDIFF_T) stdevd;
+    if (stdevd - ((double) stdev) > 0.5) {
+      ++stdev;
+    }
+    cerr << "[TIME] " << time_label
+         << " Prs " << MPI::COMM_WORLD.Get_size()
+         << " Min " << TIMEOUTPUT(min)
+         << " Avg " << TIMEOUTPUT(avg)
+         << " Max " << TIMEOUTPUT(max)
+         << " Std " << TIMEOUTPUT(stdev)
+         << endl;
+  }
+}
+#endif
 
 
 int main(int argc, char **argv) {
   MPI::Init(argc, argv);
+
+  TIME_T(ts_very_beginning);
+  TIMESET(ts_very_beginning);
+
   if (argc < 4) {
     ZEROSAY("[USAGE] " << argv[0] << " <encoded-rule-file> <encoded-data-file> <output-file> [<encoded-redist-conds-file>]" << endl);
     MPI::Finalize();
@@ -2185,24 +2224,87 @@ int main(int argc, char **argv) {
   ZEROSAY("[INFO] PAGESIZE: " << PAGESIZE << endl);
   ZEROSAY("[INFO] RANDOMIZE: " << RANDOMIZE << endl);
 
+  TIME_T(ts_load_rules);
+  TIMESET(ts_load_rules);
+
   vector<Rule> rules;
+
   ZEROSAY("[INFO] Loading rules from " << argv[1] << endl);
   load_rules(argv[1], rules);
+
   //print_rules(rules);
+
+  TIME_T(ts_load_data);
+  TIMESET(ts_load_data);
+
   ZEROSAY("[INFO] Loading data from " << argv[2] << endl);
   load_data(argv[2]);
+
+  TIME_T(ts_randomize);
+  TIMESET(ts_randomize);
+
   if (RANDOMIZE || argc > 4) {
     ZEROSAY("[INFO] Redistributing data according to " << (argc <= 4 ? "(nothing)" : argv[4]) << endl);
     redistribute_data(argc > 4 ? argv[4] : NULL);
   }
+
+  TIME_T(ts_index);
+  TIMESET(ts_index);
+
+  ZEROSAY("[INFO] Building indexes." << endl);
+  idxpos.insert(idxspo.begin(), idxspo.end());
+  idxosp.insert(idxspo.begin(), idxspo.end());
+
+  TIME_T(ts_infer);
+  TIMESET(ts_infer);
+
   ZEROSAY("[INFO] Inferring..." << endl);
   infer(rules);
+
+  TIME_T(ts_destroy_index);
+  TIMESET(ts_destroy_index);
+
+  ZEROSAY("[INFO] Destroying indexes." << endl);
+  idxpos.clear();
+  idxosp.clear();
+  map<constint_t, Index>::iterator it = atoms.begin();
+  for (; it != atoms.end(); ++it) {
+    // Save rif:error tuple (there can be only one) to check for
+    // inconsistency later.
+    if (it->first != CONST_RIF_ERROR) {
+      it->second.clear();
+    }
+  }
+
+  TIME_T(ts_uniq);
+  TIMESET(ts_uniq);
+
   if (uniquify) {
     ZEROSAY("[INFO] Deduplicating data." << endl);
     uniq();
   }
+
+  TIME_T(ts_output);
+  TIMESET(ts_output);
+
   ZEROSAY("[INFO] Writing output to " << argv[3] << endl);
   write_data(argv[3]);
+
+  TIME_T(ts_finish);
+  TIMESET(ts_finish);
+
+#if defined(TIMING_USE) && TIMING_USE != TIMING_NONE
+  report_times("Loading rules", ts_load_rules, ts_load_data);
+  report_times("Loading data", ts_load_data, ts_randomize);
+  report_times("Randomize", ts_randomize, ts_index);
+  report_times("Index", ts_index, ts_infer);
+  report_times("Infer", ts_infer, ts_destroy_index);
+  report_times("Unindex", ts_destroy_index, ts_uniq);
+  report_times("Unique", ts_uniq, ts_output);
+  report_times("Output", ts_output, ts_finish);
+  report_times("Overall", ts_very_beginning, ts_finish);
+#endif
+
   MPI::Finalize();
   return 0;
 }

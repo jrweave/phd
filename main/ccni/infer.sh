@@ -145,7 +145,7 @@ d=`date "+%Y-%m-%dT%H:%M:%S%z %s"`
 echo "[$d] ../der --print-index $local/$id/$rbase.dct | awk '{print \"--force \"\$2;}' > $local/$id/$rbase.frc"
 ../der --print-index $local/$id/$rbase.dct | awk "{print \"--force \"\$2;}" > $local/$id/$rbase.frc
 
-cmd="$main/red-mpi -b $blocksize -p $pagesize -si -if $dataformat -i $datafile -of der -o $jobs/$id/#/$dbase.der -od $jobs/$id/#/$dbase.dct --global-dict $runargs"
+cmd="$main/red-mpi --time -b $blocksize -p $pagesize -si -if $dataformat -i $datafile -of der -o $jobs/$id/#/$dbase.der -od $jobs/$id/#/$dbase.dct --global-dict $runargs"
 if [ "$dataformat" == "nt.lzo" ]; then
 	cmd="$cmd -ix $indexfile"
 fi
@@ -181,7 +181,7 @@ while [ "$check" != "" ]; do
 done
 
 if [ "$decode" != "" ]; then
-	cmd="$main/red-mpi -b $blocksize -p $pagesize -if der -i $jobs/$id/#/$dbase-closure.der -id $jobs/$id/#/$dbase.dct --global-dict -of nt -o $jobs/$id/#/$dbase-closure.nt $runargs"
+	cmd="$main/red-mpi --time -b $blocksize -p $pagesize -if der -i $jobs/$id/#/$dbase-closure.der -id $jobs/$id/#/$dbase.dct --global-dict -of nt -o $jobs/$id/#/$dbase-closure.nt $runargs"
 	d=`date "+Y-%m-%dT%H:%M:%S%z %s"`
 	echo "[$d] ./batch.sh $batchargs $cmd"
 	slurmid=`./batch.sh $batchargs $cmd 2>&1 | tail -n 1 | perl -ne 'if ($_ =~ /(\d+)/) { print "$1\n"; }'`
