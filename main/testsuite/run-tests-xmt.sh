@@ -29,6 +29,8 @@ do
 		echo "$delta"
 		echo "FAILED $rulefile $datafile"
 		nfailures=`expr $nfailures + 1`
+	else
+		echo "PASSED $rulefile $datafile"
 	fi
 	ntests=`expr $ntests + 1`
 done
