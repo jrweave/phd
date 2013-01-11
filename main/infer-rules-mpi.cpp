@@ -1108,10 +1108,11 @@ bool special(Condition &condition, Relation &intermediate, Relation &filtered, b
           constint_t c1 = it->at(lhs->get.variable);
           constint_t c2 = it->at(rhs->get.variable);
           if (c1 == 0 && c2 == 0) {
-            cerr << "[ERROR] Please make sure equality statements occur to the right of atomic formulas that bind a variable." << endl;
-            return true;
+            cerr << "[WARNING] Please make sure equality statements occur to the right of atomic formulas that bind a variable in the equality, if any exist.  Otherwise, results will be incorrect." << endl;
+            return false;
           } else if (!sign && (c1 == 0 || c2 == 0)) {
-            cerr << "[ERROR] Please make sure that inequality statements occur to the right of atomic of atomic formulas that bind BOTH variables and the inequality." << endl;
+            cerr << "[ERROR] Please make sure that inequality statements occur to the right of atomic formulas that bind BOTH variables and the inequality." << endl;
+            return false;
           } else if (c1 == 0) {
             result.push_back(*it);
             Tuple &t = result.back();
@@ -1966,6 +1967,12 @@ void get_redist_data(const uint8_t *bytes, size_t len, TripleIndex &repls) {
     }
     if (rule.condition.get.subformulas.begin->type != ATOMIC) {
       cerr << "[ERROR] First subformula of a replication must be atomic, but found " << *rule.condition.get.subformulas.begin << endl;
+    }
+    if (rule.condition.get.subformulas.begin->get.atom.type != FRAME &&
+        rule.condition.get.subformulas.begin->get.atom.type != ATOM) {
+      // Not storing any other data, nor would such occur in RDF,
+      // nor can it be inferred (we're not support membership assertion).
+      continue;
     }
     Action action;
     action.type = ASSERT_FACT;

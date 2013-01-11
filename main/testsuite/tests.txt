@@ -1,3 +1,5 @@
+parowl2.core,foaf.nt,2,cwmoff
+parowl2.core,lubm1.nt,2,cwmoff
 cax-adc.core,cax-adc.nt,1,cwmignore
 cls-int.core,cls-int.nt,1
 cls-oo.core,cls-oo.nt,1

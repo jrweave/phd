@@ -10,7 +10,6 @@ while (<STDIN>) {
 		}
 		$line = $1 . $defns{$2} . $3;
 	}
-	$line =~ s/\{([^\s]+)\}/$defns{$1}/eg;
 	if ($line =~ m/^\s*Prefix\s*\(\s*(\w+)\s+<([^\s]+)>\s*\)\s*$/) {
 		$prefix{$1} = $2;
 	} elsif ($line =~ m/^\s*$/) {
