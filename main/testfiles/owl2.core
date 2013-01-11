@@ -12,11 +12,6 @@
 #DEFINE NOTIN Not({IN}
 #DEFINE /NOTIN {/IN})
 
-#DEFINE SAME External("http://www.w3.org/TR/rdf-sparql-query/#func-sameTerm"^^rif:iri(
-#DEFINE /SAME ))
-#DEFINE NOTSAME Not({SAME}
-#DEFINE /NOTSAME {/SAME})
-
 #DEFINE $MC List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:IrreflexiveProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:ObjectProperty owl:DatatypeProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses)
 #DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf rdf:first rdf:rest)
 #DEFINE $CARDP List(owl:maxCardinality owl:maxQualifiedCardinality)
@@ -568,15 +563,6 @@ Forall ?c1 ?c2 ?x (
 			 ?y2[rdf:first->?z2]
        ?z1[owl:sameAs->?z2] ))
 
- Forall ?x ?y1 ?y2 ?z1 ?z2 (
-   rif:error() :- And (
-			 _checkDifferent(?x ?y1)
-			 _checkDifferent(?x ?y2)
-			 {NOTSAME}?y1 ?y2{/NOTSAME}
-			 ?y1[rdf:first->?z1]
-			 ?y2[rdf:first->?z2]
-       ?z1[owl:sameAs->?z2] ))
-
 (* <#prp-adp> *)
  Forall ?r ?l (
 	 _checkDisjointProperties(?r ?l) :- And (
@@ -599,16 +585,6 @@ Forall ?c1 ?c2 ?x (
 			 ?o[?x->?v]
 			 ?o[?y->?v] ))
 
- Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
-   rif:error() :- And (
-			 _checkDisjointProperties(?r ?l1)
-			 _checkDisjointProperties(?r ?l2)
-			 {NOTSAME}?l1 ?l2{/NOTSAME}
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[?x->?v]
-			 ?o[?y->?v] ))
-
 (* <#cax-adc> *)
  Forall ?r ?l (
    _checkDisjointClasses(?r ?l) :- And (
@@ -626,16 +602,6 @@ Forall ?c1 ?c2 ?x (
 			 _checkDisjointClasses(?r ?l1)
 			 _checkDisjointClasses(?r ?l2)
 			 Not(?l1 = ?l2)
-			 ?l1[rdf:first->?x]
-			 ?l2[rdf:first->?y]
-			 ?o[rdf:type->?x]
-			 ?o[rdf:type->?y] ))
-
- Forall ?x ?y ?o ?l1 ?l2 ?r (
-   rif:error() :- And (
-			 _checkDisjointClasses(?r ?l1)
-			 _checkDisjointClasses(?r ?l2)
-			 {NOTSAME}?l1 ?l2{/NOTSAME}
 			 ?l1[rdf:first->?x]
 			 ?l2[rdf:first->?y]
 			 ?o[rdf:type->?x]
