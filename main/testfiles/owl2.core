@@ -7,10 +7,41 @@
  Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
  Prefix(dc   <http://purl.org/dc/terms/>)
 
-#PRAGMA NOT REPLICATE And(?s[?p->?o])
-#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf) ?p)))
-#PRAGMA REPLICATE And(?s[?p->?o] External(pred:list-contains(List(owl:maxCardinality owl:maxQualifiedCardinality) ?p)) External(pred:list-contains(List(0 1) ?o)))
-#PRAGMA REPLICATE And(?s[rdf:type->?o] External(pred:list-contains(List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:IrreflexiveProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:ObjectProperty owl:DatatypeProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses) ?o)))
+#DEFINE IN External(pred:list-contains(
+#DEFINE /IN ))
+#DEFINE NOTIN Not({IN}
+#DEFINE /NOTIN {/IN})
+
+#DEFINE SAME External("http://www.w3.org/TR/rdf-sparql-query/#func-sameTerm"^^rif:iri(
+#DEFINE /SAME ))
+#DEFINE NOTSAME Not({SAME}
+#DEFINE /NOTSAME {/SAME})
+
+#DEFINE $MC List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:IrreflexiveProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:ObjectProperty owl:DatatypeProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses)
+#DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf rdf:first rdf:rest)
+#DEFINE $CARDP List(owl:maxCardinality owl:maxQualifiedCardinality)
+#DEFINE $CARDV List(0 1)
+
+#PRAGMA REPLICATE And(?s[?p->?o] {IN}{$MP} ?p{/IN})
+#PRAGMA REPLICATE And(?s[?p->?o] {IN}{$CARDP} ?p{/IN} {IN}{$CARDV} ?o{/IN})
+#PRAGMA REPLICATE And(?s[rdf:type->?o] {IN}{$MC} ?o{/IN})
+#PRAGMA REPLICATE And(_markAllTypes(?a ?b))
+#PRAGMA REPLICATE And(_allTypes(?a ?b ?c))
+#PRAGMA REPLICATE And(_checkUnionOf(?a ?b))
+#PRAGMA REPLICATE And(_checkDifferent(?a ?b))
+#PRAGMA REPLICATE And(_checkDisjointProperties(?a ?b))
+#PRAGMA REPLICATE And(_checkDisjointClasses(?a ?b))
+#PRAGMA REPLICATE And(_markCheckChain(?a ?b))
+#PRAGMA REPLICATE And(_checkChain(?a ?b ?c ?d))
+#PRAGMA REPLICATE And(_markSameKey(?a ?b))
+#PRAGMA REPLICATE And(_sameKey(?a ?b ?c ?d))
+#PRAGMA REPLICATE And(_checkOneOf(?a ?b))
+#PRAGMA REPLICATE And(?a = rdf:nil)
+#PRAGMA REPLICATE And(rdf:nil = ?a)
+
+#PRAGMA ARBITRARY And(rif:error())
+#PRAGMA ARBITRARY And(?s[owl:sameAs -> ?o])
+#PRAGMA ARBITRARY And(?s[rdf:type -> ?o] {NOTIN}{$MC} ?o{/NOTIN})
 
 (* <#scm-int> *)
  Forall ?c ?l (
@@ -530,10 +561,18 @@ Forall ?c1 ?c2 ?x (
 
  Forall ?x ?y1 ?y2 ?z1 ?z2 (
    rif:error() :- And (
-       ?x[rdf:type -> owl:AllDifferent]
 			 _checkDifferent(?x ?y1)
 			 _checkDifferent(?x ?y2)
 			 Not(?y1 = ?y2)
+			 ?y1[rdf:first->?z1]
+			 ?y2[rdf:first->?z2]
+       ?z1[owl:sameAs->?z2] ))
+
+ Forall ?x ?y1 ?y2 ?z1 ?z2 (
+   rif:error() :- And (
+			 _checkDifferent(?x ?y1)
+			 _checkDifferent(?x ?y2)
+			 {NOTSAME}?y1 ?y2{/NOTSAME}
 			 ?y1[rdf:first->?z1]
 			 ?y2[rdf:first->?z2]
        ?z1[owl:sameAs->?z2] ))
@@ -552,10 +591,19 @@ Forall ?c1 ?c2 ?x (
 
  Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointProperties]
 			 _checkDisjointProperties(?r ?l1)
 			 _checkDisjointProperties(?r ?l2)
 			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[?x->?v]
+			 ?o[?y->?v] ))
+
+ Forall ?x ?y ?o ?v ?l1 ?l2 ?r (
+   rif:error() :- And (
+			 _checkDisjointProperties(?r ?l1)
+			 _checkDisjointProperties(?r ?l2)
+			 {NOTSAME}?l1 ?l2{/NOTSAME}
 			 ?l1[rdf:first->?x]
 			 ?l2[rdf:first->?y]
 			 ?o[?x->?v]
@@ -575,10 +623,19 @@ Forall ?c1 ?c2 ?x (
 
  Forall ?x ?y ?o ?l1 ?l2 ?r (
    rif:error() :- And (
-       ?r[rdf:type -> owl:AllDisjointClasses]
 			 _checkDisjointClasses(?r ?l1)
 			 _checkDisjointClasses(?r ?l2)
 			 Not(?l1 = ?l2)
+			 ?l1[rdf:first->?x]
+			 ?l2[rdf:first->?y]
+			 ?o[rdf:type->?x]
+			 ?o[rdf:type->?y] ))
+
+ Forall ?x ?y ?o ?l1 ?l2 ?r (
+   rif:error() :- And (
+			 _checkDisjointClasses(?r ?l1)
+			 _checkDisjointClasses(?r ?l2)
+			 {NOTSAME}?l1 ?l2{/NOTSAME}
 			 ?l1[rdf:first->?x]
 			 ?l2[rdf:first->?y]
 			 ?o[rdf:type->?x]
@@ -590,9 +647,9 @@ Forall ?c1 ?c2 ?x (
 
  Forall ?p ?pc (
 	 _markCheckChain(?p ?pc) :- And (
-		 _markCheckChain(?q ?pc)
-		 ?q[rdf:rest->?p]
-		 Not(?p = rdf:nil) ))
+		 _markCheckChain(?p ?q)
+		 ?q[rdf:rest->?pc]
+		 Not(?pc = rdf:nil) ))
  
  Forall ?q ?start ?pc ?last ?p (
    _checkChain(?q ?start ?pc  ?last) :- And (

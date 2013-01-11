@@ -4,6 +4,13 @@ $rule = "";
 while (<STDIN>) {
 	chomp;
 	$line = $_;
+	while ($line =~ m/^([^\{]*)\{([^\s\}]+)\}(.*)$/) {
+		if (!defined($defns{$2})) {
+			die "[ERROR] Undefined replacement string: $2 .  Giving up.\n";
+		}
+		$line = $1 . $defns{$2} . $3;
+	}
+	$line =~ s/\{([^\s]+)\}/$defns{$1}/eg;
 	if ($line =~ m/^\s*Prefix\s*\(\s*(\w+)\s+<([^\s]+)>\s*\)\s*$/) {
 		$prefix{$1} = $2;
 	} elsif ($line =~ m/^\s*$/) {
@@ -34,6 +41,8 @@ while (<STDIN>) {
 		$rule = "";
 	} elsif ($line =~ m/^\s*\(\*.*\*\)\s*$/) {
 		# ignore
+	} elsif ($line =~ m/^\s*#DEFINE\s+([^\s]+)\s+(.*)$/) {
+		$defns{$1} = $2;
 	} elsif ($line =~ m/^\s*(#PRAGMA\s+.*)$/) {
 		$p = $1;
 		$p =~ s/\b(\d+)\b/"$1"^^xsd:integer/g;

@@ -7,10 +7,17 @@ Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
 Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
 Prefix(dc   <http://purl.org/dc/terms/>)
 
+#DEFINE IN External(pred:list-contains(
+#DEFINE /IN ))
+#DEFINE NOTIN Not({IN}
+#DEFINE /NOTIN {/IN})
+#DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf)
+
 #PRAGMA REPLICATE And(?p[rdfs:domain -> ?c])
 #PRAGMA REPLICATE And(?p[rdfs:range -> ?c])
-#PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2] Not(External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf) ?p2))))
+#PRAGMA REPLICATE And(?p1[rdfs:subPropertyOf -> ?p2])
 #PRAGMA REPLICATE And(?c1[rdfs:subClassOf -> ?c2])
+#PRAGMA ARBITRARY And(?x[?p2 -> ?y] {NOTIN}{$MP} ?p2{/NOTIN})
 
 (* <#scm-spo> *)
 Forall ?p3 ?p2 ?p1 (
@@ -28,7 +35,7 @@ Forall ?c1 ?c2 ?c3 (
 Forall ?x ?y ?p2 ?p1 (
    ?x[?p2->?y] :- And(
        ?p1[rdfs:subPropertyOf->?p2]
-			 Not(External(pred:list-contains(List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf) ?p2)))
+			 {NOTIN}{$MP} ?p2{/NOTIN}
        ?x[?p1->?y]  ))
 
 (* <#prp-dom> *)
@@ -49,3 +56,4 @@ Forall ?x ?c1 ?c2 (
        ?c1[rdfs:subClassOf->?c2]
        ?x[rdf:type->?c1]  ))
 
+#EOF

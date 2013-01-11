@@ -28,9 +28,9 @@ while (<STDIN>) {
 			&pickbest();
 		}
 		@cur = ($1, 0, 0, 0);
-	} elsif ($_ =~ m/REPLICATE/) {
-		++$cur[1];
 	} elsif ($_ =~ m/ABANDON/) {
+		++$cur[1];
+	} elsif ($_ =~ m/REPLICATE/) {
 		++$cur[2];
 	} elsif ($_ =~ m/ARBITRARY/) {
 		++$cur[3];

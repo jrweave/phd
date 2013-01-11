@@ -43,6 +43,10 @@ echo "Remove long comments from cnf file so that relsat doesn't have a stroke"
 echo "  egrep '^[^c]' $base.cnf > $base-concise.cnf"
 egrep '^[^c]' $base.cnf > $base-concise.cnf
 
+echo "Count solutions first to estimate how long the next step will take"
+echo "  relsat -p 3 -t n -#c $base-concise.cnf > $base.out"
+relsat -p 3 -t n -#c $base-concise.cnf | grep "Number of solutions" 
+
 echo "Use relsat to print ALL possible solutions"
 echo "  relsat -p 3 -t n -#a $base-concise.cnf > $base.out"
 relsat -p 3 -t n -#a $base-concise.cnf > $base.out

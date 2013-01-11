@@ -2,7 +2,7 @@
 
 TESTS=tests.txt
 
-DERDUMP=hexdump -v -e '8/1 "%02X" " " 8/1 "%02X" " " 8/1 "%02X" "\n"'
+DERDUMP="hexdump -v -e '8/1 \"%02X\" \" \" 8/1 \"%02X\" \" \" 8/1 \"%02X\" \"\\n\"'"
 
 maindir=`cd ..; pwd; cd - 2>&1 > /dev/null`
 xmtdir="$maindir/deploy-to-xmt"
