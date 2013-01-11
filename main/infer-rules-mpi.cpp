@@ -1695,7 +1695,7 @@ void infer(vector<Rule> &rules) {
       }
 
       if (app_count > 1) {
-        rules_since_change = 0;
+        rules_since_change = 1;
       } else {
         ++rules_since_change;
       }

@@ -1968,7 +1968,7 @@ void infer(dynamic_array<Rule> &rules) {
         nasserts += local_nasserts;
       }
       if (nasserts > 0) {
-        rules_since_change = 0;
+        rules_since_change = 1;
       } else {
         ++rules_since_change;
       }
