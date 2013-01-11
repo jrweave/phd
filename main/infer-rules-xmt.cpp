@@ -1281,8 +1281,12 @@ void join(Relation &lhs, Relation &rhs, dynamic_array<size_t> &vars, Relation &o
   Relation flhs, frhs;
   use_bloom_filter(lhs, hash, lbloom, flhs);
   //cerr << "LHS filtered from " << lhs.size() << " to " << flhs.size() << " items." << endl;
-  use_bloom_filter(rhs, hash, rbloom, frhs);
+  use_bloom_filter(rhs, hash, lbloom, frhs);
   //cerr << "RHS filtered from " << rhs.size() << " to " << frhs.size() << " items." << endl;
+  if (flhs.empty() || frhs.empty()) {
+    output.swap(results); // empty
+    return;
+  }
   Order order(vars, false);
   if (flhs.size() < frhs.size()) {
     flhs.swap(frhs);
