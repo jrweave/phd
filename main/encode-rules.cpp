@@ -776,6 +776,19 @@ int doit(int argc, char **argv) THROWS(TraceableException) {
   for (i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "--print-constants") == 0) {
       do_print_constants = true;
+    } else if (strcmp(argv[i], "--force") == 0) {
+      stringstream ss(stringstream::in | stringstream::out);
+      ss << argv[++i];
+      constint_t c;
+      ss >> hex >> c;
+      cerr << "[INFO] Mapping " << argv[i+1] << " to " << hex << c << endl;
+      DPtr<uint8_t> *p = cstr2dptr(argv[++i]);
+      RIFConst cnst = RIFConst::parse(p);
+      p->drop();
+      if (constenc.count(cnst) > 0) {
+        cerr << "[WARNING] Forcing duplicate mapping to same term.  The latest mapping will be used." << endl;
+      }
+      constenc[cnst] = c;
     } else {
       filename = argv[i];
     }

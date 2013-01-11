@@ -71,7 +71,8 @@ struct cmdargs_t {
   size_t page_size;
   bool decompress;
   bool print_index;
-} cmdargs = { set<string>(), string("-"), string("-"), string(""), 0, false, false };
+  bool scan_index;
+} cmdargs = { set<string>(), string("-"), string("-"), string(""), 0, false, false, false };
 
 bool parse_args(const int argc, char **argv) {
   int i;
@@ -98,6 +99,8 @@ bool parse_args(const int argc, char **argv) {
       cmdargs.print_index = true;
     } else if (string(argv[i]) == string("--lookup") || string(argv[i]) == string("-l")) {
       cmdargs.lookups.insert(string(argv[++i]));
+    } else if (string(argv[i]) == string("--scan") || string(argv[i]) == string("-s")) {
+      cmdargs.scan_index = true;
     } else if (string(argv[i]) == string("--force")) {
       try {
         string termstr(argv[++i]);
@@ -150,6 +153,57 @@ void print(const ID &id, const RDFTerm &term) {
     cout << setw(2) << hex << (int)*p;
   }
   cout << setw(1) << dec << ' ' << term << endl;
+}
+
+int scan_index() {
+  InputStream *is;
+  if (cmdargs.input == string("-")) {
+    NEW(is, IStream<istream>, cin);
+  } else {
+    NEW(is, IFStream, cmdargs.input.c_str());
+  }
+  NEW(is, BufferedInputStream, is, 4096);
+  DPtr<uint8_t> *p = is->read(ID::size() + sizeof(uint32_t));
+  ID id;
+  string str;
+  uint32_t len;
+  while (p != NULL) {
+    if (p->size() < ID::size() + sizeof(uint32_t)) {
+      cerr << "[ERROR] Unexpected end of file (at " << __FILE__ << ":" << __LINE__ << ")" << endl;
+      p->drop();
+      return -1;
+    }
+    memcpy(id.ptr(), p->dptr(), ID::size());
+    memcpy(&len, p->dptr() + ID::size(), sizeof(uint32_t));
+    if (is_little_endian()) {
+      reverse_bytes(len);
+    }
+    p->drop();
+    p = is->read(len);
+    if (p == NULL || p->size() < len) {
+      cerr << "[ERROR] Unexpected end of file (at " << __FILE__ << ":" << __LINE__ << ")" << endl;
+      if (p != NULL) {
+        p->drop();
+      }
+      return -2;
+    }
+    str.assign(p->dptr(), p->dptr() + p->size());
+    set<string>::iterator it = cmdargs.lookups.find(str);
+    if (it != cmdargs.lookups.end()) {
+      RDFTerm term = RDFTerm::parse(p);
+      print(id, term);
+      cmdargs.lookups.erase(it);
+    }
+    p->drop();
+    if (cmdargs.lookups.empty()) {
+      p = NULL;
+    } else {
+      p = is->read(ID::size() + sizeof(uint32_t));
+    }
+  }
+  is->close();
+  DELETE(is);
+  return 0;
 }
 
 int print_index() {
@@ -206,7 +260,12 @@ int main(int argc, char **argv) {
     return -1;
   }
   if (cmdargs.print_index || !cmdargs.lookups.empty()) {
-    int r = print_index();
+    int r;
+    if (cmdargs.scan_index) {
+      r = scan_index();
+    } else {
+      r = print_index();
+    }
     CustomRDFEncoder::dict.clear();
     ASSERTNPTR(0);
     return r;
