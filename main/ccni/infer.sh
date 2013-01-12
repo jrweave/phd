@@ -158,6 +158,8 @@ if [ "$slurmid" == "" ]; then
 	echo "[ERROR] No slurmid was determined after submitting encoding job."
 	exit
 fi
+ln -s $local/$id $local/$slurmid
+ln -s $jobs/$id $jobs/$slurmid
 echo "Waiting on slurm job $slurmid to finish."
 check=`squeue -h -j$slurmid`
 while [ "$check" != "" ]; do
@@ -173,6 +175,8 @@ if [ "$slurmid" == "" ]; then
 	echo "[ERROR] No slurmid was determined after submitting inference job."
 	exit
 fi
+ln -s $local/$id $local/$slurmid
+ln -s $jobs/$id $jobs/$slurmid
 echo "Waiting on slurm job $slurmid to finish."
 check=`squeue -h -j$slurmid`
 while [ "$check" != "" ]; do
@@ -189,6 +193,8 @@ if [ "$decode" != "" ]; then
 		echo "[ERROR] No slurmid was determined after submitting decoding job."
 		exit
 	fi
+	ln -s $local/$id $local/$slurmid
+	ln -s $jobs/$id $jobs/$slurmid
 	echo "Waiting on slurm job $slurmid to finish."
 	check=`squeue -h -j$slurmid`
 	while [ "$check" != "" ]; do

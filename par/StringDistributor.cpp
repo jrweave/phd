@@ -23,7 +23,8 @@ StringDistributor::StringDistributor(const int my_rank,
                                      const size_t packet_size,
                                      Distributor *dist)
     throw(BaseException<void*>, BaseException<size_t>)
-    : Distributor(), recv_packets(RecvMap(headerlt)), dist(dist),
+    : Distributor(), dist(dist),
+      recv_packets(RecvMap(headerlt, allocator<DPtr<uint8_t>*>())),
       packet_size(packet_size), my_rank(my_rank), id_counter(0),
       no_more_sends(false), really_no_more_sends(false) {
   if (dist == NULL) {

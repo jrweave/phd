@@ -32,7 +32,19 @@ bool alloc(ptr_type *&p, size_t num) throw() {
         cerr << "[PTR_MEMDEBUG] Warning: requested an allocation of zero bytes." << endl;
     }
   #endif
-  p = (ptr_type*)calloc(num, sizeof(ptr_type));
+  #ifdef USE_POSIX_MEMALIGN
+    size_t align = sizeof(void*);
+    while (align < sizeof(ptr_type)) {
+      align <<= 1;
+    }
+    if (posix_memalign((void**)&p, align, num*sizeof(ptr_type)) != 0) {
+      p = NULL;
+    }
+  #elif defined(USE_MALLOC)
+    p = (ptr_type*)malloc(num*sizeof(ptr_type));
+  #else
+    p = (ptr_type*)calloc(num, sizeof(ptr_type));
+  #endif
   if (p != NULL) {
     PTR_PRINTA(p);
     #ifdef PTR_MEMDEBUG
@@ -54,6 +66,22 @@ bool ralloc(ptr_type *&p, size_t num) throw() {
   if (q == NULL) {
     return false;
   }
+  #ifdef USE_POSIX_MEMALIGN
+    if (q != p) {
+      size_t align = sizeof(void*);
+      while (align < sizeof(ptr_type)) {
+        align <<= 1;
+      }
+      ptr_type *tmp = NULL;
+      unsigned long addr = (unsigned long)((void*) q);
+      if (addr % align != 0 &&
+          posix_memalign((void**)&tmp, align, num*sizeof(ptr_type)) != 0) {
+        memcpy(tmp, q, num*sizeof(ptr_type));
+        dalloc(q);
+        q = tmp;
+      }
+    }
+  #endif
   PTR_PRINTD(p);
   PTR_PRINTA(q);
   #ifdef PTR_MEMDEBUG
