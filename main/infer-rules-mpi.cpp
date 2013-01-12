@@ -35,6 +35,22 @@ using namespace par;
 using namespace ptr;
 using namespace std;
 
+void *myalloc(size_t num_items, size_t item_size) {
+#ifdef USE_POSIX_MEMALIGN
+  void *p = NULL;
+  size_t align = sizeof(void*);
+  while (align < item_size) {
+    align <<= 1;
+  }
+  if (posix_memalign(&p, align, num_items * item_size) != 0) {
+    return NULL;
+  }
+  return p;
+#else
+  return malloc(num_items * item_size);
+#endif
+}
+
 #define ZEROSAY(...) if (MPI::COMM_WORLD.Get_rank() == 0) cerr << __VA_ARGS__
 
 // The must match RIFTermType in RIFTerm.h.
@@ -680,7 +696,7 @@ uint8_t *read_all(const char *filename, size_t &len) {
   file.Seek(0, MPI_SEEK_SET);
   MPI::Offset filesize = file.Get_size();
   MPI::Offset bytesread = 0;
-  uint8_t *buffer = (uint8_t*)malloc(filesize);
+  uint8_t *buffer = (uint8_t*)myalloc(filesize, 1);
   while (bytesread < filesize) {
     MPI::Status stat;
     file.Read_all(buffer + bytesread, filesize - bytesread, MPI::BYTE, stat);
@@ -935,8 +951,8 @@ void load_data(const char *filename) {
     file.Close();
     return;
   }
-  uint8_t *buffer = (uint8_t*)malloc(PAGESIZE);
-  uint8_t *data = (uint8_t*)malloc(PAGESIZE);
+  uint8_t *buffer = (uint8_t*)myalloc(1, PAGESIZE);
+  uint8_t *data = (uint8_t*)myalloc(1, PAGESIZE);
   MPI::Offset bytesread = 0;
   MPI::Offset dangling = 0;
   MPI::Offset unitsize = 3 * sizeof(constint_t);
@@ -2103,7 +2119,7 @@ void redistribute_data(const char *filename) {
 
     ZEROSAY("Preparing data for replication." << endl);
     int size = repls.size() * 3 * sizeof(constint_t);
-    bytes = (uint8_t*)malloc(size);
+    bytes = (uint8_t*)myalloc(3*repls.size(), sizeof(constint_t));
     if (bytes == NULL) {
       cerr << "[ERROR] Processor " << rank
            << " failed to allocate " << size
@@ -2122,8 +2138,8 @@ void redistribute_data(const char *filename) {
     }
 
     ZEROSAY("Doing actual replication." << endl);
-    int *sizes = (int*)malloc(nproc*sizeof(int));
-    int *displs = (int*)malloc(nproc*sizeof(int));
+    int *sizes = (int*)myalloc(nproc, sizeof(int));
+    int *displs = (int*)myalloc(nproc, sizeof(int));
     if (sizes == NULL || displs == NULL) {
       cerr << "[ERROR] Processor " << rank
            << " failed to allocate " << 2*nproc*sizeof(int)
@@ -2138,7 +2154,8 @@ void redistribute_data(const char *filename) {
     }
 
     size_t recvbytes = displs[nproc-1] + sizes[nproc-1];
-    uint8_t *recvbuf = (uint8_t*)malloc(recvbytes);
+    uint8_t *recvbuf = (uint8_t*)myalloc(recvbytes/sizeof(constint_t),
+                                         sizeof(constint_t));
     if (recvbuf == NULL) {
       cerr << "[ERROR] Processor " << rank
            << " failed to allocate " << recvbytes
@@ -2198,8 +2215,8 @@ void write_data(const char *filename) {
   }
   size_t unitsize = 3 * sizeof(constint_t);
   size_t bufsize = PAGESIZE - (PAGESIZE % unitsize);
-  uint8_t *buffer = (uint8_t*)malloc(bufsize);
-  uint8_t *data = (uint8_t*)malloc(bufsize);
+  uint8_t *buffer = (uint8_t*)myalloc(1, bufsize);
+  uint8_t *data = (uint8_t*)myalloc(1, bufsize);
   uint8_t *write_to = data;
   uint8_t *end = data + bufsize;
   bool written_once = false;
