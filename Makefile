@@ -47,6 +47,7 @@ clean :
 
 distclean :
 	$(ECHO) distcleaning up
+	cp Makefile.bkp Makefile.inc
 	-$(RM) -vf $(EXE) $(OBJS) $(OBJLIBS)
 	-$(RM) -vfr *.dSYM
 	-for d in $(DIRS); do ($(ECHO) cd $$d; cd $$d; $(ECHO) $(MAKE) $(MFLAGS) clean; $(MAKE) $(MFLAGS) distclean); done

@@ -46,16 +46,16 @@ testBufferedInputStream : testBufferedInputStream.cpp ../BufferedInputStream.o
 
 testLZOOutputStream : testLZOOutputStream.cpp ../LZOOutputStream.o ../BufferedOutputStream.o
 	$(ECHO) running test $(SUBDIR)/testLZOOutputStream
-	$(ECHO) $(CC) $(CFLAGS) -o testLZOOutputStream testLZOOutputStream.cpp ../LZOOutputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o
-	$(CC) $(CFLAGS) -o testLZOOutputStream testLZOOutputStream.cpp ../LZOOutputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o
+	$(ECHO) $(CC) $(CFLAGS) -o testLZOOutputStream testLZOOutputStream.cpp ../LZOOutputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o ../../sys/endian.o
+	$(CC) $(CFLAGS) -o testLZOOutputStream testLZOOutputStream.cpp ../LZOOutputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o ../../sys/endian.o
 	$(ECHO) [TEST] ./testLZOOutputStream
 	./testLZOOutputStream
 	rm -fv *.enc
 
 testLZOInputStream : testLZOInputStream.cpp ../LZOInputStream.o
 	$(ECHO) running test $(SUBDIR)/testLZOInputStream
-	$(ECHO) $(CC) $(CFLAGS) -o testLZOInputStream testLZOInputStream.cpp ../LZOInputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o
-	$(CC) $(CFLAGS) -o testLZOInputStream testLZOInputStream.cpp ../LZOInputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o
+	$(ECHO) $(CC) $(CFLAGS) -o testLZOInputStream testLZOInputStream.cpp ../LZOInputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o ../../sys/endian.o
+	$(CC) $(CFLAGS) -o testLZOInputStream testLZOInputStream.cpp ../LZOInputStream.o ../BufferedOutputStream.o ../InputStream.o ../../ptr/Ptr.o ../IOException.o ../../ptr/BadAllocException.o ../../ex/TraceableException.o ../../ptr/alloc.o ../../3rd/lzo/src/lzo1x_1.o ../../ptr/SizeUnknownException.o ../OutputStream.o ../../3rd/lzo/src/lzo_util.o ../../3rd/lzo/src/lzo_init.o ../../3rd/lzo/src/lzo1x_d2.o ../../sys/endian.o
 	$(ECHO) [TEST] ./testLZOInputStream
 	./testLZOInputStream
 	rm -fv *.dec

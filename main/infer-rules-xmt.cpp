@@ -36,7 +36,8 @@
 #endif
 
 #ifndef TUPLE_SIZE
-#error "Must specify the tuple size (maximum number of variables in a rule) using -DTUPLE_SIZE."
+#define TUPLE_SIZE 12
+#warning "TUPLE_SIZE was not was not defined!  Defaulting to -DTUPLE_SIZE=12.  Hope that's enough."
 #endif
 
 #ifndef NUM_ATOM_PREDS

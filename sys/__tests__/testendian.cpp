@@ -22,13 +22,10 @@ using namespace std;
 using namespace sys;
 
 bool testEndianess() {
-#if SYSTEM == SYS_MACBOOK_PRO
-  PROG(is_little_endian());
-  PROG(!is_big_endian());
+  __endian_check_t check = { UINT32_C(0x01020304) };
+  PROG(is_little_endian() || check.c[0] != 4);
+  PROG(is_big_endian() || check.c[0] != 1);
   PASS;
-#else
-#error "SYSTEM must be specified to a known value for this test.\n"
-#endif
 }
 
 int main(int argc, char **argv) {

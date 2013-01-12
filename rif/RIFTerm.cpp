@@ -599,6 +599,7 @@ bool RIFTerm::containsFunction() const throw() {
     default:
       // Should never happen, but just in case, do _something_.
       cerr << "[ERROR] Unhandled case " << this->type << " at " << __FILE__ << ":" << __LINE__ << endl;
+      return false;
   }
 }
 

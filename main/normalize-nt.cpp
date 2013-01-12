@@ -283,6 +283,10 @@ RDFTerm collect_stats(RDFTerm term) {
     }
     return norm;
   }
+  default: {
+    cerr << "[ERROR] Unhandled case " << (int)term.getType() << " at line " << __LINE__ << ".  This should never happen." << endl;
+    return RDFTerm();
+  }
   }
 }
 #endif

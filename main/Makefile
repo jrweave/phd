@@ -72,16 +72,16 @@ package-xmt : infer-rules-xmt.cpp encode.h ../sys/sys.h ../sys/ints.h Makefile.x
 	tar cvfz deploy-to-xmt.tar.gz deploy-to-xmt
 
 normalize-nt : normalize-nt.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o normalize-nt normalize-nt.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(SYS_OBJS)
 
 normalize-nt-mpi : normalize-nt-mpi.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt-mpi normalize-nt-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o normalize-nt-mpi normalize-nt-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o normalize-nt-mpi normalize-nt-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o normalize-nt-mpi normalize-nt-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 infer : infer.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 #prd2cnf : pattern-etc.cpp prd2cnf.cpp
 #	$(ECHO) $(CC) $(CFLAGS) -o prd2cnf prd2cnf.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
@@ -100,37 +100,37 @@ infer : infer.cpp
 #	$(CC) $(CFLAGS) -o refine_rules refine_rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
 
 rules-to-sat : rules-to-sat.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 lzo : lzo.cpp
-	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo lzo.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 lzo-mpi : lzo-mpi.cpp
-	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o lzo-mpi lzo-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 der : der.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o der der.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 red-mpi : red-mpi.cpp
-	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -I../3rd/lzo/include -o red-mpi red-mpi.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 encode-rules : encode-rules.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-	$(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o encode-rules encode-rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
 infer-rules : infer-rules.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o infer-rules infer-rules.cpp
 	$(CC) $(CFLAGS) -o infer-rules infer-rules.cpp
 
 infer-rules-mpi : infer-rules-mpi.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS)
-	$(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS)
+	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
 
 infer-rules-xmt : infer-rules-xmt.cpp
-	$(ECHO) $(CC) $(CFLAGS) -DTUPLE_SIZE=12 -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp
-	$(CC) $(CFLAGS) -DTUPLE_SIZE=12 -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp
+	$(ECHO) $(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)
+	$(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)

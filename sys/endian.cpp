@@ -14,3 +14,9 @@
  */
 
 #include "sys/endian.h"
+
+namespace sys {
+
+extern const __endian_check_t  __endint = { UINT32_C(0x01020304) };
+
+}

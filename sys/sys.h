@@ -18,9 +18,12 @@
 
 #define SYS_DEFAULT 0
 #define SYS_CCNI_OPTERONS 1
-#define SYS_BLUE_GENE_L 2
-#define SYS_CRAY_XMT 3
-#define SYS_CRAY_XMT2 4
+#define SYS_MASTIFF 2
+#define SYS_BLUE_GENE_L 3
+#define SYS_BLUE_GENE_P 4
+#define SYS_BLUE_GENE_Q 5
+#define SYS_CRAY_XMT 6
+#define SYS_CRAY_XMT_2 7
 
 #ifndef SYSTEM
 #define SYSTEM SYS_DEFAULT

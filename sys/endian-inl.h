@@ -16,6 +16,7 @@
 #include "sys/endian.h"
 
 #include "sys/ints.h"
+#include "sys/sys.h"
 
 namespace sys {
 
@@ -23,22 +24,51 @@ using namespace std;
 
 // TODO check for common BYTE_ORDER macros
 
+typedef union {
+  uint32_t i;
+  uint8_t c[4];
+} __endian_check_t;
+
+extern const __endian_check_t __endint;
+
 inline
 bool is_big_endian() {
-  static const union {
-    uint32_t i;
-    uint8_t c[4];
-  } endint = { UINT32_C(0x01020304) };
-  return endint.c[0] == 1;
+#if SYSTEM
+#if SYSTEM == SYS_CCNI_OPTERONS || \
+    SYSTEM == SYS_MASTIFF
+  return false;
+#elif SYSTEM == SYS_BLUE_GENE_L || \
+      SYSTEM == SYS_BLUE_GENE_P || \
+      SYSTEM == SYS_BLUE_GENE_Q || \
+      SYSTEM == SYS_CRAY_XMT    || \
+      SYSTEM == SYS_CRAY_XMT_2
+  return true;
+#else
+  return __endint.c[0] == 1;
+#endif
+#else
+  return __endint.c[0] == 1;
+#endif
 }
 
 inline
 bool is_little_endian() {
-  static const union {
-    uint32_t i;
-    uint8_t c[4];
-  } endint = { UINT32_C(0x01020304) };
-  return endint.c[0] == 4;
+#ifdef SYSTEM
+#if SYSTEM == SYS_CCNI_OPTERONS || \
+    SYSTEM == SYS_MASTIFF
+  return true;
+#elif SYSTEM == SYS_BLUE_GENE_L || \
+      SYSTEM == SYS_BLUE_GENE_P || \
+      SYSTEM == SYS_BLUE_GENE_Q || \
+      SYSTEM == SYS_CRAY_XMT    || \
+      SYSTEM == SYS_CRAY_XMT_2
+  return false;
+#else
+  return __endint.c[0] == 4;
+#endif
+#else
+  return __endint.c[0] == 4;
+#endif
 }
 
 }

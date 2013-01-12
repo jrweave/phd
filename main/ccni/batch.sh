@@ -11,6 +11,8 @@ time=''
 slurmout=''
 slurmerr=''
 runargs=''
+nodes=0
+tasks_per_node=0
 for arg in "$@"
 do
 	case "$arg" in
@@ -19,6 +21,10 @@ do
 		--constraint=*)	constraint=`echo $arg | cut -d '=' -f 2-`
 										;;
 		-n=*)						nproc=`echo $arg | cut -d '=' -f 2-`
+										;;
+		-N=*)						nodes=`echo $arg | cut -d '=' -f 2-`
+										;;
+		--tasks-per-node=*)  tasks_per_node=`echo $arg | cut -d '=' -f 2-`
 										;;
 		--mail-type=*)	mailtype=`echo $arg | cut -d '=' -f 2-`
 										;;
@@ -79,6 +85,14 @@ if [ "$nproc" == "" ]; then
 	exit
 fi
 batchcmd="$batchcmd -n $nproc"
+
+if [ $nodes -ne 0 ]; then
+	batchcmd="$batchcmd -N $nodes"
+fi
+
+if [ $tasks_per_node -ne 0 ]; then
+	batchcmd="$batchcmd --tasks-per-node=$tasks_per_node"
+fi
 
 if [ "$mailtype" != "" ]; then
 	batchcmd="$batchcmd --mail-type=$mailtype"

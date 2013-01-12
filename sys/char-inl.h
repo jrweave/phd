@@ -19,7 +19,6 @@
 #include <cstring>
 #include "sys/sys.h"
 
-#if SYSTEM == SYS_DEFAULT
 inline uint8_t to_ascii(char c) {
   return (uint8_t) c;
 }
@@ -41,9 +40,6 @@ inline int ascii_strncmp(const uint8_t *ascii, const char *cstr,
     const size_t n) {
   return strncmp((const char *)ascii, cstr, n);
 }
-#else
-#error Lacking definition of some char.h functions for specified system.
-#endif
 
 inline bool is_alnum(uint32_t c) {
   return is_digit(c) || is_alpha(c);
