@@ -719,7 +719,23 @@ void print_rules(vector<Rule> &rules) {
 
 ////// JOIN PROCESSING //////
 
+#ifndef USE_INDEX_SPO
+#define USE_INDEX_SPO 0
+#endif
+
+#ifndef USE_INDEX_OSP
+#define USE_INDEX_OSP 0
+#endif
+
+#ifndef TUPLE_SIZE
+#warning "Without -DTUPLE_SIZE=N, tuples will be stored in vectors, which are inefficient.  If you know the maximum number of variables N in any rule, compile with -DTUPLE_SIZE=N."
+#endif
+
+#ifndef CONTAINER
 #define CONTAINER deque
+#elif CONTAINER == 0
+#undef CONTAINER // Hacky way to force lists.
+#endif
 
 template<size_t N>
 class Array {
@@ -954,7 +970,7 @@ void load_data(const char *filename) {
           *it = (*it << 8) | ((constint_t)*p);
         }
       }
-      idxspo.insert(triple);
+      idxpos.insert(triple);
     }
   }
   file.Close();
@@ -1273,6 +1289,21 @@ void query_atom(Atom &atom, set<varint_t> &allvars, Relation &results) {
   results.swap(temp);
 }
 
+void scan_triples(Triple &triple_pattern, TripleIndex &results) {
+  TripleIndex::const_iterator it = idxpos.begin();
+  for (; it != idxpos.end(); ++it) {
+    size_t i;
+    for (i = 0; i < 3; ++i) {
+      if (triple_pattern[i] != 0 && triple_pattern[i] != it->at(i)) {
+        break;
+      }    
+    }    
+    if (i == 3) { 
+      results.insert(*it);
+    }    
+  }
+}
+
 void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
   switch (atom.type) {
     case ATOM:
@@ -1345,23 +1376,39 @@ void query(Atomic &atom, set<varint_t> &allvars, Relation &results) {
               (pred.type == CONSTANT ? 0x2 : 0x0) |
               ( obj.type == CONSTANT ? 0x1 : 0x0);
     TripleIndex::const_iterator begin, end;
+    TripleIndex scanned (Order(1,2,0));
     switch (idx) {
-      case 0x0:
       case 0x4:
-      case 0x6:
-      case 0x7: // SPO
+      case 0x6: // SPO
+#if USE_INDEX_SPO
         begin = idxspo.lower_bound(mintriple);
         end = idxspo.upper_bound(maxtriple);
+#else
+        scan_triples(mintriple, scanned);
+        begin = scanned.begin();
+        end = scanned.end();
+#endif
+        break;
+      case 0x0:
+        begin = idxpos.begin();
+        end = idxpos.end();
         break;
       case 0x2:
-      case 0x3: // POS
+      case 0x3:
+      case 0x7: // POS
         begin = idxpos.lower_bound(mintriple);
         end = idxpos.upper_bound(maxtriple);
         break;
       case 0x1:
       case 0x5: // OSP
+#if USE_INDEX_OSP
         begin = idxosp.lower_bound(mintriple);
         end = idxosp.upper_bound(maxtriple);
+#else
+        scan_triples(mintriple, scanned);
+        begin = scanned.begin();
+        end = scanned.end();
+#endif
         break;
       default:
         cerr << "[ERROR] Unhandled case " << hex << idx << " at line " << dec << __LINE__ << endl;
@@ -1646,7 +1693,7 @@ void infer(Rule &rule, TripleIndex &assertions, TripleIndex &retractions) {
 void note_sizes(vector<size_t> &sizes) {
   vector<size_t> sz;
   sz.reserve(1 + atoms.size());
-  sz.push_back(idxspo.size());
+  sz.push_back(idxpos.size());
   map<constint_t, Index>::const_iterator it = atoms.begin();
   for (; it != atoms.end(); ++it) {
     sz.push_back(it->second.size());
@@ -1667,23 +1714,31 @@ void infer(vector<Rule> &rules) {
       for (app_count = 0; changed; ++app_count) {
         changed = false;
 
-        TripleIndex assertions (Order(0, 1, 2));
-        TripleIndex retractions (Order(0, 1, 2));
+        TripleIndex assertions (Order(1, 2, 0));
+        TripleIndex retractions (Order(1, 2, 0));
         infer(rules[rulecount], assertions, retractions);
 
         TripleIndex::iterator it = retractions.begin();
         for (; it != retractions.end(); ++it) {
-          if (idxspo.erase(*it) > 0) {
-            idxpos.erase(*it);
+          if (idxpos.erase(*it) > 0) {
+#if USE_INDEX_SPO
+            idxspo.erase(*it);
+#endif
+#if USE_INDEX_OSP
             idxosp.erase(*it);
+#endif
             changed = true;
           }
         }
         it = assertions.begin();
         for (; it != assertions.end(); ++it) {
-          if (idxspo.insert(*it).second) {
-            idxpos.insert(*it);
+          if (idxpos.insert(*it).second) {
+#if USE_INDEX_SPO
+            idxspo.insert(*it);
+#endif
+#if USE_INDEX_OSP
             idxosp.insert(*it);
+#endif
             changed = true;
           }
         }
@@ -1728,15 +1783,15 @@ void infer(vector<Rule> &rules) {
   while (changed) {
     changed = false;
 #ifndef ANY_ORDER
-    TripleIndex assertions (Order(0, 1, 2));
-    TripleIndex retractions (Order(0, 1, 2));
+    TripleIndex assertions (Order(1, 2, 0));
+    TripleIndex retractions (Order(1, 2, 0));
 #endif
     int rulecount = 0;
     vector<Rule>::iterator rule = rules.begin();
     for (; rule != rules.end(); ++rule) {
 #ifdef ANY_ORDER
-      TripleIndex assertions (Order(0, 1, 2));
-      TripleIndex retractions (Order(0, 1, 2));
+      TripleIndex assertions (Order(1, 2, 0));
+      TripleIndex retractions (Order(1, 2, 0));
 #endif
       infer(*rule, assertions, retractions);
 #ifndef ANY_ORDER
@@ -1744,17 +1799,25 @@ void infer(vector<Rule> &rules) {
 #endif
     TripleIndex::iterator it = retractions.begin();
     for (; it != retractions.end(); ++it) {
-      if (idxspo.erase(*it) > 0) {
-        idxpos.erase(*it);
+      if (idxpos.erase(*it) > 0) {
+#if USE_INDEX_SPO
+        idxspo.erase(*it);
+#endif
+#if USE_INDEX_OSP
         idxosp.erase(*it);
+#endif
         changed = true;
       }
     }
     it = assertions.begin();
     for (; it != assertions.end(); ++it) {
-      if (idxspo.insert(*it).second) {
-        idxpos.insert(*it);
+      if (idxpos.insert(*it).second) {
+#if USE_INDEX_SPO
+        idxspo.insert(*it);
+#endif
+#if USE_INDEX_OSP
         idxosp.insert(*it);
+#endif
         changed = true;
       }
     }
@@ -1798,8 +1861,9 @@ public:
   TripleIndex newindex;
   DistUniq(Distributor *dist) throw(BaseException<void*>)
       : DistComputation(dist), rank(MPI::COMM_WORLD.Get_rank()),
-        nproc(MPI::COMM_WORLD.Get_size()), it(idxspo.begin()),
-        end(idxspo.end()), newindex(TripleIndex(Order(0,1,2))) {
+        nproc(MPI::COMM_WORLD.Get_size()), it(idxpos.begin()),
+        end(idxpos.end()),
+        newindex(TripleIndex(Order(1,2,0), allocator<Triple>())) {
     // do nothing
   }
   virtual ~DistUniq() throw(DistException) {
@@ -1892,9 +1956,10 @@ public:
   bool randomize;
   Redistributor(Distributor *dist) throw(BaseException<void*>)
       : DistComputation(dist), rank(MPI::COMM_WORLD.Get_rank()),
-        nproc(MPI::COMM_WORLD.Get_size()), it(idxspo.begin()),
-        end(idxspo.end()), repl_count(0), newindex(TripleIndex(Order(0,1,2))),
-        replications(TripleIndex(Order(0,1,2))) {
+        nproc(MPI::COMM_WORLD.Get_size()), it(idxpos.begin()),
+        end(idxpos.end()), repl_count(0),
+        newindex(TripleIndex(Order(1,2,0), allocator<Triple>())),
+        replications(TripleIndex(Order(1,2,0), allocator<Triple>())) {
     // do nothing
   }
   virtual ~Redistributor() throw(DistException) {
@@ -1993,42 +2058,110 @@ void redistribute_data(const char *filename) {
   if (MPI::COMM_WORLD.Get_size() <= 1) {
     return;
   }
-  if (!RANDOMIZE && filename == NULL) {
-    return;
+  if (RANDOMIZE) {
+    ZEROSAY("Performing randomization..." << endl);
+    Distributor *dist;
+    NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, 3*sizeof(constint_t),
+        NUMREQUESTS, COORDEVERY, 382);
+    Redistributor *redist;
+    NEW(redist, Redistributor, dist);
+    redist->randomize = true;
+    redist->exec();
+    idxpos.swap(redist->newindex);
+    DELETE(redist);
   }
-  TripleIndex repls (Order(0,1,2));
+  TripleIndex repls (Order(1, 2, 0));
   if (filename != NULL) {
-    ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
-    
-    // build the indexes to support finding data in need of replication
-    idxpos.insert(idxspo.begin(), idxspo.end());
-    idxosp.insert(idxspo.begin(), idxspo.end());
 
+    int rank = MPI::COMM_WORLD.Get_rank();
+    int nproc = MPI::COMM_WORLD.Get_size();
+
+    ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
     size_t len;
     uint8_t *bytes = read_all(filename, len);
+
+    if (bytes == NULL || len == 0) {
+      ZEROSAY("No conditions for replication." << endl);
+      return;
+    }
+
+//    ZEROSAY("Indexing data for looking up replication data." << endl);
+//    // build the indexes to support finding data in need of replication
+//    idxspo.insert(idxpos.begin(), idxpos.end());
+//    idxosp.insert(idxpos.begin(), idxpos.end());
+
+    ZEROSAY("Query out the data for replication." << endl);
     get_redist_data(bytes, len, repls);
+
     free(bytes);
 
-    // now get rid of them because we need memory during redistribution
-    // and they'll be outdated after redistribution anyway
-    idxpos.clear();
-    idxosp.clear();
+//    ZEROSAY("Destroying the aforementioned indexes." << endl);
+//    // now get rid of them because we need memory during redistribution
+//    // and they'll be outdated after redistribution anyway
+//    idxpos.clear();
+//    idxosp.clear();
+
+    ZEROSAY("Preparing data for replication." << endl);
+    int size = repls.size() * 3 * sizeof(constint_t);
+    bytes = (uint8_t*)malloc(size);
+    if (bytes == NULL) {
+      cerr << "[ERROR] Processor " << rank
+           << " failed to allocate " << size
+           << " bytes for replicating data." << endl;
+      MPI::COMM_WORLD.Abort(-1);
+    }
+
+    uint8_t *write_to = bytes;
+    TripleIndex::const_iterator it = repls.begin();
+    for (; it != repls.end(); ++it) {
+      size_t i;
+      for (i = 0; i < it->size(); ++i) {
+        memcpy(write_to, &it->at(i), sizeof(constint_t));
+        write_to += sizeof(constint_t);
+      }
+    }
+
+    ZEROSAY("Doing actual replication." << endl);
+    int *sizes = (int*)malloc(nproc*sizeof(int));
+    int *displs = (int*)malloc(nproc*sizeof(int));
+    if (sizes == NULL || displs == NULL) {
+      cerr << "[ERROR] Processor " << rank
+           << " failed to allocate " << 2*nproc*sizeof(int)
+           << " bytes for gathering each processors data sizes." << endl;
+      MPI::COMM_WORLD.Abort(-2);
+    }
+    MPI::COMM_WORLD.Allgather(&size, 1, MPI::INT, sizes, 1, MPI::INT);
+    size_t i;
+    displs[0] = 0;
+    for (i = 1; i < nproc; ++i) {
+      displs[i] = displs[i-1] + sizes[i-1];
+    }
+
+    size_t recvbytes = displs[nproc-1] + sizes[nproc-1];
+    uint8_t *recvbuf = (uint8_t*)malloc(recvbytes);
+    if (recvbuf == NULL) {
+      cerr << "[ERROR] Processor " << rank
+           << " failed to allocate " << recvbytes
+           << " bytes for gathering all the replicated data." << endl;
+    }
+    MPI::COMM_WORLD.Allgatherv(bytes, size, MPI::BYTE,
+                               recvbuf, sizes, displs, MPI::BYTE);
+
+    free(bytes);
+    free(sizes);
+    free(displs);
+
+    ZEROSAY("Loading replicated data." << endl);
+    for (i = 0; i < recvbytes; i += 3*sizeof(constint_t)) {
+      Triple triple(3);
+      size_t j;
+      for (j = 0; j < 3; ++j) {
+        memcpy(&triple[j], recvbuf + i + j*sizeof(constint_t), sizeof(constint_t));
+      }
+      idxpos.insert(triple);
+    }
+    free(recvbuf);
   }
-  ZEROSAY("Performing redistribution..." << endl);
-  Distributor *dist;
-  NEW(dist, MPIPacketDistributor, MPI::COMM_WORLD, 3*sizeof(constint_t),
-      NUMREQUESTS, COORDEVERY, 382);
-  Redistributor *redist;
-  NEW(redist, Redistributor, dist);
-  redist->randomize = RANDOMIZE;
-  redist->replications.swap(repls);
-  redist->exec();
-  if (RANDOMIZE) {
-    idxspo.swap(redist->newindex);
-  } else {
-    idxspo.insert(redist->newindex.begin(), redist->newindex.end());
-  }
-  DELETE(redist);
 }
 
 void uniq() {
@@ -2041,10 +2174,10 @@ void uniq() {
   DistUniq *redist;
   NEW(redist, DistUniq, dist);
   redist->exec();
-  idxspo.swap(redist->newindex);
+  idxpos.swap(redist->newindex);
   DELETE(redist);
   // NOTE intentionally not modifying other indexes because I know this is
-  // a last step before output data from idxspo.
+  // a last step before output data from idxpos.
 }
 
 void write_data(const char *filename) {
@@ -2074,8 +2207,8 @@ void write_data(const char *filename) {
   MPI::File file = MPI::File::Open(MPI::COMM_SELF, fnamestr.c_str(),
       MPI::MODE_WRONLY | MPI::MODE_CREATE | MPI::MODE_EXCL, MPI::INFO_NULL);
   file.Seek(0, MPI_SEEK_SET);
-  TripleIndex::iterator it = idxspo.begin();
-  for (; it != idxspo.end(); ++it) {
+  TripleIndex::iterator it = idxpos.begin();
+  for (; it != idxpos.end(); ++it) {
     Triple::const_iterator tit = it->begin();
     for (; tit != it->end(); ++tit) {
       size_t i;
@@ -2120,8 +2253,8 @@ void write_data(const char *filename) {
 
 #define FOR_HUMAN_EYES 0
 void print_data() {
-  TripleIndex::iterator it = idxspo.begin();
-  for (; it != idxspo.end(); ++it) {
+  TripleIndex::iterator it = idxpos.begin();
+  for (; it != idxpos.end(); ++it) {
     Triple::const_iterator tit = it->begin();
     for (; tit != it->end(); ++tit) {
 #if !FOR_HUMAN_EYES
@@ -2259,8 +2392,12 @@ int main(int argc, char **argv) {
   TIMESET(ts_index);
 
   ZEROSAY("[INFO] Building indexes." << endl);
-  idxpos.insert(idxspo.begin(), idxspo.end());
-  idxosp.insert(idxspo.begin(), idxspo.end());
+#if USE_INDEX_SPO
+  idxspo.insert(idxpos.begin(), idxpos.end());
+#endif
+#if USE_INDEX_OSP
+  idxosp.insert(idxpos.begin(), idxpos.end());
+#endif
 
   TIME_T(ts_infer);
   TIMESET(ts_infer);
@@ -2272,7 +2409,7 @@ int main(int argc, char **argv) {
   TIMESET(ts_destroy_index);
 
   ZEROSAY("[INFO] Destroying indexes." << endl);
-  idxpos.clear();
+  idxspo.clear();
   idxosp.clear();
   map<constint_t, Index>::iterator it = atoms.begin();
   for (; it != atoms.end(); ++it) {

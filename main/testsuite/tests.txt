@@ -1,5 +1,3 @@
-parowl2.core,foaf.nt,2,cwmoff
-parowl2.core,lubm1.nt,2,cwmoff
 cax-adc.core,cax-adc.nt,1,cwmignore
 cls-int.core,cls-int.nt,1
 cls-oo.core,cls-oo.nt,1
@@ -15,9 +13,11 @@ none.core,foaf.nt,2
 sameas.core,foaf.nt,1
 minrdfs.core,foaf.nt,1
 parminrdfs.core,foaf.nt,2
+parowl2.core,foaf.nt,2
 owl2.core,foaf.nt,1
 none.core,lubm1.nt,2
 sameas.core,lubm1.nt,1
 minrdfs.core,lubm1.nt,1
 parminrdfs.core,lubm1.nt,2
+parowl2.core,lubm1.nt,2,cwmoff
 owl2.core,lubm1.nt,1,cwmoff
