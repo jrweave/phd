@@ -1,4 +1,3 @@
 #!/bin/bash
 
-export MALLOC_MMAP_MAX_=0
-srun $@
+srun --runjob-opts='--envs MALLOC_MMAP_MAX_=0 BG_MAPCOMMONHEAP=1' $@
