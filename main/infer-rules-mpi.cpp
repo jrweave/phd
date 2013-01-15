@@ -20,6 +20,7 @@
 #include "util/timing.h"
 
 bool RANDOMIZE = false;
+bool COMPLETE = false;
 int PAGESIZE = 4*1024*1024;
 int NUMREQUESTS = 100;
 int COORDEVERY = 100;
@@ -2070,6 +2071,11 @@ void get_redist_data(const uint8_t *bytes, size_t len, TripleIndex &repls) {
   }
 }
 
+// Global variables... shame on you.
+bool already_read_replication_conditions = false;
+uint8_t *replication_conditions = NULL;
+size_t replication_conditions_len = 0;
+
 void redistribute_data(const char *filename) {
   if (MPI::COMM_WORLD.Get_size() <= 1) {
     return;
@@ -2092,11 +2098,13 @@ void redistribute_data(const char *filename) {
     int rank = MPI::COMM_WORLD.Get_rank();
     int nproc = MPI::COMM_WORLD.Get_size();
 
-    ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
-    size_t len;
-    uint8_t *bytes = read_all(filename, len);
+    if (!already_read_replication_conditions) {
+      ZEROSAY("Reading the encoded conditions for replication from " << filename << endl);
+      replication_conditions = read_all(filename, replication_conditions_len);
+      already_read_replication_conditions = true;
+    }
 
-    if (bytes == NULL || len == 0) {
+    if (replication_conditions == NULL || replication_conditions_len == 0) {
       ZEROSAY("No conditions for replication." << endl);
       return;
     }
@@ -2107,9 +2115,7 @@ void redistribute_data(const char *filename) {
 //    idxosp.insert(idxpos.begin(), idxpos.end());
 
     ZEROSAY("Query out the data for replication." << endl);
-    get_redist_data(bytes, len, repls);
-
-    free(bytes);
+    get_redist_data(replication_conditions, replication_conditions_len, repls);
 
 //    ZEROSAY("Destroying the aforementioned indexes." << endl);
 //    // now get rid of them because we need memory during redistribution
@@ -2119,7 +2125,7 @@ void redistribute_data(const char *filename) {
 
     ZEROSAY("Preparing data for replication." << endl);
     int size = repls.size() * 3 * sizeof(constint_t);
-    bytes = (uint8_t*)myalloc(3*repls.size(), sizeof(constint_t));
+    uint8_t *bytes = (uint8_t*)myalloc(3*repls.size(), sizeof(constint_t));
     if (bytes == NULL) {
       cerr << "[ERROR] Processor " << rank
            << " failed to allocate " << size
@@ -2371,6 +2377,8 @@ int main(int argc, char **argv) {
       ss >> PAGESIZE;
     } else if (strcmp(argv[i], "--randomize") == 0) {
       RANDOMIZE = true;
+    } else if (strcmp(argv[i], "--complete") == 0) {
+      COMPLETE = true;
     }
   }
 
@@ -2419,8 +2427,29 @@ int main(int argc, char **argv) {
   TIME_T(ts_infer);
   TIMESET(ts_infer);
 
-  ZEROSAY("[INFO] Inferring..." << endl);
-  infer(rules);
+  vector<size_t> old_sizes, new_sizes;
+  note_sizes(new_sizes);
+
+  uint8_t another_iteration = 0;
+  do {
+    ZEROSAY("[INFO] Inferring..." << endl);
+    infer(rules);
+
+    another_iteration = false;
+    if (COMPLETE && argc > 4) {
+      vector<size_t> before, after;
+      note_sizes(before);
+      
+      ZEROSAY("[INFO] Redistributing data for completeness." << endl);
+      RANDOMIZE = false;
+      redistribute_data(argv[4]);
+
+      note_sizes(after);
+      uint8_t local_need_another_iteration = (before != after) ? 1 : 0;
+      MPI::COMM_WORLD.Allreduce(&local_need_another_iteration,
+          &another_iteration, 1,  MPI::BYTE, MPI::BOR);
+    }
+  } while (another_iteration != 0);
 
   TIME_T(ts_destroy_index);
   TIMESET(ts_destroy_index);

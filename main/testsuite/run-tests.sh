@@ -15,14 +15,14 @@ do
 	rulefile=`echo "$line" | cut -d ',' -f 1`
 	datafile=`echo "$line" | cut -d ',' -f 2`
 	mpiprocs=`echo "$line" | cut -d ',' -f 3`
-	cwmnote=`echo "$line" | cut -d ',' -f 4`
+	note=`echo "$line" | cut -d ',' -f 4`
 	rulefile="$maindir/$rulefile"
 	datafile="$maindir/$datafile"
 	echo "[TEST] $rulefile $datafile"
-	if [ "$CWM" != "" ] && [ "$cwmnote" != "cwmoff" ]; then
+	if [ "$CWM" != "" ] && [ "$note" != "cwmoff" ]; then
 		./cwm-test.sh $CWM $rulefile $datafile
 		rc=$?
-		if [ "$cwmnote" != "cwmignore" ]; then
+		if [ "$note" != "cwmignore" ]; then
 			cwmexpected=`expr $cwmexpected + 1`
 			if [ $rc -ne 0 ]; then
 				cwmfailures=`expr $cwmfailures + 1`
@@ -31,7 +31,11 @@ do
 			echo "(IGNORE CWM)"
 		fi
 	fi
-	./infer-test.sh $rulefile $datafile $mpiprocs
+	args4mpi=''
+	if [ "$note" == "mpicomplete" ]; then
+		args4mpi="$args4mpi --complete"
+	fi
+	./infer-test.sh $rulefile $datafile $mpiprocs $args4mpi
 	rc=$?
 	if [ $rc -ne 0 ]; then
 		inferfailures=`expr $inferfailures + 1`

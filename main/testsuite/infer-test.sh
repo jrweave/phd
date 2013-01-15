@@ -1,14 +1,19 @@
 #!/bin/sh
 
-if [ $# -ne 3 ]; then
-	echo "[USAGE] $0 <rif-core-file> <ntriples-files> <num-mpi-procs>"
+if [ $# -lt 3 ]; then
+	echo "[USAGE] $0 <rif-core-file> <ntriples-files> <num-mpi-procs> [infer-mpi.sh flags]"
 	exit -1
 fi
 
-mpiprocs=$3
+rules=$1
+shift
+data=$1
+shift
+mpiprocs=$1
+shift
 
-cp $1 _rules
-cp $2 _data
+cp $rules _rules
+cp $data _data
 cd ..; ./infer.sh testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out | grep INCONSISTENT > testsuite/_inc0; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out > _err
 sort -u _data-closure.nt > _closure
@@ -23,7 +28,7 @@ sort -u _data-closure.nt > _closure
 #mv data _data
 ## end hassle
 
-cd ..; ./infer-mpi.sh $mpiprocs testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_mpi | grep INCONSISTENT > testsuite/_inc1; cd - 2>&1 > /dev/null
+cd ..; ./infer-mpi.sh $mpiprocs testsuite/_rules testsuite/_data $@ 2>&1 | tee testsuite/_out_mpi | grep INCONSISTENT > testsuite/_inc1; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out_mpi > _err_mpi
 sort -u _data-closure-rank-*.nt > _closure_mpi
 rm _data-closure-rank-*.nt
@@ -82,14 +87,14 @@ if [ $err2 -ne 0 ]; then
 	statusxmt=`expr $statusxmt + 1`
 fi
 if [ $statusmpi -gt 0 ]; then
-	echo "FAILED MPI $1 $2"
+	echo "FAILED MPI $rules $data"
 else
-	echo "PASSED MPI $1 $2"
+	echo "PASSED MPI $rules $data"
 fi
 if [ $statusxmt -gt 0 ]; then
-	echo "FAILED XMT $1 $2"
+	echo "FAILED XMT $rules $data"
 else
-	echo "PASSED XMT $1 $2"
+	echo "PASSED XMT $rules $data"
 fi
 #rm _*
 exit `expr $status + $statusmpi + $statusxmt`
