@@ -25,7 +25,7 @@ OBJS		+= lzo-mpi red-mpi
 endif
 endif
 ifeq ($(USE_PAR_MPI), yes)
-OBJS		+= infer normalize-nt-mpi infer-rules-mpi
+OBJS		+= infer normalize-nt-mpi infer-rules-mpi infer-rules-mpi-hl
 endif
 
 all : build __tests__
@@ -130,6 +130,10 @@ infer-rules : infer-rules.cpp
 infer-rules-mpi : infer-rules-mpi.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
 	$(CC) $(CFLAGS) -o infer-rules-mpi infer-rules-mpi.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
+
+infer-rules-mpi-hl : infer-rules-mpi-hl.cpp
+	$(ECHO) $(CC) $(CFLAGS) -DNPROCS_PER_NODE=2 -o infer-rules-mpi-hl infer-rules-mpi-hl.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -DNPROCS_PER_NODE=2 -o infer-rules-mpi-hl infer-rules-mpi-hl.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
 
 infer-rules-xmt : infer-rules-xmt.cpp
 	$(ECHO) $(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)

@@ -13,12 +13,9 @@
 #DEFINE /NOTIN {/IN})
 
 #DEFINE $MC List(owl:FunctionalProperty owl:InverseFunctionalProperty owl:IrreflexiveProperty owl:SymmetricProperty owl:AsymmetricProperty owl:TransitiveProperty owl:Class owl:ObjectProperty owl:DatatypeProperty owl:AllDifferent owl:AllDisjointProperties owl:AllDisjointClasses)
-#DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf rdf:first rdf:rest)
-#DEFINE $CARDP List(owl:maxCardinality owl:maxQualifiedCardinality)
-#DEFINE $CARDV List(0 1)
+#DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf owl:equivalentProperty owl:propertyDisjointWith owl:inverseOf owl:someValuesFrom owl:onProperty owl:allValuesFrom owl:hasValue owl:onClass rdfs:subClassOf owl:equivalentClass owl:disjointWith owl:complementOf owl:distinctMembers owl:members owl:propertyChainAxiom owl:intersectionOf owl:hasKey owl:unionOf owl:oneOf rdf:first rdf:rest owl:maxCardinality owl:maxQualifiedCardinality)
 
 #PRAGMA REPLICATE And(?s[?p->?o] {IN}{$MP} ?p{/IN})
-#PRAGMA REPLICATE And(?s[?p->?o] {IN}{$CARDP} ?p{/IN} {IN}{$CARDV} ?o{/IN})
 #PRAGMA REPLICATE And(?s[rdf:type->?o] {IN}{$MC} ?o{/IN})
 #PRAGMA REPLICATE And(_markAllTypes(?a ?b))
 #PRAGMA REPLICATE And(_allTypes(?a ?b ?c))
@@ -31,8 +28,9 @@
 #PRAGMA REPLICATE And(_markSameKey(?a ?b))
 #PRAGMA REPLICATE And(_sameKey(?a ?b ?c ?d))
 #PRAGMA REPLICATE And(_checkOneOf(?a ?b))
-#PRAGMA REPLICATE And(?a = rdf:nil)
-#PRAGMA REPLICATE And(rdf:nil = ?a)
+#PRAGMA REPLICATE And(?a = ?b)
+
+#PRAGMA NOT REPLICATE And(?s[?p->?o])
 
 #PRAGMA ARBITRARY And(rif:error())
 #PRAGMA ARBITRARY And(?s[owl:sameAs -> ?o])

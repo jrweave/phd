@@ -29,8 +29,8 @@ rm -v $base2-rank-*.der $base2-rank-*.dct $base2-closure-rank-*.der $base2-closu
 echo "mpirun -np $NP ./red-mpi -si -i $data -of der -o $base2-#.der -od $base2-#.dct `cat $base1.frc`"
 mpirun -np $NP ./red-mpi -si -i $data -of der -o $base2-rank-#.der -od $base2-rank-#.dct --global-dict `cat $base1.frc`
 
-echo "mpirun -np $NP ./infer-rules-mpi $base1.enc $base2-#.der $base2-closure-#.der $base1-repls.enc $@"
-mpirun -np $NP ./infer-rules-mpi $base1.enc $base2-rank-#.der $base2-closure-rank-#.der $base1-repls.enc $@
+echo "mpirun -np $NP ./infer-rules-mpi-hl $base1.enc $base2-#.der $base2-closure-#.der $base1-repls.enc $@"
+mpirun -np $NP ./infer-rules-mpi-hl $base1.enc $base2-rank-#.der $base2-closure-rank-#.der $base1-repls.enc $@
 
 echo "mpirun -np $NP ./red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.der -o $base2-closure-rank-#.nt --global-dict"
 mpirun -np $NP ./red-mpi -if der -i $base2-closure-rank-#.der -id $base2-rank-#.dct -o $base2-closure-rank-#.nt --global-dict

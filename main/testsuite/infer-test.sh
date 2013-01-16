@@ -32,13 +32,20 @@ cd ..; ./infer-mpi.sh $mpiprocs testsuite/_rules testsuite/_data $@ 2>&1 | tee t
 grep '\[ERROR\]' _out_mpi > _err_mpi
 sort -u _data-closure-rank-*.nt > _closure_mpi
 rm _data-closure-rank-*.nt
+cd ..; ./infer-mpi-hl.sh 2 testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_mpi_hl | grep INCONSISTENT > testsuite/_inc11; cd - 2>&1 > /dev/null
+grep '\[ERROR\]' _out_mpi_hl > _err_mpi_hl
+sort -u _data-closure-rank-*.nt > _closure_mpi_hl
+rm _data-closure-rank-*.nt
 cd ..; ./infer-xmt.sh testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out_xmt | grep INCONSISTENT > testsuite/_inc2; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out_xmt > _err_xmt
 sort -u _data-closure.nt > _closure_xmt
 rm _data-closure.nt
 status=0
 statusmpi=0
+statusmpihl=0
 statusxmt=0
+
+# checking sequential inference
 inc0=`wc -l _inc0 | awk '{ print $1 }'`
 err0=`wc -l _err | awk '{ print $1 }'`
 if [ $err0 -ne 0 ]; then
@@ -46,6 +53,8 @@ if [ $err0 -ne 0 ]; then
 	echo "[ERROR] TOTAL OF $err0 ERRORS OCCURRED IN infer.sh."
 	status=`expr $status + $err0`
 fi
+
+# comparing with MPI inference
 delta=`diff _closure _closure_mpi`
 if [ "$delta" != "" ]; then
 	echo "$delta"
@@ -66,6 +75,30 @@ if [ $err1 -ne 0 ]; then
 	echo "[ERROR] TOTAL OF $err1 ERRORS OCCURRED IN infer-mpi.sh."
 	statusmpi=`expr $statusmpi + 1`
 fi
+
+# comparing with MPI inference using distributed hash joins on local nodes
+delta=`diff _closure _closure_mpi_hl`
+if [ "$delta" != "" ]; then
+	echo "$delta"
+	statusmpihl=`expr $statusmpihl + 1`
+fi
+inc11=`wc -l _inc11 | awk '{ print $1 }'`
+err11=`wc -l _err_mpi_hl | awk '{ print $1 }'`
+if [ $inc0 -gt 0 ] && [ $inc11 -le 0 ]; then
+	echo "infer.sh found consistency, but infer-mpi-hl.sh did not."
+	statusmpihl=`expr $statusmpihl + 1`
+fi
+if [ $inc0 -le 0 ] && [ $inc11 -gt 0 ]; then
+	echo "infer-mpi-hl.sh found inconsistency, but infer.sh did not."
+	statusmpihl=`expr $statusmpihl + 1`
+fi
+if [ $err11 -ne 0 ]; then
+	cat _err_mpi_hl
+	echo "[ERROR] TOTAL OF $err11 ERRORS OCCURRED IN infer-mpi-hl.sh."
+	statusmpihl=`expr $statusmpihl + 1`
+fi
+
+# comparing with XMT inference
 delta=`diff _closure _closure_xmt`
 if [ "$delta" != "" ]; then
 	echo "$delta"
@@ -86,10 +119,17 @@ if [ $err2 -ne 0 ]; then
 	echo "[ERROR] TOTAL OF $err2 ERRORS OCCURRED IN infer-xmt.sh."
 	statusxmt=`expr $statusxmt + 1`
 fi
+
+# report results
 if [ $statusmpi -gt 0 ]; then
 	echo "FAILED MPI $rules $data"
 else
 	echo "PASSED MPI $rules $data"
+fi
+if [ $statusmpihl -gt 0 ]; then
+	echo "FAILED MHL $rules $data"
+else
+	echo "PASSED MHL $rules $data"
 fi
 if [ $statusxmt -gt 0 ]; then
 	echo "FAILED XMT $rules $data"
@@ -97,4 +137,4 @@ else
 	echo "PASSED XMT $rules $data"
 fi
 #rm _*
-exit `expr $status + $statusmpi + $statusxmt`
+exit `expr $status + $statusmpi + $statusmpihl + $statusxmt`
