@@ -189,13 +189,15 @@ int scan_index() {
     }
     str.assign(p->dptr(), p->dptr() + p->size());
     set<string>::iterator it = cmdargs.lookups.find(str);
-    if (it != cmdargs.lookups.end()) {
+    if (cmdargs.print_index || it != cmdargs.lookups.end()) {
       RDFTerm term = RDFTerm::parse(p);
       print(id, term);
-      cmdargs.lookups.erase(it);
+      if (it != cmdargs.lookups.end()) {
+        cmdargs.lookups.erase(it);
+      }
     }
     p->drop();
-    if (cmdargs.lookups.empty()) {
+    if (!cmdargs.print_index && cmdargs.lookups.empty()) {
       p = NULL;
     } else {
       p = is->read(ID::size() + sizeof(uint32_t));
