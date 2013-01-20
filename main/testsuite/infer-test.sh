@@ -14,7 +14,7 @@ shift
 
 cp $rules _rules
 cp $data _data
-cd ..; ./infer.sh testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out | grep INCONSISTENT > testsuite/_inc0; cd - 2>&1 > /dev/null
+cd ..; ./infer-new.sh testsuite/_rules testsuite/_data 2>&1 | tee testsuite/_out | grep INCONSISTENT > testsuite/_inc0; cd - 2>&1 > /dev/null
 grep '\[ERROR\]' _out > _err
 sort -u _data-closure.nt > _closure
 

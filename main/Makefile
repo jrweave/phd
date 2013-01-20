@@ -16,7 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include -DANY_ORDER
-OBJS		= normalize-nt der encode-rules infer-rules infer-rules-xmt rules-to-sat
+OBJS		= normalize-nt der encode-rules infer-rules infer-rules-xmt rules-to-sat infer-rules-new
 #OLD OBJS: prd2cnf refine refine-all
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
@@ -138,3 +138,7 @@ infer-rules-mpi-hl : infer-rules-mpi-hl.cpp
 infer-rules-xmt : infer-rules-xmt.cpp
 	$(ECHO) $(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)
 	$(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)
+
+infer-rules-new : infer-rules-new.cpp
+	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-new infer-rules-new.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
+	$(CC) $(CFLAGS) -o infer-rules-new infer-rules-new.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
