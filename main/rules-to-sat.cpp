@@ -1720,6 +1720,7 @@ void print_rules(const set<Rule> &rules) {
 
 bool PRAGMAS = false;
 bool SACRIFICE = false;
+bool DONT_PRESUME = false;
 bool CLOSED = false;
 bool EAGER = false;
 
@@ -1989,7 +1990,7 @@ void build_cnf(set<Rule> &rules, const set<Pattern> &repls, set<Pattern> &norepl
   set<Pattern> patterns;
   norepls.insert(arbs.begin(), arbs.end());
   noarbs.insert(repls.begin(), repls.end());
-  if (SACRIFICE) {
+  if (SACRIFICE && !DONT_PRESUME) {
     sacrifice_rules(rules, repls, norepls, arbs, noarbs);
   }
   if (PRAGMAS) {
@@ -2552,6 +2553,8 @@ void parse_args(int argc, char **argv) {
     } else if (strcmp(argv[i], "--eager") == 0 ||
                strcmp(argv[i], "-e") == 0) {
       EAGER = true;
+    } else if (strcmp(argv[i], "--dont-presume") == 0) {
+      DONT_PRESUME = true;
     } else {
       cerr << "[WARNING] Ignoring unrecognized flag: " << argv[i] << endl;
     }
