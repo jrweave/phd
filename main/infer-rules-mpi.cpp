@@ -832,7 +832,7 @@ public:
     safety_check(this->sz + 1);
     this->data[this->sz++] = val;
   }
-  void pop_back(const constint_t &val) {
+  void pop_back() {
     this->data[--this->sz] = 0;
   }
   void swap(Array<N> &t) {
@@ -2435,7 +2435,7 @@ int main(int argc, char **argv) {
     ZEROSAY("[INFO] Inferring..." << endl);
     infer(rules);
 
-    another_iteration = false;
+    another_iteration = 0;
     if (COMPLETE && argc > 4) {
       vector<size_t> before, after;
       note_sizes(before);

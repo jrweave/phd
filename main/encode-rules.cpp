@@ -806,7 +806,7 @@ int doit(int argc, char **argv) THROWS(TraceableException) {
     string line;
     getline(cin, line);
     list<uint8_t> encoded;
-    if (line.size() <= 1) {
+    if (line.size() <= 1 && (line.size() <= 0 || line[0] != '#')) {
       break;
     }
     if (filename.size() > 0 && line.size() >= 18 && line.substr(0, 18) == string("#PRAGMA REPLICATE ")) {
