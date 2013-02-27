@@ -1,0 +1,260 @@
+# ./go.sh testfiles/rdfs-step3.core --sacrifice
+
+Prefix(rdf  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(rdfs <http://www.w3.org/2000/01/rdf-schema#>)
+Prefix(owl  <http://www.w3.org/2002/07/owl#>)
+Prefix(xsd  <http://www.w3.org/2001/XMLSchema#>)
+Prefix(rif  <http://www.w3.org/2007/rif#>)
+Prefix(func <http://www.w3.org/2007/rif-builtin-function#>)
+Prefix(pred <http://www.w3.org/2007/rif-builtin-predicate#>)
+Prefix(dc   <http://purl.org/dc/terms/>)
+Prefix(mine <tag:weavej3@rpi.edu,2012:/>)
+
+#DEFINE IN External(pred:list-contains(
+#DEFINE /IN ))
+#DEFINE NOTIN Not({IN}
+#DEFINE /NOTIN {/IN})
+#DEFINE $MP List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf)
+#DEFINE $MPT List(rdfs:domain rdfs:range rdfs:subPropertyOf rdfs:subClassOf rdf:type)
+#DEFINE $MC List(rdfs:Class rdfs:Datatype rdfs:ContainerMembershipProperty)
+
+#PRAGMA REPLICATE And(?p[rdfs:domain->?c])
+#PRAGMA REPLICATE And(?p[rdfs:range->?c])
+#PRAGMA REPLICATE And(?p[rdfs:subClassOf->?c])
+#PRAGMA REPLICATE And(?p[rdfs:subPropertyOf->?c])
+#PRAGMA REPLICATE And(?p[rdf:type->rdfs:Class])
+#PRAGMA REPLICATE And(?p[rdf:type->rdfs:Datatype])
+#PRAGMA REPLICATE And(?p[rdf:type->rdfs:ContainerMembershipProperty])
+##PRAGMA REPLICATE And(External(pred:is-literal-XMLLiteral(?l)))
+##PRAGMA REPLICATE And(External(pred:is-literal-PlainLiteral(?l)))
+#PRAGMA ARBITRARY And(?s[?p->?o] {NOTIN}{$MPT} ?p{/NOTIN})
+#PRAGMA ARBITRARY And(?s[rdf:type->?o] {NOTIN}{$MC} ?o{/NOTIN})
+
+#SPLIT
+(* <#prp-dom> *)
+Forall ?p ?c ?x ?y (
+   ?x[rdf:type->?c] :- And(
+       ?p[rdfs:domain->?c]
+       ?x[?p->?y]
+			 {NOTIN}{$MC} ?c{/NOTIN} ))
+
+#ELIMINATED
+#Forall ?p ?c ?x ?y (
+#   ?x[rdf:type->?c] :- And(
+#       ?p[rdfs:domain->?c]
+#       ?x[?p->?y]
+#			 {IN}{$MC} ?c{/IN} ))
+
+#SPLIT
+(* <#prp-rng> *)
+Forall ?p ?c ?x ?y (
+   ?y[rdf:type->?c] :- And(
+       ?p[rdfs:range->?c]
+       ?x[?p->?y]
+			 {NOTIN}{$MC} ?c{/NOTIN}  ))
+
+#ELIMINATED
+#Forall ?p ?c ?x ?y (
+#   ?y[rdf:type->?c] :- And(
+#       ?p[rdfs:range->?c]
+#       ?x[?p->?y]
+#			 {IN}{$MC} ?c{/IN}  ))
+
+#SPLIT
+(* <#cax-sco> *)
+Forall ?x ?c1 ?c2 (
+   ?x[rdf:type->?c2] :- And(
+       ?c1[rdfs:subClassOf->?c2]
+       ?x[rdf:type->?c1]
+			 {NOTIN}{$MC} ?c2{/NOTIN}  ))
+
+#ELIMINATED
+#Forall ?x ?c1 ?c2 (
+#   ?x[rdf:type->?c2] :- And(
+#       ?c1[rdfs:subClassOf->?c2]
+#       ?x[rdf:type->?c1]
+#			 {IN}{$MC} ?c2{/IN}  ))
+
+(* <#scm-sco> *)
+Forall ?c1 ?c2 ?c3 (
+   ?c1[rdfs:subClassOf->?c3] :- And(
+       ?c1[rdfs:subClassOf->?c2]
+       ?c2[rdfs:subClassOf->?c3]  ))
+
+(* <#scm-spo> *)
+Forall ?p3 ?p2 ?p1 (
+   ?p1[rdfs:subPropertyOf->?p3] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?p2[rdfs:subPropertyOf->?p3]  ))
+
+#SPLIT
+(* <#prp-spo1> *)
+Forall ?x ?y ?p2 ?p1 (
+   ?x[?p2->?y] :- And(
+       ?p1[rdfs:subPropertyOf->?p2]
+       ?x[?p1->?y]
+			 {NOTIN}{$MPT} ?p2{/NOTIN}  ))
+
+#ELIMINATED
+#Forall ?x ?y ?p2 ?p1 (
+#   ?x[?p2->?y] :- And(
+#       ?p1[rdfs:subPropertyOf->?p2]
+#       ?x[?p1->?y]
+#			 {IN}{$MP} ?p2{/IN}  ))
+
+Forall ?x ?y ?p2 ?p1 (
+   ?x[rdf:type->?y] :- And(
+       ?p1[rdfs:subPropertyOf->rdf:type]
+       ?x[?p1->?y]
+			 {NOTIN}{$MC} ?y{/NOTIN}  ))
+
+#ELIMINATED
+#Forall ?x ?y ?p2 ?p1 (
+#   ?x[rdf:type->?y] :- And(
+#       ?p1[rdfs:subPropertyOf->rdf:type]
+#       ?x[?p1->?y]
+#			 {IN}{$MC} ?y{/IN}  ))
+
+(* <#rdf1> *)
+Forall ?u ?a ?y (
+	?a[rdf:type->rdf:Property] :- ?u[?a->?y] )
+
+#UNSUPPORTED BUILTINS
+## Assuming that validaty of constants are check beforehand
+## since RIF assumes all constants are already valid.
+#(* <#rdf2> *)
+#Forall ?u ?a ?l (
+#	?l[rdf:type->rdf:XMLLiteral] :- And(
+#		?u[?a->?l]
+#		External(pred:is-literal-XMLLiteral(?l)) ))
+#
+#(* <#rdfs1> *)
+#Forall ?u ?a ?l (
+#	?l[rdf:type->rdfs:Literal] :- And(
+#		?u[?a->?l]
+#		External(pred:is-literal-PlainLiteral(?l)) ))
+
+(* <#rdfs4a> *)
+Forall ?u ?a ?x (
+	?u[rdf:type->rdfs:Resource] :- ?u[?a->?x] )
+
+(* <#rdfs4b> *)
+Forall ?u ?a ?v (
+	?v[rdf:type->rdfs:Resource] :- ?u[?a->?v] )
+
+#ELIMINATED
+#(* <#rdfs6> *)
+#Forall ?u (
+#	?u[rdfs:subPropertyOf->?u] :- ?u[rdf:type->rdf:Property] )
+
+(* <#rdfs8> *)
+Forall ?u (
+	?u[rdfs:subClassOf->rdfs:Resource] :- ?u[rdf:type->rdfs:Class] )
+
+(* <#rdfs10> *)
+Forall ?u (
+	?u[rdfs:subClassOf->?u] :- ?u[rdf:type->rdfs:Class] )
+
+(* <#rdfs12> *)
+Forall ?u (
+	?u[rdfs:subPropertyOf->rdfs:member] :- ?u[rdf:type->rdfs:ContainerMembershipProperty] )
+
+(* <#rdfs13> *)
+Forall ?u (
+	?u[rdfs:subClassOf->rdfs:Literal] :- ?u[rdf:type->rdfs:Datatype] )
+
+rdf:type[rdf:type->rdf:Property]
+
+rdf:subject[rdf:type->rdf:Property]
+
+rdf:predicate[rdf:type->rdf:Property]
+
+rdf:object[rdf:type->rdf:Property]
+
+rdf:first[rdf:type->rdf:Property]
+
+rdf:rest[rdf:type->rdf:Property]
+
+rdf:value[rdf:type->rdf:Property]
+
+rdf:nil[rdf:type->rdf:List]
+
+rdf:type[rdfs:domain->rdfs:Resource]
+
+rdfs:domain[rdfs:domain->rdf:Property]
+
+rdfs:range[rdfs:domain->rdf:Property]
+
+rdfs:subPropertyOf[rdfs:domain->rdf:Property]
+
+rdfs:subClassOf[rdfs:domain->rdfs:Class]
+
+rdf:subject[rdfs:domain->rdf:Statement]
+
+rdf:predicate[rdfs:domain->rdf:Statement]
+
+rdf:object[rdfs:domain->rdf:Statement]
+
+rdfs:member[rdfs:domain->rdfs:Resource] 
+
+rdf:first[rdfs:domain->rdf:List]
+
+rdf:rest[rdfs:domain->rdf:List]
+
+rdfs:seeAlso[rdfs:domain->rdfs:Resource]
+
+rdfs:isDefinedBy[rdfs:domain->rdfs:Resource]
+
+rdfs:comment[rdfs:domain->rdfs:Resource]
+
+rdfs:label[rdfs:domain->rdfs:Resource]
+
+rdf:value[rdfs:domain->rdfs:Resource]
+
+rdf:type[rdfs:range->rdfs:Class]
+
+rdfs:domain[rdfs:range->rdfs:Class]
+
+rdfs:range[rdfs:range->rdfs:Class]
+
+rdfs:subPropertyOf[rdfs:range->rdf:Property]
+
+rdfs:subClassOf[rdfs:range->rdfs:Class]
+
+rdf:subject[rdfs:range->rdfs:Resource]
+
+rdf:predicate[rdfs:range->rdfs:Resource]
+
+rdf:object[rdfs:range->rdfs:Resource]
+
+rdfs:member[rdfs:range->rdfs:Resource]
+
+rdf:first[rdfs:range->rdfs:Resource]
+
+rdf:rest[rdfs:range->rdf:List]
+
+rdfs:seeAlso[rdfs:range->rdfs:Resource]
+
+rdfs:isDefinedBy[rdfs:range->rdfs:Resource]
+
+rdfs:comment[rdfs:range->rdfs:Literal]
+
+rdfs:label[rdfs:range->rdfs:Literal]
+
+rdf:value[rdfs:range->rdfs:Resource]
+
+rdf:Alt[rdfs:subClassOf->rdfs:Container]
+
+rdf:Bag[rdfs:subClassOf->rdfs:Container]
+
+rdf:Seq[rdfs:subClassOf->rdfs:Container]
+
+rdfs:ContainerMembershipProperty[rdfs:subClassOf->rdf:Property]
+
+rdfs:isDefinedBy[rdfs:subPropertyOf->rdfs:seeAlso]
+
+rdf:XMLLiteral[rdf:type->rdfs:Datatype]
+
+rdf:XMLLiteral[rdfs:subClassOf->rdfs:Literal] 
+
+rdfs:Datatype[rdfs:subClassOf->rdfs:Class]

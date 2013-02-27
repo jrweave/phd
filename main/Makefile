@@ -16,8 +16,7 @@ include ../Makefile.inc
 
 SUBDIR	= main
 CFLAGS  = $(PRJCFLAGS) -I.. -I/usr/include -DANY_ORDER
-OBJS		= normalize-nt der encode-rules infer-rules infer-rules-xmt rules-to-sat infer-rules-new
-#OLD OBJS: prd2cnf refine refine-all
+OBJS		= normalize-nt der encode-rules infer-rules infer-rules-xmt rules-to-sat
 ifeq ($(USE_3RD_LZO), yes)
 OBJS		+= lzo
 ifeq ($(USE_PAR_MPI), yes)
@@ -83,22 +82,6 @@ infer : infer.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 	$(CC) $(CFLAGS) -o infer infer.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 
-#prd2cnf : pattern-etc.cpp prd2cnf.cpp
-#	$(ECHO) $(CC) $(CFLAGS) -o prd2cnf prd2cnf.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#	$(CC) $(CFLAGS) -o prd2cnf prd2cnf.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#
-#refine : pattern-etc.cpp refine-etc.cpp refine.cpp
-#	$(ECHO) $(CC) $(CFLAGS) -o refine refine.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#	$(CC) $(CFLAGS) -o refine refine.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#
-#refine-all : pattern-etc.cpp refine-etc.cpp refine-all.cpp
-#	$(ECHO) $(CC) $(CFLAGS) -o refine-all refine-all.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#	$(CC) $(CFLAGS) -o refine-all refine-all.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-
-#refine_rules : refine_rules.cpp
-#	$(ECHO) $(CC) $(CFLAGS) -o refine_rules refine_rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-#	$(CC) $(CFLAGS) -o refine_rules refine_rules.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS)
-
 rules-to-sat : rules-to-sat.cpp
 	$(ECHO) $(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
 	$(CC) $(CFLAGS) -o rules-to-sat rules-to-sat.cpp $(RDF_OBJS) $(EX_OBJS) $(UCS_OBJS) $(PTR_OBJS) $(LANG_OBJS) $(IO_OBJS) $(IRI_OBJS) $(PAR_OBJS) $(RIF_OBJS) $(LZO_3RD_OBJS) $(SYS_OBJS)
@@ -138,7 +121,3 @@ infer-rules-mpi-hl : infer-rules-mpi-hl.cpp
 infer-rules-xmt : infer-rules-xmt.cpp
 	$(ECHO) $(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)
 	$(CC) $(CFLAGS) -DNUM_ATOM_PREDS=20 -DFAKE -o infer-rules-xmt infer-rules-xmt.cpp $(SYS_OBJS)
-
-infer-rules-new : infer-rules-new.cpp
-	$(ECHO) $(CC) $(CFLAGS) -o infer-rules-new infer-rules-new.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)
-	$(CC) $(CFLAGS) -o infer-rules-new infer-rules-new.cpp $(PTR_OBJS) $(EX_OBJS) $(IO_OBJS) $(LZO_3RD_OBJS) $(PAR_OBJS) $(SYS_OBJS)

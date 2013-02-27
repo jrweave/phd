@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+# This file is a modified template script provided by the CCNI.
+
 hostname -s > /tmp/hosts.$SLURM_JOB_ID
 
 if [ "x$SLURM_NPROCS" = "x" ] 

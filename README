@@ -2,7 +2,7 @@ This is a very early release of a code base developed by Jesse Weaver for
 experiments in his research.  Very little documentation is provided, but I
 (Jesse Weaver) got tired of telling people that I would open source this
 code as soon as I had time to document it... a time that never seems to
-come around.  So, at least it's available now.  Let's call it version 0.1.
+come around.  So, at least it's available now.  Let's call it version 0.2.
 Good luck.
 
 
@@ -18,7 +18,8 @@ the following exceptions.
 * Possibly lang/scripts/language-subtag-registry, which was retrieved from
   http://www.iana.org/assignments/language-subtag-registry .  See
   lang/scripts/README for more details.
-* ANYTHING under the 3rd/ directory.  See 3rd/README for more details.
+* main/ccni/run-opterons.sh is a modified version of a run script provided
+  by the CCNI.
 
 All the source code herein -- except for the bulleted exceptions above --
 is referred to as the Primary Source Code.
@@ -30,8 +31,10 @@ A complete copy of the Apache 2.0 license is given in LICENSE.
 
 To generate and compile everything, make.
 
-To run basic unit tests, make runtests.
+To run most unit tests, make runtests.
 
 To run all unit tests, make thorough.
 
-To get rid of generated files, make clean.
+To get rid of object files, make clean.
+
+To get rid of all generated files, make distclean.
